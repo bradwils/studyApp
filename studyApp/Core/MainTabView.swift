@@ -1,11 +1,14 @@
 import SwiftUI
 
 struct MainTabView: View {
+    @StateObject private var subjectStore = SubjectStore()  // Create the store here
+    //i should move this somewhere else
+    
     var body: some View {
         TabView {
             NavigationStack {
                 // Root of the social experience; links into the profile detail screen.
-                SocialFeedView()
+                SocialView()
             }
             .tabItem {
                 Label("Social", systemImage: "figure.2")
@@ -34,9 +37,14 @@ struct MainTabView: View {
             .tabItem {
                 Label("Modes", systemImage: "ellipsis.circle")
             }
+            
+            
         }
     }
 }
+
+//SubjectsView(store: subjectStore)  // Pass manually
+
 
 struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {

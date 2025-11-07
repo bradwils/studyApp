@@ -11,7 +11,7 @@ struct ListItem: Identifiable {
     var dailyTotalTime: String
 }
 
-struct SocialFeedView: View {
+struct SocialView: View {
     @State private var items: [ListItem] = [
         ListItem(name: "A", subject: "Math", subjectCode: "MATH", isLocked: false, timer: "00:10", photo: "person.crop.square", dailyTotalTime: "4:00"),
         
@@ -101,12 +101,12 @@ struct SocialFeedView: View {
             }
 
         }
-        .navigationTitle("Social1")
+        .navigationTitle("Social")
         .toolbarBackground(.visible, for: .navigationBar)
 
     }
 }
 
 #Preview {
-    SocialFeedView()
+    SocialView()
 }
