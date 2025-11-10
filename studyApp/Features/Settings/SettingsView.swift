@@ -38,6 +38,9 @@ struct SettingsView: View {
                             SubjectsEditor(isPresented: $isShowingSubjectsEditor)
                             // Sheet view (slide up from below) is toggled to be up or not based on the isShowingSubjectsEditor, which is also passed as a binding into the view so we can close the view from within with a close button.
                                 .padding(10)
+                                .presentationDetents([.fraction(0.6)])
+                                .presentationDragIndicator(.visible)
+                                .presentationBackgroundInteraction(.enabled)
                             
                         }
                     }
