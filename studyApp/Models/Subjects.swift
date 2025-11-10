@@ -17,11 +17,13 @@ struct Subject: Identifiable, Codable, Hashable {
     let id: UUID
     var name: String
     var code: String
+    var createdAt: Date
 
-    init(id: UUID = UUID(), name: String, code: String) { // initializing when created
+    init(id: UUID = UUID(), name: String, code: String, createdAt: Date = Date()) { // initializing when created
         self.id = id
         self.name = name
         self.code = code
+        self.createdAt = createdAt
     }
 }
 
@@ -38,6 +40,17 @@ final class SubjectStore: ObservableObject {
         self.fileURL = documentsDirectory.appendingPathComponent(filename)
         // Load existing subjects from the file on initialization
         load() //this means subjects should have now been updated with the information we need
+
+#if DEBUG
+        if subjects.isEmpty {
+            subjects = [
+                Subject(name: "Mathematics", code: "MATH101"),
+                Subject(name: "Chemistry", code: "CHEM110"),
+                Subject(name: "History", code: "HIST205")
+            ]
+        }
+#endif
+        
     }
 
 
@@ -63,4 +76,3 @@ final class SubjectStore: ObservableObject {
         try? data.write(to: fileURL, options: [.atomic])
     }
 }
-

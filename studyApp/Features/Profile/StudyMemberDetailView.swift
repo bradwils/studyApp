@@ -7,6 +7,11 @@ struct StudyMemberDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
+
+                Text("Profile")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.secondary)
+
                 Text(memberName)
                     .font(.largeTitle.bold())
 

@@ -91,6 +91,7 @@ struct SocialView: View {
                                     // Shared card component sourced from Components/Social.
                                     StudyItemCard(item: item)
                                         .padding(.horizontal, 15)
+                                        .shadow(radius: 20)
                                 }
                                 .buttonStyle(.plain)
                                 .padding(.bottom, 5)
@@ -101,7 +102,7 @@ struct SocialView: View {
             }
 
         }
-        .navigationTitle("Social")
+        .navigationBarTitle("Social", displayMode: .inline)
         .toolbarBackground(.visible, for: .navigationBar)
 
     }
