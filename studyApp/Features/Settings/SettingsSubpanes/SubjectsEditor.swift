@@ -39,48 +39,43 @@ struct SubjectsEditor: View {
                 .accessibilityLabel("Close editor")
             }
             
-            // list existing subjects with inline delete controls
-            ScrollView {
-                LazyVStack(spacing: 12) {
-                    if subjectStore.subjects.isEmpty {
-                        Text("No subjects")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding()
-                            .background(.thinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    } else {
-                        ForEach(subjectStore.subjects) { subject in
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(subject.name)
-                                        .font(.headline)
-                                    Text(subject.code)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                
-                                Button {
-                                    withAnimation(.easeInOut) {
-                                        subjectStore.remove(id: subject.id)
-                                    }
-                                } label: {
-                                    Image(systemName: "trash")
-                                        .foregroundStyle(.red)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Delete \(subject.name)")
+            // list existing subjects with swipe-to-delete functionality
+            List {
+                if subjectStore.subjects.isEmpty {
+                    Text("No subjects")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                        .listRowBackground(Color.clear)
+                } else {
+                    ForEach(subjectStore.subjects) { subject in
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(subject.name)
+                                    .font(.headline)
+                                Text(subject.code)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
                             }
-                            .padding()
-                            .background(.thinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                            
+                            Spacer()
+                            Text(formatCreatedDate(subject.createdAt))
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.vertical, 4)
+                        .listRowBackground(Color.clear)
+                    }
+                    .onDelete { indexSet in
+                        withAnimation(.easeInOut) {
+                            indexSet.forEach { index in
+                                let subject = subjectStore.subjects[index]
+                                subjectStore.remove(id: subject.id)
+                            }
                         }
                     }
                 }
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
             
             // capture new subject details before appending to the store
             
@@ -141,6 +136,12 @@ struct SubjectsEditor: View {
         newSubjectName = ""
         newSubjectCode = ""
         isNameFocused = true
+    }
+    
+    private func formatCreatedDate(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 }
 
