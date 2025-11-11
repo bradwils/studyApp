@@ -1,3 +1,5 @@
 /studyApp.xcodeproj/project.xcworkspace
 studyAppUITests/
+*.backup
+.DS_Store
 

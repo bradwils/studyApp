@@ -1,16 +1,5 @@
 import SwiftUI
 
-struct ListItem: Identifiable {
-    let id = UUID()
-    var name: String
-    var subject: String
-    var subjectCode: String
-    var isLocked: Bool
-    var timer: String
-    var photo: String
-    var dailyTotalTime: String
-}
-
 struct SocialView: View {
     @State private var items: [ListItem] = [
         ListItem(name: "A", subject: "Math", subjectCode: "MATH", isLocked: false, timer: "00:10", photo: "person.crop.square", dailyTotalTime: "4:00"),
@@ -72,7 +61,7 @@ struct SocialView: View {
             .ignoresSafeArea()
             .frame(height: 300)
 
-            ScrollView(showsIndicators: false) { //what is a scrollview?
+            ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
                     DashboardHeader(
                         currentSessionTime: currentSessionTime,
@@ -85,10 +74,8 @@ struct SocialView: View {
                         LazyVStack(spacing: 5) {
                             ForEach(items) { item in
                                 NavigationLink {
-                                    // Profile detail for the tapped member; defined in Features/Profile.
                                     StudyMemberDetailView(memberName: item.name)
                                 } label: {
-                                    // Shared card component sourced from Components/Social.
                                     StudyItemCard(item: item)
                                         .padding(.horizontal, 15)
                                         .shadow(radius: 20)

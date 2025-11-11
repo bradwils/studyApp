@@ -1,18 +1,16 @@
 import SwiftUI
 
 struct SubjectsEditor: View {
-    @StateObject private var subjectStore = SubjectStore() // persistent source of truth for subjects
+    @StateObject private var subjectStore = SubjectStore()
     @State private var newSubjectName = ""
     @State private var newSubjectCode = ""
     @FocusState private var isNameFocused: Bool
-    @Binding var isPresented: Bool  // Binding to control sheet dismissal
-
+    @Binding var isPresented: Bool
 
     private var canAddSubject: Bool {
-        !newSubjectName.trimmingCharacters(in: .whitespaces).isEmpty && //name cant be empty
-        newSubjectCode.trimmingCharacters(in: .whitespaces).count <= 4 && //subject code max 4 chars
-        !newSubjectCode.trimmingCharacters(in: .whitespaces).isEmpty //code cant be empty
-
+        !newSubjectName.trimmingCharacters(in: .whitespaces).isEmpty &&
+        newSubjectCode.trimmingCharacters(in: .whitespaces).count <= 4 &&
+        !newSubjectCode.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     var body: some View {
@@ -24,22 +22,14 @@ struct SubjectsEditor: View {
                     
                 Spacer()
                 Button(action: { isPresented.toggle() }) {
-//                    Text ("Close")
                     Image(systemName: "xmark")
-                    
                 }
                 .buttonStyle(.glass)
-//                .buttonStyle(.close)
                 .clipShape(.circle)
                 .shadow(radius: 10)
-
-                
-                
-                
                 .accessibilityLabel("Close editor")
             }
             
-            // list existing subjects with swipe-to-delete functionality
             List {
                 if subjectStore.subjects.isEmpty {
                     Text("No subjects")
@@ -77,9 +67,6 @@ struct SubjectsEditor: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             
-            // capture new subject details before appending to the store
-            
-            
             ZStack {
                 
                 VStack(spacing: 12) {
@@ -88,31 +75,24 @@ struct SubjectsEditor: View {
                         .submitLabel(.next)
                         .focused($isNameFocused)
                         
-                    ZStack(alignment: .trailing) {  // Overlay count on the right
-
-
+                    ZStack(alignment: .trailing) {
                         TextField("Subject code (e.g. MATH101)", text: $newSubjectCode)
                             .autocorrectionDisabled()
                             .submitLabel(.done)
                             .onSubmit(addSubject)
-                            .padding(.trailing, 40)  // Add padding to avoid overlap with count
+                            .padding(.trailing, 40)
 
-                        Text("\(newSubjectCode.trimmingCharacters(in: .whitespaces).count)/4")  // Character count (adjust max as needed)
-                            .foregroundColor(newSubjectCode.count > 4 ? .red : .gray)  // Color based on limit
+                        Text("\(newSubjectCode.trimmingCharacters(in: .whitespaces).count)/4")
+                            .foregroundColor(newSubjectCode.count > 4 ? .red : .gray)
                             .font(.caption)
                             .padding(.trailing, 8)
                             .opacity(0.7)
-
-
                     }
                 }
                 .padding()
                 .background(.thinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                
             }
-            
-            // primary action for creating the subject
             
             Button(action: addSubject) {
                 Label("Add Subject", systemImage: "plus.circle.fill")
@@ -123,16 +103,13 @@ struct SubjectsEditor: View {
             .disabled(!canAddSubject)
             .opacity(canAddSubject ? 1 : 0.5)
         }
-
-        // sheet-style container with blur + lift
-        
         .padding([.top, .horizontal])
     }
 
     private func addSubject() {
         guard canAddSubject else { return }
         let subject = Subject(name: newSubjectName, code: newSubjectCode.uppercased())
-        subjectStore.add(subject) // persist immediately so UI reflects the change
+        subjectStore.add(subject)
         newSubjectName = ""
         newSubjectCode = ""
         isNameFocused = true
@@ -150,7 +127,7 @@ struct SubjectsEditor: View {
         Color.gray.opacity(0.2).ignoresSafeArea()
         VStack {
             Spacer()
-            SubjectsEditor(isPresented: .constant(true))  // Creates a constant binding for preview
+            SubjectsEditor(isPresented: .constant(true))
         }
     }
 }

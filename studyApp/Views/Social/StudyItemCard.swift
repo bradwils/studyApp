@@ -1,11 +1,9 @@
 //  StudyItemCard.swift
-//  first
-//
-//  Created by brad wils on 20/3/25.
+//  studyApp
 
 import SwiftUI
 
-/// Compact summary row for a study member; supplied with `ListItem` from the social feed.
+/// Compact summary row for a study member.
 struct StudyItemCard: View {
     var item: ListItem
 
