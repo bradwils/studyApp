@@ -1,7 +1,5 @@
 //  DashboardHeader.swift
-//  first
-//
-//  Created by brad wils on 20/3/25.
+//  studyApp
 
 import SwiftUI
 
@@ -34,7 +32,7 @@ struct DashboardHeader: View {
                                 Text("\(onlineFriends) Friends studying ")
                                     .foregroundColor(.green)
                                     .padding(.leading, 8)
-                                Image(systemName: "wave.3.forward") //doesnt work
+                                Image(systemName: "wave.3.forward")
                                     .foregroundColor(.green)
                                 
                             }
@@ -51,17 +49,17 @@ struct DashboardHeader: View {
                     Spacer()
                     
                     
-                    Menu { // System menu; label can be re-laid out during presentation/dismissal
+                    Menu {
                         NavigationLink("Settings") { SettingsView() }
                         NavigationLink("Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
-                    } label: { // Make the label's size and hit area deterministic
+                    } label: {
                         Image(systemName: "person.crop.circle.fill")
-                            .resizable() // Allow symbol to scale predictably
-                            .scaledToFit() // Preserve aspect ratio so it stays centered without clipping
-                            .frame(width: 44, height: 44) // Icon size smaller than container; creates internal padding instead of external
-                            .foregroundStyle(.primary) // Visual style only; does not affect layout
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 44, height: 44)
+                            .foregroundStyle(.primary)
                     }
-                    .buttonStyle(.plain) // Prevents default button padding/animation from shifting layout
+                    .buttonStyle(.plain)
                 }
             }
             
@@ -70,7 +68,6 @@ struct DashboardHeader: View {
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .glassEffect(in: .rect(cornerRadius: 28))
                         .padding(-15)
-//                        .frame(height: 50)
                         .frame(maxHeight: 50)
 
                 } else {
@@ -83,14 +80,11 @@ struct DashboardHeader: View {
                 HStack(spacing: 20) {
                     
                     VStack(alignment: .center, spacing: 6) {
-                        Text("Total: \(totalDailyTime)") //align this centrally
+                        Text("Total: \(totalDailyTime)")
                             .font(.caption)
                             .foregroundStyle(Color.secondary)
                         Text(currentSessionTime)
                             .font(.title2.weight(.semibold))
-//                            .foregroundStyle(Color.primary)
-
-                        
                     }
                     
                     Rectangle()
@@ -117,9 +111,9 @@ struct DashboardHeader: View {
                     }
                 }
             }
-            .padding(15) //just for the personal study card, messy but redo later.
+            .padding(15)
         }
-        .padding(.horizontal, 20) //for all elements
+        .padding(.horizontal, 20)
     }
 }
 

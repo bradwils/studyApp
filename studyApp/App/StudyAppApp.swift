@@ -1,4 +1,6 @@
-//
+//  StudyAppApp.swift
+//  studyApp
+
 import SwiftUI
 
 @main

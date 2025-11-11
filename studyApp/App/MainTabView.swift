@@ -1,13 +1,11 @@
 import SwiftUI
 
 struct MainTabView: View {
-    @StateObject private var subjectStore = SubjectStore()  // Create the store here
-    //i should move this somewhere else
+    @StateObject private var subjectStore = SubjectStore()
     
     var body: some View {
         TabView {
             NavigationStack {
-                // Root of the social experience; links into the profile detail screen.
                 SocialView()
             }
             .tabItem {
@@ -15,7 +13,6 @@ struct MainTabView: View {
             }
             
             NavigationStack {
-                // Placeholder focus tools live here; replace with actual focus flows.
                 FocusView()
             }
             .tabItem {
@@ -23,7 +20,6 @@ struct MainTabView: View {
             }
             
             NavigationStack {
-                // Entry point for collaboration features such as study groups.
                 GroupsView()
             }
             .tabItem {
@@ -31,7 +27,6 @@ struct MainTabView: View {
             }
             
             NavigationStack {
-                // Hosts additional study modes configuration once implemented.
                 ModesView()
             }
             .tabItem {
@@ -42,9 +37,6 @@ struct MainTabView: View {
         }
     }
 }
-
-//SubjectsView(store: subjectStore)  // Pass manually
-
 
 struct MainTabView_Previews: PreviewProvider {
     static var previews: some View {

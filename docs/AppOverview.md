@@ -3,36 +3,61 @@
 ## Purpose
 StudyApp is a SwiftUI-based iOS application that surfaces social study activity, focus tools, group collaboration, and configurable modes through a tab-driven experience.
 
+## Architecture
+The app follows SwiftUI industry best practices with a clean, organized structure:
+
+- **App Layer**: Entry point and main navigation
+- **View Layer**: All UI components organized by feature
+- **Model Layer**: Data models and business logic
+- **Resources**: Assets and sample data
+
 ## High-Level Flow
 - `StudyAppApp` boots the SwiftUI app and hosts `MainTabView`.
-- `MainTabView` builds the global `TabView`, pushing each feature inside its own `NavigationStack`.
-- Individual feature screens (e.g., `SocialFeedView`, `FocusView`) live under `Features/` and pull in reusable UI from `Components/` and shared data from `Models/`.
-- Local JSON assets (e.g., `JSONs/mainListItems/sample1.json`) provide mock data for prototyping.
+- `MainTabView` builds the global `TabView`, with each feature inside its own `NavigationStack`.
+- Feature screens live under `Views/` organized by feature area (Social, Focus, Groups, Modes, Settings, Profile).
+- Data models and stores in `Models/` provide shared data across features.
+- `Resources/` contains assets and sample data for prototyping.
 
-## Folder Responsibilities
-- `Core/` — App entry point (`StudyAppApp`) and cross-feature scaffolding such as `MainTabView`.
-- `Features/` — Feature-specific screens and logic. Current subfolders: Social, Focus, Groups, Modes, Profile.
-- `Components/` — Reusable SwiftUI views shared between features (e.g., cards, headers).
-- `Models/` — Shared data models and stores that multiple features consume (e.g., `StudyTracking` for session data).
-- `JSONs/` — Local JSON fixtures backing UI prototyping or sample content.
-- `Assets.xcassets/` — Color sets and app icon resources.
+## Folder Structure
+```
+studyApp/
+├── App/                    # App entry point and main navigation
+│   ├── StudyAppApp.swift   # App entry point
+│   └── MainTabView.swift   # Tab navigation
+├── Views/                  # All view files organized by feature
+│   ├── Social/             # Social feed and components
+│   ├── Focus/              # Focus mode views
+│   ├── Groups/             # Study groups
+│   ├── Modes/              # Study modes
+│   ├── Settings/           # Settings and preferences
+│   └── Profile/            # User profiles
+├── Models/                 # Data models and stores
+│   ├── Subject.swift
+│   ├── SubjectStore.swift
+│   ├── StudyTracking.swift
+│   └── SocialFeed.swift
+└── Resources/              # Assets and data
+    ├── Assets.xcassets/
+    └── SampleData/
+```
 
-## Feature Snapshot
-- **Social**: `SocialFeedView` renders a feed of study activity using `StudyItemCard` and navigation into `StudyMemberDetailView`.
-- **Focus**: `FocusView` placeholder for focus-mode functionality surfaced via its own tab.
-- **Groups**: `GroupsView` placeholder for collaboration flows.
-- **Modes**: `ModesView` placeholder for future study modes.
-- **Profile**: `StudyMemberDetailView` displays details on a selected study member.
+## Features
+- **Social**: Feed of study activity with user profiles
+- **Focus**: Focus mode tools and timers
+- **Groups**: Collaborative study groups
+- **Modes**: Configurable study modes
+- **Settings**: App settings and subject management
+- **Profile**: User profile details and statistics
 
-## Shared Components & Models
-- `Components/Social/DashboardHeader.swift`: Summary header for the social dashboard (streaks, current session).
-- `Components/Social/StudyItemCard.swift`: Reusable card showing an individual's study snapshot.
-- `Models/StudyTracking.swift`: Foundational models and timer management logic for tracking study sessions.
+## Data Models
+- `Subject`: Represents study subjects with persistence
+- `SubjectStore`: Manages subject data with local storage
+- `CompleteStudySession`: Tracks completed study sessions
+- `StartStudyTimer`: Manages active study timers
+- `ListItem`: Social feed item model
 
-## Data Sources
-- `JSONs/mainListItems/sample1.json` contains sample list data for prototyping.
-
-## Navigation Linkage
-- Selecting a user within `SocialFeedView` pushes `StudyMemberDetailView` inside the same `NavigationStack`.
-- The tab bar routes users to other feature root views (`FocusView`, `GroupsView`, `ModesView`) without additional cross-feature dependencies yet.
+## Navigation
+- Tab-based navigation between main features
+- NavigationStack within each tab for feature-specific flows
+- Profile detail views accessible from social feed
 
