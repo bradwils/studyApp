@@ -20,6 +20,7 @@ struct SettingsView: View {
     @State private var preferredTheme: Theme = .system
     @State private var studyReminderTime = Date()
     @State private var isShowingSubjectsEditor = false // drives the custom bottom drawer
+    
 
     var body: some View {
         NavigationStack { //is this nesaccary?
@@ -38,9 +39,9 @@ struct SettingsView: View {
                             SubjectsEditor(isPresented: $isShowingSubjectsEditor)
                             // Sheet view (slide up from below) is toggled to be up or not based on the isShowingSubjectsEditor, which is also passed as a binding into the view so we can close the view from within with a close button.
                                 .padding(10)
-                                .presentationDetents([.fraction(0.6)])
+                                .presentationDetents([.fraction(0.8)])
                                 .presentationDragIndicator(.visible)
-                                .presentationBackgroundInteraction(.enabled)
+                                
                             
                         }
                     }
