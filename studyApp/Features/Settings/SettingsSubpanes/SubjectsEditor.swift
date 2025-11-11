@@ -76,6 +76,8 @@ struct SubjectsEditor: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .scrollIndicators(.hidden) // Hides the scroll indicators
+
             
             // capture new subject details before appending to the store
             
