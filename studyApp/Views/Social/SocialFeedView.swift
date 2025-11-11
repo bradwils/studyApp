@@ -61,7 +61,7 @@ struct SocialView: View {
             .ignoresSafeArea()
             .frame(height: 300)
 
-            ScrollView(showsIndicators: false) {
+            ScrollView {
                 VStack(spacing: 16) {
                     DashboardHeader(
                         currentSessionTime: currentSessionTime,
@@ -87,6 +87,7 @@ struct SocialView: View {
                     .padding(.top, 16)
                 }
             }
+            .scrollIndicators(.hidden)
 
         }
         .navigationBarTitle("Social", displayMode: .inline)
