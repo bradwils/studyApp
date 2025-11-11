@@ -24,7 +24,7 @@ struct SubjectsEditor: View {
                 Button(action: { isPresented.toggle() }) {
                     Image(systemName: "xmark")
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.glass)
                 .clipShape(.circle)
                 .shadow(radius: 10)
                 .accessibilityLabel("Close editor")
