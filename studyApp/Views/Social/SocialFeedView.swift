@@ -24,11 +24,15 @@ struct SocialView: View {
     @State private var currentSubject = "Math"
     @State private var streakCount = 5
     @State private var totalDailyTime = "02:34"
+    
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack(alignment: .top) {
             RadialGradient(
-                colors: [Color.yellow.opacity(0.8), Color.white.opacity(0.8)],
+                colors: colorScheme == .dark
+                    ? [Color.yellow.opacity(0.8), Color.black.opacity(0.8)]
+                    : [Color.yellow.opacity(0.8), Color.white.opacity(0.8)],
                 center: .center,
                 startRadius: 100,
                 endRadius: 400
@@ -54,7 +58,9 @@ struct SocialView: View {
             .frame(height: 300)
 
             LinearGradient(
-                colors: [Color.white.opacity(0), Color.white.opacity(1)],
+                colors: colorScheme == .dark
+                    ? [Color.black.opacity(0), Color.black.opacity(1)]
+                    : [Color.white.opacity(0), Color.white.opacity(1)],
                 startPoint: .top,
                 endPoint: .bottom
             )
@@ -92,8 +98,13 @@ struct SocialView: View {
         }
         .navigationBarTitle("Social", displayMode: .inline)
         .toolbarBackground(.visible, for: .navigationBar)
+        .background(colorScheme == .dark ? Color.black : Color.white)
+
+
+
 
     }
+    
 }
 
 #Preview {

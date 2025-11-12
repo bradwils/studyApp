@@ -20,7 +20,7 @@ struct DashboardHeader: View {
                 
 
                 HStack {
-                    VStack {
+                    VStack(alignment: .leading) {
                         Text("Your Friends")
                             .bold()
                             .italic()
@@ -31,14 +31,14 @@ struct DashboardHeader: View {
                             HStack {
                                 Text("\(onlineFriends) Friends studying ")
                                     .foregroundColor(.green)
-                                    .padding(.leading, 8)
+//                                    .padding(.leading, 8)
                                 Image(systemName: "wave.3.forward")
                                     .foregroundColor(.green)
                                 
                             }
                         } else {
                             Text("No friends studying")
-                                .padding(.leading, 8)
+//                                .padding(.leading, 8)
                             
                             
                         }
@@ -61,6 +61,7 @@ struct DashboardHeader: View {
                     }
                     .buttonStyle(.plain)
                 }
+                
             }
             
             ZStack {
