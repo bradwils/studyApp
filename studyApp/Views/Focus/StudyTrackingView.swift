@@ -483,42 +483,76 @@ struct FocusBreakHint: View {
 }
 
 struct AmbientGlowBackground: View {
-    @State private var animate = false
+    @State private var phase1: Double = 0
+    @State private var phase2: Double = 0
+    @State private var phase3: Double = 0
+    @State private var hueShift: Double = 0
 
     var body: some View {
         ZStack {
-            LinearGradient(
+            // Base gradient layer with slow rotation
+            RadialGradient(
                 colors: [
-                    Color.pink.opacity(0.35),
-                    Color.blue.opacity(0.3),
-                    Color.purple.opacity(0.35)
+                    Color.pink.opacity(0.3),
+                    Color.purple.opacity(0.25),
+                    Color.blue.opacity(0.28)
                 ],
-                startPoint: animate ? .topLeading : .bottomTrailing,
-                endPoint: animate ? .bottomTrailing : .topLeading
+                center: .center,
+                startRadius: 100,
+                endRadius: 600
             )
-            .hueRotation(.degrees(animate ? 12 : -12))
-            .animation(.easeInOut(duration: 26).repeatForever(autoreverses: true), value: animate)
-
-            Circle()
-                .fill(Color.orange.opacity(0.12))
-                .frame(width: 320, height: 320)
-                .blur(radius: 80)
-                .offset(x: animate ? -140 : 120, y: animate ? -220 : -140)
-                .animation(.easeInOut(duration: 30).repeatForever(autoreverses: true), value: animate)
-
-            Circle()
-                .fill(Color.indigo.opacity(0.18))
-                .frame(width: 360, height: 360)
-                .blur(radius: 90)
-                .offset(x: animate ? 140 : -120, y: animate ? 200 : 140)
-                .animation(.easeInOut(duration: 32).repeatForever(autoreverses: true), value: animate)
+            .hueRotation(.degrees(hueShift))
+            .scaleEffect(1.0 + sin(phase1 * .pi / 180) * 0.1)
+            .rotationEffect(.degrees(phase1 * 0.2))
+            .blur(radius: 40)
+            
+            // Second morphing layer with angular gradient
+            AngularGradient(
+                colors: [
+                    Color.indigo.opacity(0.2),
+                    Color.orange.opacity(0.15),
+                    Color.pink.opacity(0.18),
+                    Color.indigo.opacity(0.2)
+                ],
+                center: .center,
+                angle: .degrees(phase2)
+            )
+            .scaleEffect(1.2 + sin(phase2 * .pi / 180) * 0.15)
+            .rotationEffect(.degrees(phase2 * 0.3))
+            .blur(radius: 60)
+            
+            // Third drifting layer with elliptical gradient
+            EllipticalGradient(
+                colors: [
+                    Color.blue.opacity(0.22),
+                    Color.purple.opacity(0.2),
+                    Color.cyan.opacity(0.15)
+                ],
+                center: .center
+            )
+            .hueRotation(.degrees(-hueShift * 0.7))
+            .scaleEffect(1.1 + cos(phase3 * .pi / 180) * 0.12)
+            .rotationEffect(.degrees(-phase3 * 0.25))
+            .blur(radius: 50)
 
             Color(.systemBackground)
                 .opacity(0.35)
         }
         .ignoresSafeArea()
         .onAppear {
-            animate = true
+            // Staggered animations with different durations for non-repeating patterns
+            withAnimation(.linear(duration: 43).repeatForever(autoreverses: false)) {
+                phase1 = 360
+            }
+            withAnimation(.linear(duration: 37).repeatForever(autoreverses: false)) {
+                phase2 = 360
+            }
+            withAnimation(.linear(duration: 47).repeatForever(autoreverses: false)) {
+                phase3 = 360
+            }
+            withAnimation(.linear(duration: 53).repeatForever(autoreverses: false)) {
+                hueShift = 30
+            }
         }
     }
 }
