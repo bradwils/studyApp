@@ -31,5 +31,18 @@
 - [ ] Explore different timer/pause button layouts
 - [ ] Consider accessibility and one-handed use
 
+## Media Player Integration
+- [ ] Add media player at the top of the screen (similar to Waze)
+- [ ] Display currently playing music information:
+  - Song name
+  - Artist name
+  - Album cover thumbnail
+- [ ] Include a progress bar across the entire width of the screen
+  - Shows current playback position
+  - Visual indicator of how far through the song
+- [ ] Consider adding basic music controls (play/pause, skip)
+  - Keep it minimal to avoid distraction
+  - Optional: may not include controls to maintain focus
+
 ## Notes
 These ideas were captured while on mobile. Prioritize implementing the pause functionality first, as it's a core feature that impacts the user experience during study sessions.
