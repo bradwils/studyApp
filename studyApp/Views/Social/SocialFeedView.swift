@@ -66,8 +66,9 @@ struct SocialView: View {
             )
             .ignoresSafeArea()
             .frame(height: 300)
+            
 
-            ScrollView {
+            
                 VStack(spacing: 16) {
                     DashboardHeader(
                         currentSessionTime: currentSessionTime,
@@ -76,6 +77,8 @@ struct SocialView: View {
                         totalDailyTime: totalDailyTime
                     )
                     .padding(.horizontal, 10)
+                    
+                    ScrollView {
 
                         LazyVStack(spacing: 5) {
                             ForEach(items) { item in
@@ -92,8 +95,11 @@ struct SocialView: View {
                     }
                     .padding(.top, 16)
                 }
+                .scrollIndicators(.hidden)
+                .scrollEdgeEffectStyle(.automatic, for: .all)
+                
+
             }
-            .scrollIndicators(.hidden)
 
         }
         .navigationBarTitle("Social", displayMode: .inline)
