@@ -13,7 +13,7 @@ struct MainTabView: View {
             }
             
             NavigationStack {
-                FocusView()
+                StudyTrackingView()
             }
             .tabItem {
                 Label("Focus", systemImage: "magnifyingglass")

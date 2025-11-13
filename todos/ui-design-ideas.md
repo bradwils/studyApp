@@ -44,5 +44,12 @@
   - Keep it minimal to avoid distraction
   - Optional: may not include controls to maintain focus
 
+
+## Study Session Scren --> Focus Screen
+
+- [ ] Based on the current Codex study screen, make the central 'ticket' thing tappable to go into a zen-mode.
+
+
+
 ## Notes
 These ideas were captured while on mobile. Prioritize implementing the pause functionality first, as it's a core feature that impacts the user experience during study sessions.
