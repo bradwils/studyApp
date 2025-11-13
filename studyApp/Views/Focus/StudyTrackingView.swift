@@ -497,7 +497,7 @@ struct AmbientGlowBackground: View {
                 endPoint: animate ? .bottomTrailing : .topLeading
             )
             .hueRotation(.degrees(animate ? 12 : -12))
-            .animation(.easeInOut(duration: 26).repeatForever(autoreverses: true), value: animate)
+            .animation(.easeInOut(duration: 23).repeatForever(autoreverses: true), value: animate)
 
             Circle()
                 .fill(Color.orange.opacity(0.12))
@@ -505,7 +505,7 @@ struct AmbientGlowBackground: View {
                 .blur(radius: 80)
                 .scaleEffect(animate ? 1.2 : 0.8)
                 .opacity(animate ? 0.15 : 0.08)
-                .animation(.easeInOut(duration: 30).repeatForever(autoreverses: true), value: animate)
+                .animation(.easeInOut(duration: 37).repeatForever(autoreverses: true), value: animate)
 
             Circle()
                 .fill(Color.indigo.opacity(0.18))
@@ -513,7 +513,7 @@ struct AmbientGlowBackground: View {
                 .blur(radius: 90)
                 .scaleEffect(animate ? 0.9 : 1.1)
                 .opacity(animate ? 0.2 : 0.12)
-                .animation(.easeInOut(duration: 32).repeatForever(autoreverses: true), value: animate)
+                .animation(.easeInOut(duration: 43).repeatForever(autoreverses: true), value: animate)
 
             Color(.systemBackground)
                 .opacity(0.35)
