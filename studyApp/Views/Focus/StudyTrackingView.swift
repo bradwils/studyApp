@@ -503,14 +503,16 @@ struct AmbientGlowBackground: View {
                 .fill(Color.orange.opacity(0.12))
                 .frame(width: 320, height: 320)
                 .blur(radius: 80)
-                .offset(x: animate ? -140 : 120, y: animate ? -220 : -140)
+                .scaleEffect(animate ? 1.2 : 0.8)
+                .opacity(animate ? 0.15 : 0.08)
                 .animation(.easeInOut(duration: 30).repeatForever(autoreverses: true), value: animate)
 
             Circle()
                 .fill(Color.indigo.opacity(0.18))
                 .frame(width: 360, height: 360)
                 .blur(radius: 90)
-                .offset(x: animate ? 140 : -120, y: animate ? 200 : 140)
+                .scaleEffect(animate ? 0.9 : 1.1)
+                .opacity(animate ? 0.2 : 0.12)
                 .animation(.easeInOut(duration: 32).repeatForever(autoreverses: true), value: animate)
 
             Color(.systemBackground)
