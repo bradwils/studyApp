@@ -1,532 +1,464 @@
 import SwiftUI
 
-/// Simplified single-screen focus surface with an ambient background.
+/// Represents the display state of the lightweight study timer.
+///
 struct StudyTrackingView: View {
-    @StateObject private var controller = StudyTrackingController()
-    @Namespace private var actionNamespace
-
+    
+    @State private var focusSliderValue: Double = 0
+    
+    
     var body: some View {
         ZStack {
-            AmbientGlowBackground()
-            VStack(spacing: 22) {
-                header
-                TimerTicketView(
-                    elapsed: controller.elapsed,
-                    subject: controller.subject,
-                    statusText: controller.statusText,
-                    breakCount: controller.breakCount,
-                    pausedDuration: controller.pausedDuration,
-                    breakLogged: controller.breakLoggedDuringPause,
-                    state: controller.state
-                )
-                FocusMetricGrid(metrics: metricItems)
-                Spacer(minLength: 8)
-                controls
-            }
-            .padding(.horizontal, 22)
-            .padding(.vertical, 28)
-        }
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    private var header: some View {
-        HStack(alignment: .firstTextBaseline) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Current subject")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text(controller.subject)
-                    .font(.title2.weight(.semibold))
-                    .contentTransition(.opacity)
-                Text(controller.statusText)
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Menu {
-                ForEach(controller.subjectOptions, id: \.self) { subject in
-                    Button(subject) {
-                        controller.setSubject(subject)
-                    }
-                }
-            } label: {
-                Image(systemName: "books.vertical.fill")
-                    .imageScale(.large)
-                    .padding(10)
-                    .background(.ultraThinMaterial, in: Circle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private var metricItems: [FocusMetricItem] {
-        [
-            FocusMetricItem(id: "elapsed", icon: "clock", title: "Elapsed", value: controller.elapsed.formattedClock),
-            FocusMetricItem(
-                id: "pause",
-                icon: "pause.circle",
-                title: controller.state == .paused ? "Pause time" : "Paused",
-                value: controller.state == .paused ? controller.pausedDuration.formattedClock : "--"
-            ),
-            FocusMetricItem(id: "breaks", icon: "cup.and.saucer.fill", title: "Breaks", value: "\(controller.breakCount)"),
-            FocusMetricItem(
-                id: "last",
-                icon: "sparkles",
-                title: "Last session",
-                value: controller.completedSession?.totalDuration.formattedClock ?? "--"
-            )
-        ]
-    }
-
-    private var controls: some View {
-        VStack(spacing: 12) {
-            Button {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.75)) {
-                    controller.togglePrimaryAction()
-                }
-            } label: {
-                FocusActionLabel(
-                    title: primaryActionTitle,
-                    subtitle: primaryActionSubtitle,
-                    icon: primaryActionIcon
-                )
-            }
-            .buttonStyle(FocusActionButtonStyle(namespace: actionNamespace, colors: primaryActionColors))
-
-            if controller.state == .paused {
-                Button {
-                    controller.endSession()
-                } label: {
-                    Label("End & log session", systemImage: "stop.circle")
-                        .font(.footnote.weight(.semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                }
-                .buttonStyle(.bordered)
-                .tint(.white.opacity(0.7))
-            }
-
-            FocusBreakHint(
-                state: controller.state,
-                pausedDuration: controller.pausedDuration,
-                breakLogged: controller.breakLoggedDuringPause
-            )
-        }
-    }
-
-    private var primaryActionTitle: String {
-        switch controller.state {
-        case .idle, .finished:
-            return "Start focus"
-        case .running:
-            return "Pause timer"
-        case .paused:
-            return "Resume focus"
-        }
-    }
-
-    private var primaryActionSubtitle: String {
-        switch controller.state {
-        case .idle:
-            return "Ticket starts counting up right away"
-        case .running:
-            return "Pause anytime — 3 min logs a break"
-        case .paused:
-            return controller.breakLoggedDuringPause ?
-                "Break logged • \(controller.pausedDuration.formattedClock)" :
-                "Paused \(controller.pausedDuration.formattedClock)"
-        case .finished:
-            return "Start another focused ticket"
-        }
-    }
-
-    private var primaryActionIcon: String {
-        switch controller.state {
-        case .idle, .finished, .paused:
-            return "play.fill"
-        case .running:
-            return "pause.fill"
-        }
-    }
-
-    private var primaryActionColors: [Color] {
-        switch controller.state {
-        case .running:
-            return [Color.orange, Color.pink]
-        case .paused:
-            return [Color.blue, Color.purple]
-        case .idle, .finished:
-            return [Color.green, Color.mint]
-        }
-    }
-}
-
-// MARK: - Components
-
-struct TimerTicketView: View {
-    var elapsed: TimeInterval
-    var subject: String
-    var statusText: String
-    var breakCount: Int
-    var pausedDuration: TimeInterval
-    var breakLogged: Bool
-    var state: StudyTrackingController.State
-
-    private var timerText: String { elapsed.formattedClock }
-
-    var body: some View {
-        VStack(spacing: 18) {
-            HStack(alignment: .firstTextBaseline) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Focus ticket")
-                        .font(.caption.smallCaps())
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text(subject)
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .contentTransition(.opacity)
-                }
-                Spacer()
-                Text(statusText)
-                    .font(.footnote.weight(.medium))
-                    .foregroundStyle(.white.opacity(0.75))
-                    .multilineTextAlignment(.trailing)
-            }
-
-            Rectangle()
-                .fill(Color.white.opacity(0.15))
-                .frame(height: 1)
-                .overlay(
-                    HStack(spacing: 6) {
-                        ForEach(0..<22, id: \.self) { _ in
-                            Circle()
-                                .fill(Color.white.opacity(0.2))
-                                .frame(width: 3, height: 3)
-                        }
-                    }
-                )
-
-            HStack(spacing: 24) {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(timerText)
-                        .font(.system(size: 58, weight: .bold, design: .rounded))
-                        .monospacedDigit()
-                        .foregroundStyle(.white)
-                        .contentTransition(.numericText())
-                    Label(stateLabel, systemImage: stateIcon)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white.opacity(0.85))
-                }
-
-                Rectangle()
-                    .fill(Color.white.opacity(0.25))
-                    .frame(width: 1, height: 120)
-                    .overlay(
-                        VStack(spacing: 6) {
-                            ForEach(0..<8, id: \.self) { _ in
-                                Circle()
-                                    .fill(Color.white.opacity(0.25))
-                                    .frame(width: 2, height: 2)
-                            }
-                        }
-                    )
-
-                VStack(alignment: .leading, spacing: 10) {
-                    Label("Breaks logged", systemImage: "cup.and.saucer.fill")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text("\(breakCount)")
-                        .font(.title.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .monospacedDigit()
-                    Divider()
-                        .overlay(Color.white.opacity(0.2))
-                    Label("Pause time", systemImage: "pause.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.white.opacity(0.7))
-                    Text(state == .paused ? pausedDuration.formattedClock : "--")
-                        .font(.title3.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .monospacedDigit()
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .padding(24)
-        .frame(maxWidth: .infinity)
-        .background(
-            RoundedRectangle(cornerRadius: 36, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.blue.opacity(0.55),
-                            Color.purple.opacity(0.5),
-                            Color.indigo.opacity(0.55)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .shadow(color: Color.black.opacity(0.25), radius: 30, x: 0, y: 18)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 36, style: .continuous)
-                .stroke(Color.white.opacity(0.18), style: StrokeStyle(lineWidth: 1.5, dash: [8, 10]))
-        )
-        .overlay(
-            HStack {
-                Circle()
-                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    .frame(width: 22, height: 22)
-                    .background(Circle().fill(Color.black.opacity(0.3)))
-                Spacer()
-                Circle()
-                    .stroke(Color.white.opacity(0.3), lineWidth: 1)
-                    .frame(width: 22, height: 22)
-                    .background(Circle().fill(Color.black.opacity(0.3)))
-            }
-            .padding(.horizontal, -12)
-        )
-    }
-
-    private var stateLabel: String {
-        switch state {
-        case .idle:
-            return "Ready"
-        case .running:
-            return "Counting up"
-        case .paused:
-            return breakLogged ? "Break logged" : "Paused"
-        case .finished:
-            return "Session saved"
-        }
-    }
-
-    private var stateIcon: String {
-        switch state {
-        case .idle:
-            return "play.fill"
-        case .running:
-            return "waveform.path"
-        case .paused:
-            return breakLogged ? "cup.and.saucer.fill" : "pause.fill"
-        case .finished:
-            return "checkmark"
-        }
-    }
-}
-
-struct FocusMetricGrid: View {
-    var metrics: [FocusMetricItem]
-
-    private let columns = [
-        GridItem(.flexible(), spacing: 12),
-        GridItem(.flexible(), spacing: 12)
-    ]
-
-    var body: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(metrics) { metric in
-                FocusMetricCell(metric: metric)
-            }
-        }
-    }
-}
-
-struct FocusMetricItem: Identifiable {
-    let id: String
-    let icon: String
-    let title: String
-    let value: String
-}
-
-struct FocusMetricCell: View {
-    let metric: FocusMetricItem
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Label(metric.title, systemImage: metric.icon)
-                .font(.caption.weight(.medium))
-                .foregroundStyle(.secondary)
-            Text(metric.value)
-                .font(.headline.monospacedDigit())
-                .foregroundStyle(.primary)
-                .contentTransition(.numericText())
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
-        )
-    }
-}
-
-struct FocusActionButtonStyle: ButtonStyle {
-    var namespace: Namespace.ID
-    var colors: [Color]
-
-    private var gradient: LinearGradient {
-        LinearGradient(
-            colors: colors.isEmpty ? [Color.green, Color.mint] : colors,
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .padding(.horizontal, 20)
-            .padding(.vertical, 20)
-            .frame(maxWidth: .infinity)
-            .background(
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .fill(gradient)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                            .stroke(Color.white.opacity(0.18), lineWidth: 1)
-                    )
-                    .shadow(color: (colors.last ?? .black).opacity(0.3), radius: 24, x: 0, y: 16)
-                    .matchedGeometryEffect(id: "focusButtonBackground", in: namespace)
-            )
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
-            .animation(.spring(response: 0.35, dampingFraction: 0.75), value: configuration.isPressed)
-    }
-}
-
-struct FocusActionLabel: View {
-    var title: String
-    var subtitle: String
-    var icon: String
-
-    var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 52, height: 52)
-                Image(systemName: icon)
-                    .font(.title2.weight(.semibold))
-                    .foregroundStyle(.white)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .contentTransition(.opacity)
-                Text(subtitle)
-                    .font(.footnote)
-                    .foregroundStyle(.white.opacity(0.8))
-                    .contentTransition(.opacity)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.bold))
-                .foregroundStyle(.white.opacity(0.8))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-struct FocusBreakHint: View {
-    let state: StudyTrackingController.State
-    let pausedDuration: TimeInterval
-    let breakLogged: Bool
-
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.headline)
-            Text(message)
-                .font(.footnote)
-                .multilineTextAlignment(.leading)
-        }
-        .foregroundStyle(.white.opacity(0.9))
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.white.opacity(0.1))
-        )
-    }
-
-    private var icon: String {
-        switch state {
-        case .paused:
-            return breakLogged ? "cup.and.saucer.fill" : "pause.circle"
-        case .running:
-            return "figure.walk"
-        case .idle, .finished:
-            return "ticket"
-        }
-    }
-
-    private var message: String {
-        switch state {
-        case .paused:
-            if breakLogged {
-                return "Break logged after 3 minutes • paused \(pausedDuration.formattedClock)"
-            } else {
-                return "Break logs at 03:00 • paused \(pausedDuration.formattedClock)"
-            }
-        case .running:
-            return "Pause for 3+ minutes to automatically log a break."
-        case .idle:
-            return "Start the ticket and it will count up until you pause."
-        case .finished:
-            return "Session saved. Start another ticket when you're ready."
-        }
-    }
-}
-
-struct AmbientGlowBackground: View {
-    @State private var animate = false
-
-    var body: some View {
-        ZStack {
+            // base gradient
             LinearGradient(
                 colors: [
                     Color.pink.opacity(0.35),
                     Color.blue.opacity(0.3),
                     Color.purple.opacity(0.35)
                 ],
-                startPoint: animate ? .topLeading : .bottomTrailing,
-                endPoint: animate ? .bottomTrailing : .topLeading
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
             )
-            .hueRotation(.degrees(animate ? 12 : -12))
-            .animation(.easeInOut(duration: 26).repeatForever(autoreverses: true), value: animate)
+            .ignoresSafeArea()
 
-            Circle()
-                .fill(Color.orange.opacity(0.12))
-                .frame(width: 320, height: 320)
-                .blur(radius: 80)
-                .scaleEffect(animate ? 1.2 : 0.8)
-                .opacity(animate ? 0.15 : 0.08)
-                .animation(.easeInOut(duration: 30).repeatForever(autoreverses: true), value: animate)
+            // “radial” highlight on the right side
+            RadialGradient(
+                gradient: Gradient(colors: [
+                    Color.white.opacity(0.35),
+                    Color.clear
+                ]),
+                center: .topTrailing,
+                startRadius: 0,
+                endRadius: 260
+            )
+            .blendMode(.softLight)
+            .ignoresSafeArea()
 
-            Circle()
-                .fill(Color.indigo.opacity(0.18))
-                .frame(width: 360, height: 360)
-                .blur(radius: 90)
-                .scaleEffect(animate ? 0.9 : 1.1)
-                .opacity(animate ? 0.2 : 0.12)
-                .animation(.easeInOut(duration: 32).repeatForever(autoreverses: true), value: animate)
+            VStack(spacing: 24) {
+                headerRow
+                timeSummaryRow
+                bigTimersRow
+                connectionRow
+                pauseStopRow
+                focusSliderSection
 
-            Color(.systemBackground)
-                .opacity(0.35)
-        }
-        .ignoresSafeArea()
-        .onAppear {
-            animate = true
+                Spacer()
+
+                nowPlayingRow
+                leaderboardHandle
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 32)
+            .padding(.bottom, 24)
         }
     }
+
+    // MARK: sections
+
+    private var headerRow: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Current Subject")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                HStack(spacing: 8) {
+                    Text("Subject name")
+                        .font(.title3.weight(.semibold))
+
+                    Image(systemName: "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing, spacing: 6) {
+                Text("Total")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("00:00:00")
+                    .font(.title3.monospacedDigit())
+                    .fontWeight(.medium)
+            }
+        }
+    }
+
+    private var timeSummaryRow: some View {
+        HStack {
+            Text("Today")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+
+            Spacer()
+
+            Text("00:00:00")
+                .font(.subheadline.monospacedDigit())
+                .foregroundColor(.primary)
+        }
+    }
+
+    private var bigTimersRow: some View {
+        HStack(spacing: 40) {
+            timerBubble(label: "Session", time: "00:00")
+            timerBubble(label: "Break", time: "00:00")
+        }
+        .padding(.top, 8)
+    }
+
+    private func timerBubble(label: String, time: String) -> some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(Color.white.opacity(0.12))
+                    .frame(width: 86, height: 86)
+
+                Text(time)
+                    .font(.title2.monospacedDigit())
+                    .fontWeight(.semibold)
+            }
+
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+
+    private var connectionRow: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "wifi")
+                .font(.subheadline)
+
+            Text("Online ")
+                .font(.caption)
+        }
+        .foregroundColor(.secondary)
+    }
+
+    private var pauseStopRow: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Pause at")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("00:12:34")
+                    .font(.headline.monospacedDigit())
+            }
+
+            Spacer()
+
+            Button(action: {}) {
+                Text("Stop")
+                    .font(.headline)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: 180)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20, style: .continuous)
+                            .fill(Color.white.opacity(0.18))
+                    )
+            }
+        }
+        .padding(.top, 4)
+    }
+
+    private var focusSliderSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Focus intensity")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                Text("\(Int(focusSliderValue))%")
+                    .font(.subheadline.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
+
+            FocusIntensitySlider(value: $focusSliderValue, range: 0...100)
+                .frame(height: 40)
+                .accessibilityLabel("Focus intensity")
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.white.opacity(0.12))
+        )
+    }
+
+    private var nowPlayingRow: some View {
+        VStack(spacing: 12) {
+            Divider().background(Color.white.opacity(0.4))
+
+            HStack(spacing: 16) {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.white.opacity(0.2))
+                    .frame(width: 44, height: 44)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Now playing")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    Text("Lo-fi focus mix")
+                        .font(.subheadline.weight(.semibold))
+
+                    Text("Artist name")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                // circular song progress
+                ZStack {
+                    Circle()
+                        .stroke(Color.white.opacity(0.25), lineWidth: 4)
+
+                    Circle()
+                        .trim(from: 0, to: 0.35)
+                        .stroke(
+                            Color.white.opacity(0.9),
+                            style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+
+                    Image(systemName: "play.fill")
+                        .font(.system(size: 12, weight: .bold))
+                }
+                .frame(width: 34, height: 34)
+            }
+        }
+    }
+
+    private var leaderboardHandle: some View {
+        VStack(spacing: 6) {
+            Capsule()
+                .fill(Color.white.opacity(0.4))
+                .frame(width: 44, height: 4)
+
+            Text("Leaderboard")
+                .font(.subheadline.weight(.semibold))
+                .padding(.top, 2)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(Color.white.opacity(0.15))
+                .ignoresSafeArea(edges: .bottom)
+        )
+        .padding(.top, 12)
+    }
 }
+
 
 #Preview {
     NavigationStack {
         StudyTrackingView()
     }
+}
+
+
+// MARK: - Formatting helpers
+
+extension TimeInterval {
+    var formattedClock: String {
+        let totalSeconds = Int(self)
+        let minutes = (totalSeconds / 60) % 60
+        let seconds = totalSeconds % 60
+        let hours = totalSeconds / 3600
+        if hours > 0 {
+            return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+        } else {
+            return String(format: "%02d:%02d", minutes, seconds)
+        }
+    }
+}
+
+
+
+// MARK: - PREXISTING ASSETS
+
+struct DotStyleDivider: View {
+    //call as DotStyleDivider(orientation: .horizontal, length: 123)
+    enum Orientation {
+        case horizontal
+        case vertical
+    }
+
+    var orientation: Orientation = .vertical
+    var length: CGFloat = 0; //default of 0 if there is nothing defined
+    var dotCount: Int { Int(length / 8) }
+    var dotSpacing: CGFloat = 6
+
+    private var isHorizontal: Bool { orientation == .horizontal }
+
+
+    
+
+    var body: some View {
+
+        Rectangle()
+            .fill(Color.white.opacity(0.25))
+            .frame(
+                width: isHorizontal ? length : 1,
+                height: isHorizontal ? 1 : length
+            )
+            .overlay {
+                Group {
+                    if isHorizontal {
+                        HStack(spacing: dotSpacing) {
+                            dots
+                        }
+                    } else {
+                        VStack(spacing: dotSpacing) {
+                            dots
+                        }
+                    }
+                }
+            }
+    }
+
+    private var dots: some View { //dots view which overlays the line for the divider
+        ForEach(0..<dotCount, id: \.self) { _ in
+            Circle()
+                .fill(Color.white.opacity(0.25))
+                .frame(width: 2, height: 2)
+        }
+    }
+}
+
+
+// MARK: - Custom Controls
+
+private var dottedLineFiller: some View {
+    GeometryReader { geometry in
+        Path { path in
+            let width = geometry.size.width
+            path.move(to: .zero)
+            path.addLine(to: CGPoint(x: width, y: 0))
+        }
+        .stroke(
+            Color.black.opacity(0.35),
+            style: StrokeStyle(lineWidth: 1, lineCap: .round, dash: [4, 10])
+        )
+    }
+    .frame(height: 1)
+}
+
+struct FocusIntensitySlider: View {
+    @Binding var value: Double
+    var range: ClosedRange<Double>
+    
+    var sliderDraggableElementWidth: CGFloat = 80
+    let sliderDraggableElementHeight: CGFloat = 45
+    
+    var sliderDraggableElementRadius: CGFloat { sliderDraggableElementWidth / 2 }
+    @State private var dragStartTouchOffset: CGFloat?
+    
+    
+    
+
+    // Track whether the knob is pressed so the capsule can animate a pop (scale/shadow) while dragging.
+    @GestureState private var isSliderElementPressed = false
+    // Capture the live translation for a subtle offset that makes the knob feel draggable.
+    @GestureState private var knobDragTranslation = CGSize.zero
+
+    private var normalizedProgress: Double {
+        guard range.upperBound != range.lowerBound else { return 0 } //make sure it's a valid range
+        return (value - range.lowerBound) / (range.upperBound - range.lowerBound)
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            // Clamp the normalized progress to 0–1 so the knob stays on the track.
+            let clampedProgress = min(max(normalizedProgress, 0), 1)
+            // Track width excludes the knob width so the thumb never overhangs.
+            let trackWidth = geo.size.width - sliderDraggableElementWidth
+            
+            let knobOffset = clampedProgress * trackWidth
+            // Single drag gesture drives knob animation states and slider updates at once.
+            let dragGesture = DragGesture(minimumDistance: 0)
+                .updating($isSliderElementPressed) { _, state, _ in
+                    state = true
+                }
+                .updating($knobDragTranslation) { value, state, _ in
+                    state = value.translation
+                }
+                .onChanged { gesture in
+                    let knobCenter = knobOffset + sliderDraggableElementRadius
+                    let startOffset = dragStartTouchOffset ?? (gesture.startLocation.x - knobCenter)
+                    if dragStartTouchOffset == nil {
+                        dragStartTouchOffset = startOffset
+                    }
+                    // Respect the knob’s inset while clamping within the available track width.
+                    let desiredCenter = gesture.location.x - startOffset
+                    let leftEdge = desiredCenter - sliderDraggableElementRadius
+                    let maxTrackWidth = max(trackWidth, 0)
+                    let xPosition = min(max(0, leftEdge), maxTrackWidth)
+                    
+                    let progress = maxTrackWidth > 0 ? xPosition / maxTrackWidth : 0
+                    // Map normalized progress back to the slider’s value range.
+                    let newValue = range.lowerBound + Double(progress) * (range.upperBound - range.lowerBound)
+                    // Finally clamp to the allowed value range before assigning.
+                    value = min(max(newValue, range.lowerBound), range.upperBound)
+                }
+                .onEnded { _ in
+                    dragStartTouchOffset = nil
+                    if value > 90 {
+                        //go to new screen
+                        //make a popup alert for debug
+                        value = 50
+                    }
+                }
+                    
+
+            ZStack(alignment: .leading) {
+                
+                dottedLineFiller
+
+                Capsule()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.white.opacity(0), Color.white.opacity(1)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: knobOffset + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+
+                
+                Capsule()
+                    .glassEffect()
+                    .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+                    .overlay {
+                        Button(action: {}) {
+                            Text("Focus")
+                                .font(.system(size: 16, weight: .heavy))
+                                .foregroundColor(.primary)
+                        }
+                        .buttonStyle(.plain)
+                        .allowsHitTesting(false)
+                    }
+                    // Slight scale, shadow, and translation changes give the knob a touch-reactive feel.
+                    .scaleEffect(isSliderElementPressed ? 1.05 : 1)
+                    .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0), value: isSliderElementPressed)
+                    .shadow(color: Color.black.opacity(isSliderElementPressed ? 0.4 : 0.25), radius: isSliderElementPressed ? 10 : 8, x: 0, y: 4)
+
+                
+                    .offset(x: knobOffset)
+                    .offset(x: knobDragTranslation.width * 0.05, y: knobDragTranslation.height * 0.05)
+                    .gesture(dragGesture)
+                    
+            }
+                .frame(height: sliderDraggableElementHeight)
+//            .contentShape(Rectangle())
+        }
+    }
+
 }
