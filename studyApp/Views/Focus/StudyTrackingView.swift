@@ -6,6 +6,11 @@ struct StudyTrackingView: View {
     
     @State private var focusSliderValue: Double = 0
     
+    @State var sliderDraggableElementWidth: CGFloat = 90
+    @State var sliderDraggableElementHeight: CGFloat = 90
+    
+    @State var onlineFriendCount: Int = 0 //to be dynamic later
+    
     
     var body: some View {
         ZStack {
@@ -37,7 +42,7 @@ struct StudyTrackingView: View {
             VStack(spacing: 24) {
                 headerRow
                 timeSummaryRow
-                bigTimersRow
+                MainTimerElement
                 connectionRow
                 pauseStopRow
                 focusSliderSection
@@ -100,41 +105,38 @@ struct StudyTrackingView: View {
         }
     }
 
-    private var bigTimersRow: some View {
-        HStack(spacing: 40) {
-            timerBubble(label: "Session", time: "00:00")
-            timerBubble(label: "Break", time: "00:00")
-        }
-        .padding(.top, 8)
+    private var MainTimerElement: some View {
+        
+            TimerSection()
+            .padding(.top, 8)
     }
 
-    private func timerBubble(label: String, time: String) -> some View {
+    private func TimerSection() -> some View {
         VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(Color.white.opacity(0.12))
-                    .frame(width: 86, height: 86)
 
-                Text(time)
-                    .font(.title2.monospacedDigit())
-                    .fontWeight(.semibold)
-            }
+            Text("11:22")
+                .font(.system(size: 100).monospacedDigit())
+                .fontWeight(.semibold)
 
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
         }
     }
 
     private var connectionRow: some View {
         HStack(spacing: 6) {
-            Image(systemName: "wifi")
-                .font(.subheadline)
 
-            Text("Online ")
+            
+            Text("\(onlineFriendCount) online friends")
                 .font(.caption)
+            
+            Image(systemName: "dot.radiowaves.up.forward")
+                .font(.subheadline)
+                .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.periodic(delay: 4.0)))
+                .foregroundColor(.green)
         }
-        .foregroundColor(.secondary)
+        
+        
+//        .foregroundColor(.secondary)
+        
     }
 
     private var pauseStopRow: some View {
@@ -166,27 +168,27 @@ struct StudyTrackingView: View {
     }
 
     private var focusSliderSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Focus intensity")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
+        
+            
+//                Text("Focus intensity")
+//                    .font(.subheadline.weight(.semibold))
+//                    .foregroundStyle(.primary)
 
-                Spacer()
+                
 
-                Text("\(Int(focusSliderValue))%")
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundStyle(.secondary)
-            }
+//                Text("DEBUG: \(Int(focusSliderValue))%")
+//                    .font(.subheadline.monospacedDigit())
+//                    .foregroundStyle(.secondary)
+        
 
-            FocusIntensitySlider(value: $focusSliderValue, range: 0...100)
+        FocusIntensitySlider(value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
                 .frame(height: 40)
                 .accessibilityLabel("Focus intensity")
-        }
+        
         .padding()
-        .background(
+        .background( //just for debug
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white.opacity(0.12))
+                .fill(Color.white.opacity(0.08))
         )
     }
 
@@ -350,19 +352,23 @@ private var dottedLineFiller: some View {
     }
     .frame(height: 1)
 }
-
+//MARK: FOCUS SLIDER STRUCT
 struct FocusIntensitySlider: View {
+    
+    @Namespace private var namespace
+
+    
+    
     @Binding var value: Double
     var range: ClosedRange<Double>
     
-    var sliderDraggableElementWidth: CGFloat = 80
-    let sliderDraggableElementHeight: CGFloat = 45
+    @Binding var sliderDraggableElementWidth: CGFloat
+    @Binding var sliderDraggableElementHeight: CGFloat
     
     var sliderDraggableElementRadius: CGFloat { sliderDraggableElementWidth / 2 }
     @State private var dragStartTouchOffset: CGFloat?
-    
-    
-    
+    let focusSliderFontSize: CGFloat = 20
+    @State var trackWidth: CGFloat = 0 // Keep track width available for other logic that depends on the slider bounds
 
     // Track whether the knob is pressed so the capsule can animate a pop (scale/shadow) while dragging.
     @GestureState private var isSliderElementPressed = false
@@ -370,95 +376,111 @@ struct FocusIntensitySlider: View {
     @GestureState private var knobDragTranslation = CGSize.zero
 
     private var normalizedProgress: Double {
-        guard range.upperBound != range.lowerBound else { return 0 } //make sure it's a valid range
+        guard range.upperBound != range.lowerBound else { return 0 }
         return (value - range.lowerBound) / (range.upperBound - range.lowerBound)
     }
 
     var body: some View {
-        GeometryReader { geo in
-            // Clamp the normalized progress to 0–1 so the knob stays on the track.
-            let clampedProgress = min(max(normalizedProgress, 0), 1)
-            // Track width excludes the knob width so the thumb never overhangs.
-            let trackWidth = geo.size.width - sliderDraggableElementWidth
-            
-            let knobOffset = clampedProgress * trackWidth
-            // Single drag gesture drives knob animation states and slider updates at once.
-            let dragGesture = DragGesture(minimumDistance: 0)
-                .updating($isSliderElementPressed) { _, state, _ in
-                    state = true
-                }
-                .updating($knobDragTranslation) { value, state, _ in
-                    state = value.translation
-                }
-                .onChanged { gesture in
-                    let knobCenter = knobOffset + sliderDraggableElementRadius
-                    let startOffset = dragStartTouchOffset ?? (gesture.startLocation.x - knobCenter)
-                    if dragStartTouchOffset == nil {
-                        dragStartTouchOffset = startOffset
+        ZStack(alignment: .leading) {
+            dottedLineFiller
+
+            GeometryReader { geo in
+                // Track width excludes the knob width so the thumb stays inside the slider bounds.
+                let currentTrackWidth = max(geo.size.width - sliderDraggableElementWidth, 0)
+                let clampedProgress = min(max(normalizedProgress, 0), 1)
+                // Knob offset matches the normalized progress along the available track width.
+                let knobOffset = clampedProgress * currentTrackWidth
+                let knobTotalOffset = CGFloat(min(max(knobOffset, 0), currentTrackWidth))
+                let dragGesture = DragGesture(minimumDistance: 0)
+                    .updating($isSliderElementPressed) { _, state, _ in
+                        state = true
                     }
-                    // Respect the knob’s inset while clamping within the available track width.
-                    let desiredCenter = gesture.location.x - startOffset
-                    let leftEdge = desiredCenter - sliderDraggableElementRadius
-                    let maxTrackWidth = max(trackWidth, 0)
-                    let xPosition = min(max(0, leftEdge), maxTrackWidth)
-                    
-                    let progress = maxTrackWidth > 0 ? xPosition / maxTrackWidth : 0
-                    // Map normalized progress back to the slider’s value range.
-                    let newValue = range.lowerBound + Double(progress) * (range.upperBound - range.lowerBound)
-                    // Finally clamp to the allowed value range before assigning.
-                    value = min(max(newValue, range.lowerBound), range.upperBound)
-                }
-                .onEnded { _ in
-                    dragStartTouchOffset = nil
-                    if value > 90 {
-                        //go to new screen
-                        //make a popup alert for debug
-                        value = 50
+                    .updating($knobDragTranslation) { value, state, _ in
+                        state = value.translation
                     }
-                }
-                    
-
-            ZStack(alignment: .leading) {
-                
-                dottedLineFiller
-
-                Capsule()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0), Color.white.opacity(1)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: knobOffset + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-
-                
-                Capsule()
-                    .glassEffect()
-                    .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-                    .overlay {
-                        Button(action: {}) {
-                            Text("Focus")
-                                .font(.system(size: 16, weight: .heavy))
-                                .foregroundColor(.primary)
+                    .onChanged { gesture in
+                        let knobCenter = knobOffset + sliderDraggableElementRadius
+                        let startOffset: CGFloat = dragStartTouchOffset ?? (gesture.startLocation.x - knobCenter)
+                        if dragStartTouchOffset == nil {
+                            dragStartTouchOffset = startOffset
                         }
-                        .buttonStyle(.plain)
-                        .allowsHitTesting(false)
+                        let desiredCenter = gesture.location.x - startOffset
+                        let leftEdge = desiredCenter - sliderDraggableElementRadius
+                        let xPosition = min(max(0, leftEdge), currentTrackWidth)
+                        // Convert the thumb position into normalized progress along the track.
+                        let progress = currentTrackWidth > 0 ? xPosition / currentTrackWidth : 0
+                        let newValue = range.lowerBound + Double(progress) * (range.upperBound - range.lowerBound)
+                        value = min(max(newValue, range.lowerBound), range.upperBound)
                     }
-                    // Slight scale, shadow, and translation changes give the knob a touch-reactive feel.
-                    .scaleEffect(isSliderElementPressed ? 1.05 : 1)
-                    .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0), value: isSliderElementPressed)
-                    .shadow(color: Color.black.opacity(isSliderElementPressed ? 0.4 : 0.25), radius: isSliderElementPressed ? 10 : 8, x: 0, y: 4)
+                    .onEnded { _ in
+                        dragStartTouchOffset = nil
+                        if value > 90 {
+                            value = 0
+                        } else {
+                            withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.6, blendDuration: 0)) {
+                                value = 0
+                            }
+                        }
+                    }
 
-                
-                    .offset(x: knobOffset)
-                    .offset(x: knobDragTranslation.width * 0.05, y: knobDragTranslation.height * 0.05)
-                    .gesture(dragGesture)
-                    
-            }
+                ZStack(alignment: .leading) {
+                    Capsule()
+                        .glassEffect()
+                        .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+                        .overlay {
+                            ZStack {
+                                Capsule()
+                                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 10])) // 5 points of line, 5 points of gap
+                                Button(action: {}) {
+                                    Text("")
+                                        .font(.system(size: focusSliderFontSize, weight: .heavy))
+                                        .foregroundColor(.primary)
+                                }
+                                .buttonStyle(.plain)
+                                .allowsHitTesting(false)
+                            }
+                        }
+                        .offset(x: currentTrackWidth)
+                        .opacity(0.4)
+                        .foregroundColor(.secondary)
+
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.white.opacity(0), Color.white.opacity(1)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: knobTotalOffset + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+
+                    Capsule()
+                        .glassEffect()
+                        .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+                        .overlay {
+                            Button(action: {}) {
+                                Text("Focus")
+                                    .font(.system(size: focusSliderFontSize, weight: .heavy))
+                                    .foregroundColor(.primary)
+                            }
+                            .buttonStyle(.plain)
+                            .allowsHitTesting(false)
+                        }
+                        .scaleEffect(isSliderElementPressed ? 1.05 : 1)
+                        .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0), value: isSliderElementPressed)
+                        .shadow(color: Color.black.opacity(isSliderElementPressed ? 0.4 : 0.25), radius: isSliderElementPressed ? 10 : 8, x: 0, y: 4)
+                        .offset(x: knobTotalOffset)
+                        .gesture(dragGesture)
+                }
                 .frame(height: sliderDraggableElementHeight)
-//            .contentShape(Rectangle())
+                .onAppear {
+                    trackWidth = currentTrackWidth
+                }
+                .onChange(of: currentTrackWidth) { oldValue, newValue in
+                    trackWidth = newValue
+                }
+            }
         }
+        .frame(height: sliderDraggableElementHeight)
     }
-
 }

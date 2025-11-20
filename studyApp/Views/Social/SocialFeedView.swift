@@ -26,21 +26,21 @@ struct SocialView: View {
     @State private var totalDailyTime = "02:34"
     
     @Environment(\.colorScheme) var colorScheme
-
-    var body: some View {
-        ZStack(alignment: .top) {
+    
+    private var backgroundGradient: some View {
+        ZStack {
             RadialGradient(
                 colors: colorScheme == .dark
-                    ? [Color.yellow.opacity(0.8), Color.black.opacity(0.8)]
-                    : [Color.yellow.opacity(0.8), Color.white.opacity(0.8)],
+                ? [Color.yellow.opacity(0.8), Color.black.opacity(0.8)]
+                : [Color.yellow.opacity(0.8), Color.white.opacity(0.8)],
                 center: .center,
                 startRadius: 100,
                 endRadius: 400
             )
             .ignoresSafeArea()
             .frame(height: 300)
-
-                // Linear gradient overlaid on top
+            
+            // Linear gradient overlaid on top
             LinearGradient(
                 colors: [Color.white.opacity(0.5), Color.pink.opacity(0.5), Color.blue.opacity(0.5)],
                 startPoint: .top,
@@ -48,7 +48,7 @@ struct SocialView: View {
             )
             .ignoresSafeArea()
             .frame(height: 300)
-
+            
             LinearGradient(
                 colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.5)],
                 startPoint: .leading,
@@ -56,19 +56,26 @@ struct SocialView: View {
             )
             .ignoresSafeArea()
             .frame(height: 300)
-
+            
             LinearGradient(
                 colors: colorScheme == .dark
-                    ? [Color.black.opacity(0), Color.black.opacity(1)]
-                    : [Color.white.opacity(0), Color.white.opacity(1)],
+                ? [Color.black.opacity(0), Color.black.opacity(1)]
+                : [Color.white.opacity(0), Color.white.opacity(1)],
                 startPoint: .top,
                 endPoint: .bottom
             )
             .ignoresSafeArea()
             .frame(height: 300)
-            
+        }
+    }
 
-            
+    var body: some View {
+        ZStack(alignment: .top) {
+            backgroundGradient
+                .allowsHitTesting(false)
+                .ignoresSafeArea(edges: .top)
+
+            ScrollView {
                 VStack(spacing: 16) {
                     DashboardHeader(
                         currentSessionTime: currentSessionTime,
@@ -77,38 +84,28 @@ struct SocialView: View {
                         totalDailyTime: totalDailyTime
                     )
                     .padding(.horizontal, 10)
-                    
-                    ScrollView {
 
-                        LazyVStack(spacing: 5) {
-                            ForEach(items) { item in
-                                NavigationLink {
-                                    StudyMemberDetailView(memberName: item.name)
-                                } label: {
-                                    StudyItemCard(item: item)
-                                        .padding(.horizontal, 15)
-                                        .shadow(radius: 20)
-                                }
-                                .buttonStyle(.plain)
-                                .padding(.bottom, 5)
+                    LazyVStack(spacing: 5) {
+                        ForEach(items) { item in
+                            NavigationLink {
+                                StudyMemberDetailView(memberName: item.name)
+                            } label: {
+                                StudyItemCard(item: item)
+                                    .padding(.horizontal, 15)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.bottom, 5)
                         }
                     }
                     .padding(.top, 16)
+                    .scrollIndicators(.hidden)
+                    .scrollEdgeEffectStyle(.automatic, for: .top)
                 }
-                .scrollIndicators(.hidden)
-                .scrollEdgeEffectStyle(.automatic, for: .all)
-                
-
             }
-
         }
         .navigationBarTitle("Social", displayMode: .inline)
         .toolbarBackground(.visible, for: .navigationBar)
         .background(colorScheme == .dark ? Color.black : Color.white)
-
-
-
-
     }
     
 }
