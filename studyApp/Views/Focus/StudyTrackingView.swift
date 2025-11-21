@@ -6,8 +6,10 @@ struct StudyTrackingView: View {
     
     @State private var focusSliderValue: Double = 0
     
+    @State private var timerInProgress: Bool = false
+    
     @State var sliderDraggableElementWidth: CGFloat = 90
-    @State var sliderDraggableElementHeight: CGFloat = 90
+    @State var sliderDraggableElementHeight: CGFloat = 60
     
     @State var onlineFriendCount: Int = 0 //to be dynamic later
     
@@ -45,6 +47,9 @@ struct StudyTrackingView: View {
                 MainTimerElement
                 connectionRow
                 pauseStopRow
+                 
+                Spacer()
+                
                 focusSliderSection
 
                 Spacer()
@@ -77,7 +82,7 @@ struct StudyTrackingView: View {
                 }
             }
 
-            Spacer()
+            // Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
                 Text("Total")
@@ -128,7 +133,9 @@ struct StudyTrackingView: View {
             Text("\(onlineFriendCount) online friends")
                 .font(.caption)
             
+            
             Image(systemName: "dot.radiowaves.up.forward")
+            
                 .font(.subheadline)
                 .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.periodic(delay: 4.0)))
                 .foregroundColor(.green)
@@ -138,10 +145,12 @@ struct StudyTrackingView: View {
 //        .foregroundColor(.secondary)
         
     }
+    
+    
 
     private var pauseStopRow: some View {
-        HStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .center, spacing: 16) {
+            VStack(spacing: 4) {
                 Text("Pause at")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -149,22 +158,58 @@ struct StudyTrackingView: View {
                 Text("00:12:34")
                     .font(.headline.monospacedDigit())
             }
+//            .frame(alignment: .trailing)
 
-            Spacer()
 
-            Button(action: {}) {
-                Text("Stop")
-                    .font(.headline)
-                    .padding(.horizontal, 32)
-                    .padding(.vertical, 12)
-                    .frame(maxWidth: 180)
-                    .background(
-                        RoundedRectangle(cornerRadius: 20, style: .continuous)
-                            .fill(Color.white.opacity(0.18))
-                    )
+            // Spacer()
+
+            //IMAGE HEREEEE
+
+            Image(systemName: "play.circle")
+                .foregroundColor(timerInProgress ? Color(.black) : Color(.gray))
+                .opacity(timerInProgress ? 1 : 0.3)
+
+
+
+            
+            .font(.system(size: 30))
+            .foregroundColor(.primary)
+//            .scaleEffect(timerInProgress ? 1.0 : 0.6)
+            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: timerInProgress)
+                
+            
+
+            Button {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
+                    timerInProgress.toggle()
+                }
+            } label: {
+                ZStack {
+                    if timerInProgress {
+                        Text("Stop")
+                            .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .trailing).combined(with: .opacity)))
+                    } else {
+                        Text("Start")
+                        .transition(.asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))                    }
+                }
+                .frame(height: 20) // keeps layout from jumping during the transition
+                .font(.headline)
+                .padding(.horizontal, 32)
+                .padding(.vertical, 12)
+                .frame(maxWidth: 180)
+                .background(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(Color.white.opacity(0.18))
+                )
             }
+        
+//            .frame(alignment: .leading)
+
+            
+            
         }
         .padding(.top, 4)
+
     }
 
     private var focusSliderSection: some View {
@@ -182,14 +227,13 @@ struct StudyTrackingView: View {
         
 
         FocusIntensitySlider(value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
-                .frame(height: 40)
-                .accessibilityLabel("Focus intensity")
-        
-        .padding()
-        .background( //just for debug
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.white.opacity(0.08))
-        )
+            .frame(height: 40)
+            .accessibilityLabel("Focus intensity")
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color.white.opacity(0.08))
+            )
     }
 
     private var nowPlayingRow: some View {
@@ -424,13 +468,13 @@ struct FocusIntensitySlider: View {
                     }
 
                 ZStack(alignment: .leading) {
-                    Capsule()
+                    Capsule() //ending capsule outline
                         .glassEffect()
                         .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
                         .overlay {
                             ZStack {
                                 Capsule()
-                                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 10])) // 5 points of line, 5 points of gap
+                                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 10]))
                                 Button(action: {}) {
                                     Text("")
                                         .font(.system(size: focusSliderFontSize, weight: .heavy))

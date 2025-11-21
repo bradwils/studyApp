@@ -1,4 +1,4 @@
-//  StudyTracking.swift
+//  StudyTrackingModel.swift
 //  studyApp
 //
 //  Models for tracking study sessions.
