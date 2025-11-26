@@ -1,8 +1,6 @@
 import SwiftUI
 
-struct MainTabView: View {
-    @StateObject private var subjectStore = SubjectStore()
-    
+struct MainTabView: View {    
     var body: some View {
         TabView {
             NavigationStack {

@@ -12,6 +12,15 @@ struct StudyTrackingView: View {
     @State var sliderDraggableElementHeight: CGFloat = 60
     
     @State var onlineFriendCount: Int = 0 //to be dynamic later
+
+    @State private var isLeaderboardPresented: Bool = true
+    
+    @StateObject private var studyTrackingModel = StudyTrackingModel()
+    @StateObject private var subjectStore = SubjectStore()
+    @State private var currentStudySessionInProgress: Bool = false
+    
+
+
     
     
     var body: some View {
@@ -47,20 +56,61 @@ struct StudyTrackingView: View {
                 MainTimerElement
                 connectionRow
                 pauseStopRow
-                 
-                Spacer()
                 
                 focusSliderSection
-
-                Spacer()
-
+                
                 nowPlayingRow
-                leaderboardHandle
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+
+
+
+
+
+
+
+
+
+
+
+
+
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 24)
             .padding(.top, 32)
             .padding(.bottom, 24)
         }
+        .sheet(isPresented: $isLeaderboardPresented) {
+            leaderboardSheetView()
+                .padding(10)
+                .presentationDragIndicator(.visible)
+                .presentationBackgroundInteraction(.enabled)
+                .presentationDetents([.height(50), .fraction(0.3), .fraction(0.9)])
+                
+        }
+        .onAppear {
+            currentStudySessionInProgress = studyTrackingModel.activeSession != nil
+            if studyTrackingModel.selectedSubject == nil,
+               let firstSubject = subjectStore.subjects.first {
+                studyTrackingModel.updateSubjectSelection(firstSubject)
+            }
+        }
+        .onChange(of: subjectStore.subjects) { old, new in
+            if studyTrackingModel.selectedSubject == nil, let first = new.first {
+                studyTrackingModel.updateSubjectSelection(first)
+            }
+            
+            
+//                .onChange(of: currentTrackWidth) { oldValue, newValue in
+//                    trackWidth = newValue
+//                }
+        }
+        .onReceive(studyTrackingModel.$activeSession) { session in
+            currentStudySessionInProgress = session != nil
+        }
+
+
+
     }
 
     // MARK: sections
@@ -72,17 +122,14 @@ struct StudyTrackingView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                HStack(spacing: 8) {
-                    Text("Subject name")
-                        .font(.title3.weight(.semibold))
-
-                    Image(systemName: "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                ActiveSubjectList(
+                    studyTrackingModel: studyTrackingModel,
+                    subjects: subjectStore.subjects,
+                    isEnabled: !currentStudySessionInProgress
+                )
             }
 
-            // Spacer()
+             Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
                 Text("Total")
@@ -237,13 +284,14 @@ struct StudyTrackingView: View {
     }
 
     private var nowPlayingRow: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             Divider().background(Color.white.opacity(0.4))
 
             HStack(spacing: 16) {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.white.opacity(0.2))
-                    .frame(width: 44, height: 44)
+                    .aspectRatio(1.0, contentMode: .fill)
+                    .frame(maxWidth: 200, maxHeight: 200)
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Now playing")
@@ -278,29 +326,15 @@ struct StudyTrackingView: View {
                 }
                 .frame(width: 34, height: 34)
             }
+            .padding(.vertical, 12)
+
+            Divider().background(Color.white.opacity(0.4))
+                .frame(maxHeight: .infinity, alignment: .bottom)
         }
     }
 
-    private var leaderboardHandle: some View {
-        VStack(spacing: 6) {
-            Capsule()
-                .fill(Color.white.opacity(0.4))
-                .frame(width: 44, height: 4)
-
-            Text("Leaderboard")
-                .font(.subheadline.weight(.semibold))
-                .padding(.top, 2)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(Color.white.opacity(0.15))
-                .ignoresSafeArea(edges: .bottom)
-        )
-        .padding(.top, 12)
-    }
 }
+
 
 
 #Preview {
@@ -318,6 +352,7 @@ extension TimeInterval {
         let minutes = (totalSeconds / 60) % 60
         let seconds = totalSeconds % 60
         let hours = totalSeconds / 3600
+        
         if hours > 0 {
             return String(format: "%02d:%02d:%02d", hours, minutes, seconds)
         } else {
@@ -528,3 +563,75 @@ struct FocusIntensitySlider: View {
         .frame(height: sliderDraggableElementHeight)
     }
 }
+
+struct leaderboardSheetView: View {
+    var body: some View {
+        Text("Leaderboard Sheet")
+        
+        List {
+            Text("A")
+            Text("A")
+        }
+    }
+
+}
+
+
+struct ActiveSubjectList: View {
+    @ObservedObject var studyTrackingModel: StudyTrackingModel
+    var subjects: [Subject]
+    var isEnabled: Bool
+
+    @State private var subjectSelection: Subject?
+
+    var body: some View {
+        Group {
+            if subjects.isEmpty {
+                Text("No subjects yet")
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Picker("Subject", selection: selectionBinding) {
+                    ForEach(subjects) { subject in
+                        Text(subject.name)
+                            .tag(subject)
+                    }
+                }
+                .pickerStyle(.menu)
+                .disabled(!isEnabled)
+                .onAppear { //update the view before it appears
+                    if subjectSelection == nil {
+                        subjectSelection = studyTrackingModel.selectedSubject ?? subjects.first
+                    }
+                    if studyTrackingModel.selectedSubject == nil, let fallback = subjectSelection {
+                        studyTrackingModel.updateSubjectSelection(fallback)
+                    }
+                }
+                .onChange(of: subjects) { old, new in
+                    if subjectSelection == nil, let fallback = new.first {
+                        subjectSelection = fallback
+                        studyTrackingModel.updateSubjectSelection(fallback)
+                    }
+                }
+                .onChange(of: subjectSelection) { old, new in //if selected subject changes,
+                    studyTrackingModel.updateSubjectSelection(new)
+                }
+                .onChange(of: studyTrackingModel.selectedSubject) { old, new in //if subject changes elsewhere, update
+                    if new != subjectSelection {
+                        subjectSelection = new
+                    }
+                }
+            }
+        }
+    }
+
+    private var selectionBinding: Binding<Subject> {
+        Binding(
+            get: { subjectSelection ?? subjects.first! },
+            set: { subjectSelection = $0 }
+        )
+    }
+}
+
+// MARK: - Mock Leaderboard Sheet

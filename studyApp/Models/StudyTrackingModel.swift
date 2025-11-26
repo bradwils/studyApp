@@ -8,40 +8,36 @@ import Combine
 
 // MARK: - Supporting Types
 
-struct SessionLocation: Codable, Equatable {
+struct SessionLocation: Codable, Equatable { //optional placeholder for future location tagging
     var description: String?
     var latitude: Double?
     var longitude: Double?
 }
 
-struct StudyBreak: Identifiable, Codable, Equatable {
-    let id: UUID = UUID()
+struct StudyBreak: Identifiable, Codable, Equatable { //records a single breakPeriod
+    var id: UUID = UUID()
     var startedAt: Date
     var endedAt: Date
 
-    var duration: TimeInterval { endedAt.timeIntervalSince(startedAt) }
-}
-
-struct FocusSnapshot: Identifiable, Codable, Equatable {
-    let id: UUID = UUID()
-    var value: Double
-    var capturedAt: Date
+    var duration: TimeInterval { endedAt.timeIntervalSince(startedAt) } //computed property
 }
 
 /// Represents an individual study session, both while active and once completed.
 struct StudySession: Identifiable, Codable {
-    let id: UUID
+    var id: UUID
     var subject: Subject?
     var subjectName: String?
     var startedAt: Date
     var endedAt: Date?
     var isPaused: Bool
-    var lastResumedAt: Date
+
+    //could probably combine these two into one property which isn't tracked but computed and displayed on the focus screen
+    var lastResumedAt: Date 
     var lastPausedAt: Date?
-    var activeDuration: TimeInterval
+
+    var totalActiveDuration: TimeInterval
     var totalBreakDuration: TimeInterval
     var breaks: [StudyBreak]
-    var focusSnapshots: [FocusSnapshot]
     var companions: [String] // placeholder for other users in the session
     var location: SessionLocation?
     var studyScore: Int? // 0...10 rating at completion
@@ -54,7 +50,7 @@ struct StudySession: Identifiable, Codable {
         id: UUID = UUID(),
         subject: Subject? = nil,
         subjectName: String? = nil,
-        startedAt: Date = Date(),
+        startedAt: Date = Date.now,
         endedAt: Date? = nil,
         isPaused: Bool = false,
         lastResumedAt: Date = Date(),
@@ -62,7 +58,6 @@ struct StudySession: Identifiable, Codable {
         activeDuration: TimeInterval = 0,
         totalBreakDuration: TimeInterval = 0,
         breaks: [StudyBreak] = [],
-        focusSnapshots: [FocusSnapshot] = [],
         companions: [String] = [],
         location: SessionLocation? = nil,
         studyScore: Int? = nil,
@@ -77,10 +72,9 @@ struct StudySession: Identifiable, Codable {
         self.isPaused = isPaused
         self.lastResumedAt = lastResumedAt
         self.lastPausedAt = lastPausedAt
-        self.activeDuration = activeDuration
+        self.totalActiveDuration = activeDuration
         self.totalBreakDuration = totalBreakDuration
         self.breaks = breaks
-        self.focusSnapshots = focusSnapshots
         self.companions = companions
         self.location = location
         self.studyScore = studyScore
@@ -97,9 +91,9 @@ struct StudySession: Identifiable, Codable {
 
     var runningActiveDuration: TimeInterval {
         if isPaused {
-            return activeDuration
+            return totalActiveDuration
         } else {
-            return activeDuration + Date().timeIntervalSince(lastResumedAt)
+            return totalActiveDuration + Date().timeIntervalSince(lastResumedAt)
         }
     }
 }
@@ -109,6 +103,7 @@ struct StudySession: Identifiable, Codable {
 final class StudyTrackingModel: ObservableObject {
     @Published private(set) var activeSession: StudySession?
     @Published private(set) var completedSessions: [StudySession] = []
+    @Published var selectedSubject: Subject?
 
     /// Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
     private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
@@ -134,7 +129,7 @@ final class StudyTrackingModel: ObservableObject {
     func pauseSession() {
         guard var session = activeSession, !session.isPaused else { return }
         let now = Date()
-        session.activeDuration += now.timeIntervalSince(session.lastResumedAt)
+        session.totalActiveDuration += now.timeIntervalSince(session.lastResumedAt)
         session.isPaused = true
         session.lastPausedAt = now
         activeSession = session
@@ -163,7 +158,7 @@ final class StudyTrackingModel: ObservableObject {
         let now = Date()
 
         if !session.isPaused {
-            session.activeDuration += now.timeIntervalSince(session.lastResumedAt)
+            session.totalActiveDuration += now.timeIntervalSince(session.lastResumedAt)
         }
 
         session.isPaused = false
@@ -193,17 +188,16 @@ final class StudyTrackingModel: ObservableObject {
         activeSession = nil
     }
 
-    /// Capture a focus slider reading over time for later trend analysis; safe to call during an active session only.
-    func logFocusIntensity(_ value: Double, at date: Date = Date()) {
-        guard var session = activeSession else { return }
-        session.focusSnapshots.append(FocusSnapshot(value: value, capturedAt: date))
-        activeSession = session
-    }
-
     /// Increment an interruption counter (e.g., notifications/away events); can be wired to external signals later.
     func addInterruption() {
         guard var session = activeSession else { return }
         session.interruptionCount += 1
         activeSession = session
+    }
+
+    /// Update the subject selection for the next session (only allowed when no session is active).
+    func updateSubjectSelection(_ subject: Subject?) {
+        guard activeSession == nil else { return }
+        selectedSubject = subject
     }
 }
