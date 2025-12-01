@@ -1,10 +1,14 @@
 import SwiftUI
 
-struct MainTabView: View {
-    @StateObject private var subjectStore = SubjectStore()
-    
+struct MainTabView: View {    
     var body: some View {
         TabView {
+            NavigationStack {
+                StudyTrackingView()
+            }
+            .tabItem {
+                Label("Debug", systemImage: "exclamationmark.triangle.fill")
+            }
             NavigationStack {
                 SocialView()
             }
@@ -36,6 +40,8 @@ struct MainTabView: View {
             
         }
     }
+    
+    
 }
 
 struct MainTabView_Previews: PreviewProvider {
