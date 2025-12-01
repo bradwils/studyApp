@@ -4,6 +4,12 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             NavigationStack {
+                StudyTrackingView()
+            }
+            .tabItem {
+                Label("Debug", systemImage: "exclamationmark.triangle.fill")
+            }
+            NavigationStack {
                 SocialView()
             }
             .tabItem {
@@ -34,6 +40,8 @@ struct MainTabView: View {
             
         }
     }
+    
+    
 }
 
 struct MainTabView_Previews: PreviewProvider {

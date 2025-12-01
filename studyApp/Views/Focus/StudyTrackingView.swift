@@ -19,6 +19,7 @@ struct StudyTrackingView: View {
     @StateObject private var subjectStore = SubjectStore()
     @State private var currentStudySessionInProgress: Bool = false
     
+    
 
 
     
@@ -81,7 +82,7 @@ struct StudyTrackingView: View {
             .padding(.bottom, 24)
         }
         .sheet(isPresented: $isLeaderboardPresented) {
-            leaderboardSheetView()
+            LeaderboardSheetView()
                 .padding(10)
                 .presentationDragIndicator(.visible)
                 .presentationBackgroundInteraction(.enabled)
@@ -564,16 +565,23 @@ struct FocusIntensitySlider: View {
     }
 }
 
-struct leaderboardSheetView: View {
-    var body: some View {
-        Text("Leaderboard Sheet")
-        
-        List {
-            Text("A")
-            Text("A")
-        }
-    }
+struct LeaderboardSheetView: View {
+    private let topSafeAreaSpacing: CGFloat = 56
 
+    var body: some View {
+        VStack(spacing: 0) {
+            Color.clear
+                .frame(height: topSafeAreaSpacing)
+
+            List {
+                Text("Leaderboard Sheet")
+                Text("A")
+                Text("A")
+            }
+            .listStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
 }
 
 
