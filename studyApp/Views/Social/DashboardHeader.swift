@@ -73,7 +73,6 @@ struct DashboardHeader: View {
 
                 } else {
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .glassEffect(in: .rect(cornerRadius: 28))
                         .padding(-15)
                         .frame(height: 50)
                 }

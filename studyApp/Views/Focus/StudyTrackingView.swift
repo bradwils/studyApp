@@ -58,10 +58,11 @@ struct StudyTrackingView: View {
                 connectionRow
                 pauseStopRow
                 
-                focusSliderSection
+                focusSliderSection //complex and fucked
                 
-                nowPlayingRow
+                horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                    //.check if above modifier is needed or not
 
 
 
@@ -81,21 +82,17 @@ struct StudyTrackingView: View {
             .padding(.top, 32)
             .padding(.bottom, 24)
         }
-        .sheet(isPresented: $isLeaderboardPresented) {
-            LeaderboardSheetView()
-                .padding(10)
-                .presentationDragIndicator(.visible)
-                .presentationBackgroundInteraction(.enabled)
-                .presentationDetents([.height(50), .fraction(0.3), .fraction(0.9)])
-                
-        }
-        .onAppear {
-            currentStudySessionInProgress = studyTrackingModel.activeSession != nil
-            if studyTrackingModel.selectedSubject == nil,
-               let firstSubject = subjectStore.subjects.first {
-                studyTrackingModel.updateSubjectSelection(firstSubject)
-            }
-        }
+        
+//        .sheet(isPresented: $isLeaderboardPresented) {
+//            LeaderboardSheetView()
+//                .padding(10)
+//                .presentationDragIndicator(.visible)
+//                .presentationBackgroundInteraction(.enabled)
+//                .presentationDetents([.height(50), .fraction(0.3), .fraction(0.9)])
+//                
+//            
+//            
+//        }
         .onChange(of: subjectStore.subjects) { old, new in
             if studyTrackingModel.selectedSubject == nil, let first = new.first {
                 studyTrackingModel.updateSubjectSelection(first)
@@ -197,7 +194,8 @@ struct StudyTrackingView: View {
     
 
     private var pauseStopRow: some View {
-        HStack(alignment: .center, spacing: 16) {
+        ZStack {
+            // "Pause at" text: fades in and slides from left when paused
             VStack(spacing: 4) {
                 Text("Pause at")
                     .font(.caption)
@@ -205,28 +203,13 @@ struct StudyTrackingView: View {
 
                 Text("00:12:34")
                     .font(.headline.monospacedDigit())
-            }
-//            .frame(alignment: .trailing)
+            } //                        t : f
+            //                    hidden : showing
+            .opacity(timerInProgress ? 0 : 1)
+            .offset(x: timerInProgress ? 50 : -80)
+            .animation(.easeInOut(duration: 0.3), value: timerInProgress)
 
-
-            // Spacer()
-
-            //IMAGE HEREEEE
-
-            Image(systemName: "play.circle")
-                .foregroundColor(timerInProgress ? Color(.black) : Color(.gray))
-                .opacity(timerInProgress ? 1 : 0.3)
-
-
-
-            
-            .font(.system(size: 30))
-            .foregroundColor(.primary)
-//            .scaleEffect(timerInProgress ? 1.0 : 0.6)
-            .animation(.spring(response: 0.5, dampingFraction: 0.7), value: timerInProgress)
-                
-            
-
+            // Button: centered when running, slides right when paused
             Button {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
                     timerInProgress.toggle()
@@ -244,17 +227,14 @@ struct StudyTrackingView: View {
                 .font(.headline)
                 .padding(.horizontal, 32)
                 .padding(.vertical, 12)
-                .frame(maxWidth: 180)
+                .frame(maxWidth: 150)
                 .background(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .fill(Color.white.opacity(0.18))
                 )
             }
-        
-//            .frame(alignment: .leading)
-
-            
-            
+            .offset(x: timerInProgress ? 0 : 80)
+            .animation(.easeInOut(duration: 0.3), value: timerInProgress)
         }
         .padding(.top, 4)
 
@@ -284,54 +264,19 @@ struct StudyTrackingView: View {
             )
     }
 
-    private var nowPlayingRow: some View {
-        VStack(spacing: 0) {
-            Divider().background(Color.white.opacity(0.4))
+    private var horizontalContentScrollRow: some View {
+        TabView {
+            MediaContentTabView()
+            
+            LeaderboardSheetView()
+                .padding(.horizontal)
 
-            HStack(spacing: 16) {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.white.opacity(0.2))
-                    .aspectRatio(1.0, contentMode: .fill)
-                    .frame(maxWidth: 200, maxHeight: 200)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Now playing")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-
-                    Text("Lo-fi focus mix")
-                        .font(.subheadline.weight(.semibold))
-
-                    Text("Artist name")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                }
-
-                Spacer()
-
-                // circular song progress
-                ZStack {
-                    Circle()
-                        .stroke(Color.white.opacity(0.25), lineWidth: 4)
-
-                    Circle()
-                        .trim(from: 0, to: 0.35)
-                        .stroke(
-                            Color.white.opacity(0.9),
-                            style: StrokeStyle(lineWidth: 4, lineCap: .round)
-                        )
-                        .rotationEffect(.degrees(-90))
-
-                    Image(systemName: "play.fill")
-                        .font(.system(size: 12, weight: .bold))
-                }
-                .frame(width: 34, height: 34)
-            }
-            .padding(.vertical, 12)
-
-            Divider().background(Color.white.opacity(0.4))
-                .frame(maxHeight: .infinity, alignment: .bottom)
+            
         }
+        .tabViewStyle(.page(indexDisplayMode: .always))
+
+        
+        
     }
 
 }
@@ -585,6 +530,70 @@ struct LeaderboardSheetView: View {
 }
 
 
+struct MediaContentTabView: View {
+    var body: some View {
+        HStack {
+            //element one
+            
+            
+            VStack(spacing: 0) {
+                HStack(spacing: 16) {
+                    //cover art, TBD
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.white.opacity(0.2))
+                        .aspectRatio(1.0, contentMode: .fill)
+                        .frame(maxWidth: 120, maxHeight: 120) //iphone size
+                    //ipad sixe tbd
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Now playing")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        Text("Lo-fi focus mix")
+                            .font(.subheadline.weight(.semibold))
+                        
+                        Text("Artist name")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    // circular song progress
+                    ZStack {
+                        Circle()
+                            .stroke(Color.white.opacity(0.25), lineWidth: 4)
+                        
+                        Circle()
+                            .trim(from: 0, to: 0.35)
+                            .stroke(
+                                Color.white.opacity(0.9),
+                                style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                            )
+                            .rotationEffect(.degrees(-90))
+                        
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                    .frame(width: 34, height: 34)
+                }
+                .padding(.vertical, 12)
+                
+            }
+            .frame(maxHeight: .infinity, alignment: .center)
+            
+            //element two
+            
+            
+            
+            
+            
+        }
+        .padding(.horizontal)    }
+}
+
+
 struct ActiveSubjectList: View {
     @ObservedObject var studyTrackingModel: StudyTrackingModel
     var subjects: [Subject]
@@ -643,3 +652,4 @@ struct ActiveSubjectList: View {
 }
 
 // MARK: - Mock Leaderboard Sheet
+
