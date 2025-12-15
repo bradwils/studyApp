@@ -2,3 +2,4 @@
 studyAppUITests/
 *.backup
 .DS_Store
+*.xcuserstate
