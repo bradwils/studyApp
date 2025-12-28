@@ -5,7 +5,7 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             NavigationStack {
-                StudyTrackingView()
+                PureFocusView()
             }
             .tabItem {
                 Label("Debug", systemImage: "exclamationmark.triangle.fill")
