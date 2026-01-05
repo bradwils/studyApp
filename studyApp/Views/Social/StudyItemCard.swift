@@ -5,7 +5,7 @@ import SwiftUI
 
 /// Compact summary row for a study member.
 struct StudyItemCard: View {
-    var item: ListItem
+    var item: SocialFeedItem
 
     var body: some View {
         HStack(alignment: .center, spacing: 6) {
@@ -60,3 +60,4 @@ struct StudyItemCard: View {
         .shadow(color: Color.black.opacity(0.05), radius: 12, x: 0, y: 8)
     }
 }
+

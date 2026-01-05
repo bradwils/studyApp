@@ -1,11 +1,11 @@
-//  SocialFeed.swift
+//  ListItem.swift
 //  studyApp
 //
-//  Models for the social feed feature.
+//  Model for social feed list items.
 
 import Foundation
 
-struct SocialFeedItem: Identifiable {
+struct ListItem: Identifiable {
     let id = UUID()
     var name: String
     var subject: String

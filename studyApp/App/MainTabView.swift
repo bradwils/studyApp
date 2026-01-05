@@ -5,7 +5,7 @@ struct MainTabView: View {
     var body: some View {
         TabView {
             NavigationStack {
-                PureFocusView()
+                SocialView()
             }
             .tabItem {
                 Label("Debug", systemImage: "exclamationmark.triangle.fill")
@@ -39,6 +39,9 @@ struct MainTabView: View {
             }
             
             
+        }
+        .tabViewSidebarBottomBar {
+            SocialView()
         }
 
     }
