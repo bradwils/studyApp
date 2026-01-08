@@ -83,7 +83,8 @@ struct StudyTrackingView: View {
         }
         .overlay(alignment: .center) {
             focusGoalTimer
-                .padding(.horizontal, 12)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .allowsHitTesting(false)
         }
         
 //        .sheet(isPresented: $isLeaderboardPresented) {
