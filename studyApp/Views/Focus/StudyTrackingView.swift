@@ -57,7 +57,6 @@ struct StudyTrackingView: View {
                 MainTimerElement
                 connectionRow
                 pauseStopRow
-                focusGoalTimer
                 focusSliderSection // complex and requires refactoring
                 
                 horizontalContentScrollRow
@@ -81,6 +80,10 @@ struct StudyTrackingView: View {
             .padding(.horizontal, 24)
             .padding(.top, 32)
             .padding(.bottom, 24)
+        }
+        .overlay(alignment: .center) {
+            focusGoalTimer
+                .padding(.horizontal, 12)
         }
         
 //        .sheet(isPresented: $isLeaderboardPresented) {
