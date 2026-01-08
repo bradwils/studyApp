@@ -14,6 +14,12 @@ class PureFocusViewModel: ObservableObject {
     // updates any Views observing this model when it changes
     @Published var showDragger: Bool = true
     
+    @Published var currentDetent: PresentationDetent = .fraction(0.1) {
+        didSet {
+            updateDraggerVisibility(for: currentDetent)
+        }
+    }
+    
     // Called whenever the sheet's detent changes
     // This demonstrates one-way flow: View notifies Model of changes
     // Model updates its @Published property, which triggers View updates
