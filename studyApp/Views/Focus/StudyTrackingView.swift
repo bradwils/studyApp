@@ -54,13 +54,12 @@ struct StudyTrackingView: View {
             VStack(spacing: 24) {
                 headerRow
                 timeSummaryRow
-                 MainTimerElement
-                 connectionRow
-                 pauseStopRow
+                MainTimerElement
+                connectionRow
+                pauseStopRow
                 focusGoalTimer
-                 
-                 focusSliderSection //complex and fucked
-                 
+                focusSliderSection //complex and fucked
+                
                 horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     //.check if above modifier is needed or not
