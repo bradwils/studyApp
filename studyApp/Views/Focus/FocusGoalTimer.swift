@@ -16,7 +16,7 @@ struct FocusGoalTimer: View {
     @State private var progress: CGFloat = 0
     @State private var remainingTime: TimeInterval = 10
     
-    private let ticker = Timer.publish(every: 0.05, on: .main, in: .common).autoconnect()
+    private let ticker = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -61,7 +61,7 @@ struct FocusGoalTimer: View {
             if elapsed >= duration {
                 isRunning = false
                 startDate = nil
-                progress = 0
+                progress = 1
                 remainingTime = 0
             }
         }

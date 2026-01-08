@@ -58,7 +58,7 @@ struct StudyTrackingView: View {
                 connectionRow
                 pauseStopRow
                 focusGoalTimer
-                focusSliderSection //complex and fucked
+                focusSliderSection // complex and requires refactoring
                 
                 horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
