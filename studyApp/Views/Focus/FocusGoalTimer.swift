@@ -60,6 +60,9 @@ struct FocusGoalTimer: View {
             
             if elapsed >= duration {
                 isRunning = false
+                startDate = nil
+                progress = 0
+                remainingTime = 0
             }
         }
     }
@@ -153,7 +156,6 @@ private struct ScreenWrapShape: Shape {
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
         return path
     }
