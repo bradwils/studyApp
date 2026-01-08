@@ -28,11 +28,11 @@ struct FocusGoalTimer: View {
             
             timerCanvas
             
-            Button(action: startTimer) {
+            Button(action: toggleTimer) {
                 HStack(spacing: 8) {
                     Image(systemName: isRunning ? "stop.circle.fill" : "play.circle.fill")
                         .font(.headline)
-                    Text(isRunning ? "Running…" : "Start 10s goal")
+                    Text(isRunning ? "Stop goal" : "Start 10s goal")
                         .fontWeight(.semibold)
                 }
                 .frame(maxWidth: .infinity)
@@ -133,6 +133,15 @@ struct FocusGoalTimer: View {
         isRunning = true
     }
     
+    private func toggleTimer() {
+        if isRunning {
+            isRunning = false
+            startDate = nil
+        } else {
+            startTimer()
+        }
+    }
+    
     private func timeString(for interval: TimeInterval) -> String {
         let clamped = max(interval, 0)
         return String(format: "00:%02d", Int(ceil(clamped)))
@@ -147,6 +156,8 @@ private struct ScreenWrapShape: Shape {
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
         path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
         return path
     }
