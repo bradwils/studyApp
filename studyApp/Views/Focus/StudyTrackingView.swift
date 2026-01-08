@@ -81,11 +81,6 @@ struct StudyTrackingView: View {
             .padding(.top, 32)
             .padding(.bottom, 24)
         }
-        .overlay(alignment: .center) {
-            focusGoalTimer
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .allowsHitTesting(false)
-        }
         
 //        .sheet(isPresented: $isLeaderboardPresented) {
 //            LeaderboardSheetView()

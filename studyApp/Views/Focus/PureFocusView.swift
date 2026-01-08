@@ -86,7 +86,11 @@ struct PureFocusView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 24)
 
-
+            
+        }
+        .overlay(alignment: .center) {
+            FocusGoalTimer()
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         }
         .toolbar(.hidden, for: .tabBar) //hide specifically the tabBar within this view
         .foregroundColor(Color.white)
@@ -200,4 +204,3 @@ struct PureFocusView: View {
 #Preview {
     PureFocusView()
 }
-
