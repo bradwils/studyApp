@@ -16,7 +16,8 @@ struct FocusGoalTimer: View {
     @State private var progress: CGFloat = 0
     @State private var remainingTime: TimeInterval = 10
     
-    private let ticker = Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()
+    private let ticker = Timer.publish(every: 0.5, on: .main, in: .common)
+    @State private var tickerConnection: Cancellable?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -49,6 +50,20 @@ struct FocusGoalTimer: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color.white.opacity(0.08))
         )
+        .onAppear {
+            tickerConnection = ticker.connect()
+            tickerConnection?.cancel()
+        }
+        .onDisappear {
+            tickerConnection?.cancel()
+        }
+        .onChange(of: isRunning) { running in
+            if running {
+                tickerConnection = ticker.connect()
+            } else {
+                tickerConnection?.cancel()
+            }
+        }
         .onReceive(ticker) { date in
             guard isRunning, let startDate else { return }
             
@@ -156,7 +171,6 @@ private struct ScreenWrapShape: Shape {
         path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY))
         path.addLine(to: CGPoint(x: rect.midX, y: rect.minY))
         return path
     }
