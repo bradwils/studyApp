@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 /// ViewModel powering the Social feed.
 /// Holds the feed items and dashboard summary so the view stays declarative.

@@ -61,7 +61,7 @@ struct PureFocusSheetContent: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .presentationDragIndicator(viewModel.showDragger ? .visible : .hidden)
-        .presentationDetents(detents, selection: Binding(
+        .presentationDetents([ .fraction(0.1), .fraction(0.35), .fraction(0.6)], selection: Binding(
             get: { viewModel.currentDetent },
             set: { newDetent in
                 viewModel.currentDetent = newDetent
