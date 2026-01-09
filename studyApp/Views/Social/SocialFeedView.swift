@@ -1,30 +1,8 @@
 import SwiftUI
 
 struct SocialView: View {
-    @State private var items: [SocialFeedItem] = [
-        SocialFeedItem(name: "A", subject: "Math", subjectCode: "MATH", isLocked: false, timer: "00:10", photo: "person.crop.square", dailyTotalTime: "4:00"),
-        
-        SocialFeedItem(name: "Bob", subject: "Physics", subjectCode: "PHYS", isLocked: true, timer: "00:20", photo: "person.crop.square.fill", dailyTotalTime: "5:00"),
-        
-        SocialFeedItem(name: "Carol", subject: "Chemistry", subjectCode: "CHEM", isLocked: false, timer: "00:30", photo: "person.crop.square", dailyTotalTime: "6:00"),
-        
-        SocialFeedItem(name: "Dave", subject: "Biology", subjectCode: "BIO", isLocked: true, timer: "00:40", photo: "person.crop.square.fill", dailyTotalTime: "7:00"),
-        
-        SocialFeedItem(name: "Earl", subject: "English", subjectCode: "ENG", isLocked: true, timer: "00:50", photo: "person.crop.square.fill", dailyTotalTime: "8:00"),
-        
-        SocialFeedItem(name: "A", subject: "Math", subjectCode: "MATH", isLocked: false, timer: "00:10", photo: "person.crop.square", dailyTotalTime: "4:00"),
-        
-        SocialFeedItem(name: "Anthony", subject: "Math", subjectCode: "MATH", isLocked: false, timer: "00:10", photo: "person.crop.square", dailyTotalTime: "4:00")
-
-        
-    ]
-
-    // Add state for current study session
-    @State private var currentSessionTime = "00:00"
-    @State private var currentSubject = "Math"
-    @State private var streakCount = 5
-    @State private var totalDailyTime = "02:34"
-    
+    /// Dedicated ViewModel keeps the feed data and summary in one place.
+    @StateObject private var viewModel = SocialFeedViewModel()
     @Environment(\.colorScheme) var colorScheme
     
     private var backgroundGradient: some View {
@@ -78,15 +56,15 @@ struct SocialView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     DashboardHeader(
-                        currentSessionTime: currentSessionTime,
-                        currentSubject: currentSubject,
-                        streakCount: streakCount,
-                        totalDailyTime: totalDailyTime
+                        currentSessionTime: viewModel.currentSessionTime,
+                        currentSubject: viewModel.currentSubject,
+                        streakCount: viewModel.streakCount,
+                        totalDailyTime: viewModel.totalDailyTime
                     )
                     .padding(.horizontal, 10)
 
                     LazyVStack(spacing: 5) {
-                        ForEach(items) { item in
+                        ForEach(viewModel.items) { item in
                             NavigationLink {
                                 StudyMemberDetailView(memberName: item.name)
                             } label: {
