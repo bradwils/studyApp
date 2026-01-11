@@ -24,7 +24,7 @@ struct FocusIntensitySlider: View {
     
     @Namespace private var namespace
 
-    
+    @State private var navigateToPureFocus = false
     
     @Binding var value: Double
     var range: ClosedRange<Double>
@@ -50,7 +50,7 @@ struct FocusIntensitySlider: View {
     var body: some View {
         ZStack(alignment: .leading) {
             dottedLineFiller
-
+            
             GeometryReader { geo in
                 // Track width excludes the knob width so the thumb stays inside the slider bounds.
                 let currentTrackWidth = max(geo.size.width - sliderDraggableElementWidth, 0)
@@ -82,14 +82,15 @@ struct FocusIntensitySlider: View {
                     .onEnded { _ in
                         dragStartTouchOffset = nil
                         if value > 90 {
-                            value = 0
+                            navigateToPureFocus = true
+                            
                         } else {
                             withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.6, blendDuration: 0)) {
                                 value = 0
                             }
                         }
                     }
-
+                
                 ZStack(alignment: .leading) {
                     Capsule() //ending capsule outline
                         .glassEffect()
@@ -110,7 +111,7 @@ struct FocusIntensitySlider: View {
                         .offset(x: currentTrackWidth)
                         .opacity(0.4)
                         .foregroundColor(.secondary)
-
+                    
                     Capsule()
                         .fill(
                             LinearGradient(
@@ -120,7 +121,7 @@ struct FocusIntensitySlider: View {
                             )
                         )
                         .frame(width: knobTotalOffset + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-
+                    
                     Capsule()
                         .glassEffect()
                         .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
@@ -148,9 +149,17 @@ struct FocusIntensitySlider: View {
                 }
             }
         }
-        .frame(height: sliderDraggableElementHeight)
+        //MIGHT BE MISSING THIS HERE:         .frame(height: sliderDraggableElementHeight)
+        //think it's offset as of 
+
+        .navigationDestination(isPresented: $navigateToPureFocus) {
+            PureFocusView()
+        }
     }
+
+        
 }
+
 
 #Preview {
     FocusIntensitySlider(

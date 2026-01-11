@@ -1,4 +1,3 @@
-//
 //  PureFocusView.swift
 //  studyApp
 //
@@ -8,88 +7,41 @@
 import SwiftUI
 
 //need to use white UI elements exclusively.
-
-
 struct PureFocusView: View {
     
     // MARK: - State Properties
     
-    @State private var sheetActive: Bool = true
-
-    
-    // MARK: - ViewModel
-    
-    // @StateObject creates and owns the model instance
-    // Using StateObject ensures the model persists during view redraws
-    // This demonstrates proper ownership: the View owns the Model
-    @StateObject private var viewModel = PureFocusViewModel() //establish the viewModel
-
-    // IDs used for programmatic scrolling inside the ScrollViewReader.
-    // Use constants so it's easy to change or search for the target views.
-    private enum SheetIDs {
-        static let sheetTopInfo = "sheetTopInfo"
-        static let hRow = "hRow"
-    }
-
-    // Helper: centralise the scrolling logic so it's easier to read and modify.
-    // - proxy: the ScrollViewProxy provided by ScrollViewReader
-    // - detent: the new selected PresentationDetent
-
+    @StateObject private var viewModel = PureFocusViewModel()
 
     var body: some View {
-        ZStack {
-            backgroundGradient //overlay the gradient on the base before other elements
+        ZStack(alignment: .bottom) {
+            backgroundGradient
             
             VStack() {
-                
-                
                 topScreenCode
                 Spacer()
                     .frame(maxHeight: 150)
                 
-                Text("Last break: 00:52") //break
+                Text("Last break: 00:52")
                 Text("00:00:00")
                     .bold()
                     .font(.system(size: 70))
-
                 
                 Spacer()
-                
-                
-                
-
-                
-
-                
-                
-
-                
-
-                
-                
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 24)
-
             
             ContainerRelativeShape()
-                            .inset(by: 1) // Inset slightly so the border is visible
-                            .stroke(Color.blue, lineWidth: 10)
-                            .ignoresSafeArea()
+                .inset(by: 1)
+                .stroke(Color.blue, lineWidth: 10)
+                .ignoresSafeArea()
 
+            CustomBottomSheet()
         }
-        .toolbar(.hidden, for: .tabBar) //hide specifically the tabBar within this view
+        .toolbar(.hidden, for: .tabBar)
         .foregroundColor(Color.white)
-
-        .sheet(isPresented: $sheetActive) {
-            
-            PureFocusSheetContent()
-
-        }
-
-        
-
-
+        .navigationBarBackButtonHidden(false)
     }
     
     
@@ -137,3 +89,4 @@ struct PureFocusView: View {
 #Preview {
     PureFocusView()
 }
+    
