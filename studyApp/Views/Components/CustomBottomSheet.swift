@@ -7,138 +7,212 @@
 
 import SwiftUI
 
+/// A customizable bottom sheet component with drag gesture support and momentum-based animations.
+/// The sheet can be dragged to resize and will animate smoothly when released based on gesture velocity.
 struct CustomBottomSheet: View {
     
-    @State var predictedEndLocation: CGFloat = 0
+    // MARK: - Constants
     
-    @State var newHeight: CGFloat = 0
-
-    @State private var height: CGFloat = 120
+    /// Minimum height the sheet can collapse to
+    private let minimumHeight: CGFloat = 120
     
-    @State var translation: CGFloat = 0 //diff between starting point & current point
+    /// Threshold for considering a drag gesture as having significant momentum
+    private let momentumThreshold: CGFloat = 40
     
-    @State var newH: CGFloat = 0;
+    /// Momentum dampening factor (lower = more dampening)
+    private let momentumDampening: CGFloat = 0.1
     
-    @State var oldH: CGFloat = 0;
+    // MARK: - State Properties
     
+    /// Current height of the bottom sheet
+    @State private var sheetHeight: CGFloat = 120
+    
+    /// Height of the sheet before the current gesture began
+    @State private var previousHeight: CGFloat = 120
+    
+    /// Offset from the initial touch point to the sheet edge
+    @State private var touchOffset: CGFloat = 0
+    
+    /// Whether a drag gesture is currently active
+    @State private var isDragging = false
+    
+//    @State private var customDetents: [CGFloat] = [] //need to be computed, will be done
+    
+    // MARK: - Body
     
     var body: some View {
-        GeometryReader { geo in
-//            let fullyExpanded = geo.size.height * 0.85
-////            let semiExpanded = geo.size.height * 0.35
-//            let collapsed = geo.size.height * 0.2
-            // Capture geometry info needed inside gesture closures
-            let containerHeight = geo.size.height
+        GeometryReader { geometry in
+            let containerHeight = geometry.size.height
+            //based on containerHeight, assert detents which are mapped against predictions
+            let containerMinY = geometry.frame(in: .global).minY
             
-            let maxContainerHeight: CGFloat = 120;
-            
-            let containerMinY = geo.frame(in: .global).minY //does not ignore safe area
-            
-
-            // Inline gesture so we can convert predicted/global coordinates to local
-            let gesture = DragGesture()
-                    
-                .onChanged { value in
-                    
-                    //need to do grabLocation - oldH = offset, then add that to newH
-//                    offset = value.location.y - (containerHeight - oldH)
-                    //add offset to newH
-                    //be done
-                    
-                    
-                    
-                    translation = value.translation.height
-                    newH = oldH - translation
-//                    let clamped = min(max(newH, collapsed), fullyExpanded)
-                    // Convert predicted global Y into local container coordinates
-                    let predictedGlobalY = value.predictedEndLocation.y
-                    let predictedLocalY = predictedGlobalY - containerMinY
-                    // Keep an observable of the predicted local position for debugging/UI
-                    predictedEndLocation = min(max(predictedLocalY, 0), containerHeight)
-                    height = newH
+            sheetContent
+                .frame(width: geometry.size.width)
+                .frame(height: sheetHeight, alignment: .top)
+                .background(sheetBackground)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .ignoresSafeArea(edges: .bottom)
+                .gesture(
+                    createDragGesture(
+                        containerHeight: containerHeight,
+                        containerMinY: containerMinY
+                    )
+                )
+                .onAppear {
+                    sheetHeight = minimumHeight
+                    previousHeight = minimumHeight
                 }
-                .onEnded { value in
-                    // Convert predicted and current end points to local container coordinates
-                    let predictedGlobalY = value.predictedEndLocation.y 
-                    let predictedLocalY = predictedGlobalY - containerMinY
-                    let currentLocalY = value.location.y - containerMinY
-
-                    // Difference between predicted and actual end positions
-                    let diff = predictedLocalY - currentLocalY
-                    translation = diff // COULD BE CAUSING ISSUES?
-
-                    // If predicted motion is significant (>40pt) use predicted position, otherwise use actual
-                    var targetLocalY: CGFloat = oldH //default to old height if in doubt
-                    
-                    if (abs(diff) > 40) {
-                        var overmmentumAdjustedLocalY: CGFloat = 0;
-                        if (predictedLocalY > currentLocalY) { //ADJUST FOR OVERMOMENTUM TO BOTTOM OF SCREEN (SCREENMAX)
-                            overmmentumAdjustedLocalY = predictedLocalY - diff * 0.5 //adjust for momentum
-                            targetLocalY = min(overmmentumAdjustedLocalY, containerHeight - 120) //minimum height of 120
-                        } else { //adjust for overmomentum to top of scren (screenmin)
-                            overmmentumAdjustedLocalY = predictedLocalY + diff * 0.5 //adjust for momentum
-                            targetLocalY = max(overmmentumAdjustedLocalY, maxContainerHeight) //minimum height of 0 for now
-                        }
-                        
-                        
-                        
-                    } else {
-                        targetLocalY = currentLocalY
+        }
+        .edgesIgnoringSafeArea(.bottom)
+    }
+    
+    // MARK: - View Components
+    
+    /// The main content of the bottom sheet
+    private var sheetContent: some View {
+        VStack(spacing: 0) {
+            dragIndicator
+            
+            ScrollView {
+                VStack(spacing: 16) {
+                    ForEach(0..<40) { index in
+                        Text("Item \(index)")
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.white)
+                            .cornerRadius(12)
                     }
-                    //if so,
-
-                    // Convert local Y (distance from top) into sheet height (distance from bottom)
-                    var targetHeight = containerHeight - targetLocalY
-                    // Clamp into allowed range
-
-                    withAnimation(.interactiveSpring()) { //tweak this spring, make it custom!
-                        height = targetHeight
-                    }
-                    oldH = height
-
-                }
-
-            VStack(spacing: 0) {
-                Capsule()
-                    .fill(Color.secondary)
-                    .frame(width: 40, height: 6)
-                    .padding(.top, 8)
-                    .padding(.bottom, 12)
-
-                ScrollView {
-                    VStack(spacing: 16) {
-                        Text("predictedEndLocation: \(predictedEndLocation)")
-                        Text("viewHeight: \(geo.size.height)")
-                        Text("translation: \(translation)")
-                        Text("newH: \(newH)")
-                        Text("oldH: \(oldH)")
-                        ForEach(0..<40) { i in
-                            Text("Item \(i)")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.white)
-                                .cornerRadius(12)
-                        }
-                    }
-                    .padding()
                 }
                 .padding()
             }
-            .frame(width: geo.size.width)
-            .frame(height: height, alignment: .bottom)
-            .background(
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(Color.gray)
-                    .shadow(radius: 10)
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-            .ignoresSafeArea(edges: .bottom)
-            .gesture(gesture)
-//            .animation(.interactiveSpring(), value: height)
-            .onAppear {
-                height = 120
-                oldH = 120
-            }
+            .padding()
         }
+        .ignoresSafeArea(edges: .bottom)
+    }
+    
+    /// The capsule-shaped drag indicator at the top of the sheet
+    private var dragIndicator: some View {
+        Capsule()
+            .fill(Color.secondary)
+            .frame(width: 40, height: 6)
+            .padding(.top, 8)
+            .padding(.bottom, 12)
+    }
+    
+    /// Background styling for the sheet
+    private var sheetBackground: some View {
+        RoundedRectangle(cornerRadius: 24)
+            .fill(Color.gray)
+            .shadow(radius: 10)
+    }
+    
+    // MARK: - Gesture Handling
+    
+    /// Creates the drag gesture for resizing the sheet
+    /// - Parameters:
+    ///   - containerHeight: Total height of the container
+    ///   - containerMinY: The minimum Y position of the container in global coordinates
+    /// - Returns: A configured DragGesture
+    private func createDragGesture(containerHeight: CGFloat, containerMinY: CGFloat) -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                handleDragChanged(
+                    value: value,
+                    containerHeight: containerHeight,
+                    containerMinY: containerMinY
+                )
+            }
+            .onEnded { value in
+                handleDragEnded(
+                    value: value,
+                    containerHeight: containerHeight,
+                    containerMinY: containerMinY
+                )
+            }
+    }
+    
+    /// Handles updates during an active drag gesture
+    private func handleDragChanged(
+        value: DragGesture.Value,
+        containerHeight: CGFloat,
+        containerMinY: CGFloat
+    ) {
+        // Calculate touch offset on first drag event
+        if !isDragging {
+            touchOffset = value.location.y - (containerHeight - previousHeight)
+            isDragging = true
+        }
+        
+        // Calculate new height based on drag translation
+        let translationHeight = value.translation.height
+        let calculatedHeight = previousHeight - translationHeight
+        
+        sheetHeight = calculatedHeight - touchOffset
+    }
+    
+    /// Handles the end of a drag gesture, applying momentum-based positioning
+    private func handleDragEnded(
+        value: DragGesture.Value,
+        containerHeight: CGFloat,
+        containerMinY: CGFloat
+    ) {
+        isDragging = false
+        
+        // Convert coordinates to local container space
+        let predictedLocalY = value.predictedEndLocation.y - containerMinY
+        let currentLocalY = value.location.y - containerMinY
+        let momentumDifference = predictedLocalY - currentLocalY
+        
+        var targetLocalY = previousHeight
+        
+        // Apply momentum-based positioning if gesture has significant velocity
+        if abs(momentumDifference) > momentumThreshold {
+            targetLocalY = calculateMomentumAdjustedPosition(
+                predictedLocalY: predictedLocalY,
+                currentLocalY: currentLocalY,
+                momentumDifference: momentumDifference,
+                containerHeight: containerHeight
+            )
+            
+            withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {
+                sheetHeight = containerHeight - targetLocalY
+            }
+        } else {
+            // Stationary release - use current position
+            targetLocalY = currentLocalY
+        }
+        
+        previousHeight = containerHeight - targetLocalY
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// Calculates the final position with momentum dampening applied
+    /// - Parameters:
+    ///   - predictedLocalY: The predicted end position based on gesture velocity
+    ///   - currentLocalY: The current touch position in local coordinates
+    ///   - momentumDifference: The difference between predicted and current positions
+    ///   - containerHeight: Total height of the container
+    /// - Returns: The adjusted target Y position
+    private func calculateMomentumAdjustedPosition(
+        predictedLocalY: CGFloat,
+        currentLocalY: CGFloat,
+        momentumDifference: CGFloat,
+        containerHeight: CGFloat
+    ) -> CGFloat {
+        let adjustedPrediction: CGFloat
+        let clampedPosition: CGFloat
+        
+        if predictedLocalY > currentLocalY {
+            // Dragging downward - dampen momentum and clamp to minimum sheet height
+            adjustedPrediction = predictedLocalY - momentumDifference * momentumDampening
+            clampedPosition = min(adjustedPrediction, containerHeight - minimumHeight)
+        } else {
+            // Dragging upward - dampen momentum and clamp to top of container
+            adjustedPrediction = predictedLocalY + momentumDifference * momentumDampening
+            clampedPosition = max(adjustedPrediction, 0)
+        }
+        
+        return clampedPosition
     }
 }
