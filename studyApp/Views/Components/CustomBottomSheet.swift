@@ -22,6 +22,8 @@ struct CustomBottomSheet: View {
     /// Momentum dampening factor (lower = more dampening)
     private let momentumDampening: CGFloat = 0.1
     
+    let customDetents: [CGFloat] = [0.1, 0.4, 0.8]
+    
     // MARK: - State Properties
     
     /// Current height of the bottom sheet
@@ -36,21 +38,23 @@ struct CustomBottomSheet: View {
     /// Whether a drag gesture is currently active
     @State private var isDragging = false
     
-//    @State private var customDetents: [CGFloat] = [] //need to be computed, will be done
+    /// Measured height of the container provided by GeometryReader
+    @State private var containerHeight: CGFloat = 0
+    
+    @State var adjustedDetentSizes: [CGFloat] = []  //to be calculated whenever geometryReader changes
+    
+    
+    //    @State private var customDetents: [CGFloat] = [] //need to be computed, will be done
     
     // MARK: - Body
     
     var body: some View {
         GeometryReader { geometry in
-            let containerHeight = geometry.size.height
+            let containerHeight = geometry.size.height  //refactor to containerHeight, as it only ignores the bottom safe zone still.3e
             //based on containerHeight, assert detents which are mapped against predictions
-            let containerMinY = geometry.frame(in: .global).minY
             
             sheetContent
-                .frame(width: geometry.size.width)
-                .frame(height: sheetHeight, alignment: .top)
                 .background(sheetBackground)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .ignoresSafeArea(edges: .bottom)
                 .gesture(
                     createDragGesture(
@@ -61,6 +65,10 @@ struct CustomBottomSheet: View {
                 .onAppear {
                     sheetHeight = minimumHeight
                     previousHeight = minimumHeight
+                    updateContainerMetrics(newHeight: containerHeight)
+                }
+                .onChange(of: containerHeight) { new in  //where the changed value of geometryHeight is newHeight
+                    updateContainerMetrics(newHeight: new)
                 }
         }
         .edgesIgnoringSafeArea(.bottom)
@@ -72,6 +80,8 @@ struct CustomBottomSheet: View {
     private var sheetContent: some View {
         VStack(spacing: 0) {
             dragIndicator
+            
+            debugContent
             
             ScrollView {
                 VStack(spacing: 16) {
@@ -88,6 +98,18 @@ struct CustomBottomSheet: View {
             .padding()
         }
         .ignoresSafeArea(edges: .bottom)
+    }
+    
+    private var debugContent: some View {
+        VStack {
+            ForEach(adjustedDetentSizes.indices, id: \.self) { index in
+                Text("Detent: \(Int(adjustedDetentSizes[index]))")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.black)
+                    .cornerRadius(12)
+            }
+        }
     }
     
     /// The capsule-shaped drag indicator at the top of the sheet
@@ -148,6 +170,8 @@ struct CustomBottomSheet: View {
         let calculatedHeight = previousHeight - translationHeight
         
         sheetHeight = calculatedHeight - touchOffset
+        
+        //update clamped value - todoq
     }
     
     /// Handles the end of a drag gesture, applying momentum-based positioning
@@ -163,10 +187,11 @@ struct CustomBottomSheet: View {
         let currentLocalY = value.location.y - containerMinY
         let momentumDifference = predictedLocalY - currentLocalY
         
+        var snappedHeight: CGFloat = 0
+        
         var targetLocalY = previousHeight
         
-        // Apply momentum-based positioning if gesture has significant velocity
-        if abs(momentumDifference) > momentumThreshold {
+        if abs(momentumDifference) > momentumThreshold {  // Apply momentum-based positioning if gesture has significant velocity)
             targetLocalY = calculateMomentumAdjustedPosition(
                 predictedLocalY: predictedLocalY,
                 currentLocalY: currentLocalY,
@@ -174,15 +199,43 @@ struct CustomBottomSheet: View {
                 containerHeight: containerHeight
             )
             
+            // Snap to the nearest detent
+            let targetHeight = containerHeight - targetLocalY
+            snappedHeight = findNearestDetent(
+                for: targetHeight, detents: adjustedDetentSizes, minHeight: minimumHeight,
+                maxHeight: containerHeight)
+            
+            targetLocalY = containerHeight - snappedHeight
+            
             withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {
-                sheetHeight = containerHeight - targetLocalY
+                sheetHeight = snappedHeight
             }
+            
         } else {
             // Stationary release - use current position
-            targetLocalY = currentLocalY
+            //check it's not out of bounds, if so move to nearest detent
+            
+            if sheetHeight < adjustedDetentSizes[0] {
+                snappedHeight = adjustedDetentSizes[0]  //make it snap to lowest detent
+            } else if sheetHeight > adjustedDetentSizes[adjustedDetentSizes.count - 1] {
+                //make it snap to highest detent
+                snappedHeight = adjustedDetentSizes[adjustedDetentSizes.count - 1]
+            }
+            
+            withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {
+                sheetHeight = snappedHeight
+                print(sheetHeight)
+            }
+            targetLocalY = sheetHeight  //saves the localY for reference on next drag
         }
         
         previousHeight = containerHeight - targetLocalY
+        
+        //MARK: see below, this was the given code. have a look.
+        // let rawHeight = containerHeight - targetLocalY
+        // let resolvedHeight = resolveDetent(for: rawHeight, containerHeight: containerHeight)
+        
+        // previousHeight = resolvedHeight
     }
     
     // MARK: - Helper Methods
@@ -215,4 +268,27 @@ struct CustomBottomSheet: View {
         
         return clampedPosition
     }
+    
+    private func updateContainerMetrics(newHeight: CGFloat) {
+        // Update detents based on new container height
+        adjustedDetentSizes = customDetents.map { $0 * newHeight }
+    }
+    
+    /// Finds the nearest detent height to the target height, clamped within min and max bounds.
+    /// - Parameters:
+    ///   - targetHeight: The desired height to snap to.
+    ///   - detents: Array of available detent heights.
+    ///   - minHeight: Minimum allowed height.
+    ///   - maxHeight: Maximum allowed height.
+    /// - Returns: The snapped height closest to the target.
+    private func findNearestDetent(
+        for targetHeight: CGFloat, detents: [CGFloat], minHeight: CGFloat, maxHeight: CGFloat
+    ) -> CGFloat {
+        // Find the detent with the smallest absolute difference to the target height
+        let nearestDetent =
+        detents.min(by: { abs($0 - targetHeight) < abs($1 - targetHeight) }) ?? targetHeight
+        // Clamp the result to ensure it's within valid bounds
+        return min(max(nearestDetent, minHeight), maxHeight)
+    }
+    
 }
