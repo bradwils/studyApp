@@ -150,7 +150,7 @@ struct FocusIntensitySlider: View {
             }
         }
         //MIGHT BE MISSING THIS HERE:         .frame(height: sliderDraggableElementHeight)
-        //think it's offset as of 
+        //think it's offset as of
 
         .navigationDestination(isPresented: $navigateToPureFocus) {
             PureFocusView()
