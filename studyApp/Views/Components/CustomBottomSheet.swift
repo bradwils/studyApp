@@ -17,13 +17,13 @@ struct CustomBottomSheet: View {
     private let minimumHeight: CGFloat = 120
     
     /// Threshold for considering a drag gesture as having significant momentum
-    private let momentumThreshold: CGFloat = 40
+    private let momentumThreshold: CGFloat = 0
     
     /// Momentum dampening factor (lower = more dampening)
     private let momentumDampening: CGFloat = 0.1
     
-    let customDetents: [CGFloat] = [0.1, 0.4, 0.8]
-    
+
+
     // MARK: - State Properties
     
     /// Current height of the bottom sheet
@@ -37,24 +37,57 @@ struct CustomBottomSheet: View {
     
     /// Whether a drag gesture is currently active
     @State private var isDragging = false
+        
+    // MARK: - Detent Configuration
+    // Detents are "snap points" where the sheet prefers to rest
+    // These are defined as RATIOS (0.0 to 1.0) of the container height
+    // Example: 0.1 = 10% of screen height, 0.7 = 70% of screen height
     
-    /// Measured height of the container provided by GeometryReader
-    @State private var containerHeight: CGFloat = 0
+    /// Detent snap points as ratios of container height
+    /// - 0.1 = Small peek (10% of screen)
+    /// - 0.3 = Medium size (30% of screen)  
+    /// - 0.7 = Large/expanded (70% of screen)
+    /// These ratios represent the SHEET HEIGHT, not Y position from top
+    private let detentRatios: [CGFloat] = [0.1, 0.3, 0.7]
     
-    @State var adjustedDetentSizes: [CGFloat] = []  //to be calculated whenever geometryReader changes
-    
-    
-    //    @State private var customDetents: [CGFloat] = [] //need to be computed, will be done
+    /// Converts detent ratios to absolute pixel heights for the current container
+    /// Example: If container is 800pt tall and ratio is 0.3, returns 240pt
+    /// - Parameter containerHeight: The total height of the container in points
+    /// - Returns: Array of absolute sheet heights in points
+    private func detentHeights(for containerHeight: CGFloat) -> [CGFloat] {
+        return detentRatios.map { ratio in
+            ratio * containerHeight  // Convert 0.0-1.0 ratio to actual pixel height
+        }
+    }
+
+
+
+
+
+
+
     
     // MARK: - Body
     
     var body: some View {
         GeometryReader { geometry in
-            let containerHeight = geometry.size.height  //refactor to containerHeight, as it only ignores the bottom safe zone still.3e
+            let containerHeight = geometry.size.height
+            
+            //set adjusted detents
+            
             //based on containerHeight, assert detents which are mapped against predictions
+            let containerMinY = geometry.frame(in: .global).minY
+            
+            var snappedHeight: CGFloat = 200; //used for when we want to snap the sheet to a specific detent.
+            
+            //calculate the wanted detent sizes. this is the set value given
+            
             
             sheetContent
+                .frame(width: geometry.size.width)
+                .frame(height: sheetHeight, alignment: .top)
                 .background(sheetBackground)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                 .ignoresSafeArea(edges: .bottom)
                 .gesture(
                     createDragGesture(
@@ -65,10 +98,10 @@ struct CustomBottomSheet: View {
                 .onAppear {
                     sheetHeight = minimumHeight
                     previousHeight = minimumHeight
-                    updateContainerMetrics(newHeight: containerHeight)
-                }
-                .onChange(of: containerHeight) { new in  //where the changed value of geometryHeight is newHeight
-                    updateContainerMetrics(newHeight: new)
+
+
+
+
                 }
         }
         .edgesIgnoringSafeArea(.bottom)
@@ -81,8 +114,8 @@ struct CustomBottomSheet: View {
         VStack(spacing: 0) {
             dragIndicator
             
-            debugContent
-            
+
+
             ScrollView {
                 VStack(spacing: 16) {
                     ForEach(0..<40) { index in
@@ -100,18 +133,18 @@ struct CustomBottomSheet: View {
         .ignoresSafeArea(edges: .bottom)
     }
     
-    private var debugContent: some View {
-        VStack {
-            ForEach(adjustedDetentSizes.indices, id: \.self) { index in
-                Text("Detent: \(Int(adjustedDetentSizes[index]))")
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.black)
-                    .cornerRadius(12)
-            }
-        }
-    }
-    
+
+
+
+
+
+
+
+
+
+
+
+
     /// The capsule-shaped drag indicator at the top of the sheet
     private var dragIndicator: some View {
         Capsule()
@@ -170,11 +203,17 @@ struct CustomBottomSheet: View {
         let calculatedHeight = previousHeight - translationHeight
         
         sheetHeight = calculatedHeight - touchOffset
-        
-        //update clamped value - todoq
+
+
     }
     
-    /// Handles the end of a drag gesture, applying momentum-based positioning
+    /// Handles the end of a drag gesture, applying momentum-based positioning and snapping to detents
+    /// 
+    /// SNAPPING LOGIC:
+    /// 1. If gesture has momentum (fast swipe), predict where it would land
+    /// 2. Find the nearest detent to that predicted position
+    /// 3. Animate to that detent
+    /// 4. If no momentum (slow release), just snap to nearest detent if out of bounds
     private func handleDragEnded(
         value: DragGesture.Value,
         containerHeight: CGFloat,
@@ -182,113 +221,187 @@ struct CustomBottomSheet: View {
     ) {
         isDragging = false
         
-        // Convert coordinates to local container space
-        let predictedLocalY = value.predictedEndLocation.y - containerMinY
-        let currentLocalY = value.location.y - containerMinY
-        let momentumDifference = predictedLocalY - currentLocalY
+        // STEP 1: Convert detent ratios (0.1, 0.3, 0.7) to absolute heights
+        // Example: container=800pt → detents=[80pt, 240pt, 560pt]
+        let detentSnapPoints = detentHeights(for: containerHeight)
         
-        var snappedHeight: CGFloat = 0
+        // STEP 2: Calculate gesture momentum
+        // We work in Y coordinates (from top of container)
+        // predictedLocalY = where iOS thinks the finger would end up based on velocity
+        // currentLocalY = where the finger actually is right now
+        let predictedEndY = value.predictedEndLocation.y - containerMinY  // Predicted Y position
+        let currentY = value.location.y - containerMinY                   // Current Y position
+        let momentum = predictedEndY - currentY                           // How much momentum (positive = downward)
         
-        var targetLocalY = previousHeight
+        // Start with current sheet height, we'll calculate the target snap point
+        var targetSheetHeight = sheetHeight
         
-        if abs(momentumDifference) > momentumThreshold {  // Apply momentum-based positioning if gesture has significant velocity)
-            targetLocalY = calculateMomentumAdjustedPosition(
-                predictedLocalY: predictedLocalY,
-                currentLocalY: currentLocalY,
-                momentumDifference: momentumDifference,
+        // STEP 3: Decide snapping behavior based on momentum
+        if abs(momentum) > momentumThreshold {
+            // === MOMENTUM PATH: Fast swipe detected ===
+            print("Fast swipe detected (momentum: \(momentum))")
+            
+            // Calculate where the sheet should end up based on momentum
+            // This dampens the momentum so it doesn't fly to extreme positions
+            let predictedSheetTopY = calculateMomentumAdjustedPosition(
+                predictedLocalY: predictedEndY,
+                currentLocalY: currentY,
+                momentumDifference: momentum,
                 containerHeight: containerHeight
             )
+            print("→ Momentum predicts sheet top at Y: \(predictedSheetTopY)")
             
-            // Snap to the nearest detent
-            let targetHeight = containerHeight - targetLocalY
-            snappedHeight = findNearestDetent(
-                for: targetHeight, detents: adjustedDetentSizes, minHeight: minimumHeight,
-                maxHeight: containerHeight)
+            // COORDINATE CONVERSION: Y position → Sheet height
+            // If sheet top is at Y=200 in a 800pt container, sheet height = 800 - 200 = 600pt
+            let predictedSheetHeight = containerHeight - predictedSheetTopY
+            print("→ Which means sheet height: \(predictedSheetHeight)")
             
-            targetLocalY = containerHeight - snappedHeight
-            
+            // Snap to nearest detent
+            // Example: if predicted height is 520pt and detents are [80, 240, 560],
+            // it will snap to 560pt (closest match)
+            targetSheetHeight = findNearestDetent(
+                for: predictedSheetHeight,
+                detents: detentSnapPoints,
+                minHeight: minimumHeight,
+                maxHeight: containerHeight
+            )
+            print("→ Snapping to nearest detent: \(targetSheetHeight)pt")
+
+            // Animate to the target detent
             withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {
-                sheetHeight = snappedHeight
+                sheetHeight = targetSheetHeight
             }
-            
+
         } else {
-            // Stationary release - use current position
-            //check it's not out of bounds, if so move to nearest detent
+            // === STATIONARY PATH: Slow drag/no momentum ===
+            print("Slow release, checking bounds...")
             
-            if sheetHeight < adjustedDetentSizes[0] {
-                snappedHeight = adjustedDetentSizes[0]  //make it snap to lowest detent
-            } else if sheetHeight > adjustedDetentSizes[adjustedDetentSizes.count - 1] {
-                //make it snap to highest detent
-                snappedHeight = adjustedDetentSizes[adjustedDetentSizes.count - 1]
-            }
+            // Only snap if the sheet is outside the valid detent range
+            // Example: detents=[80, 240, 560], if sheet is at 50pt (below 80), snap to 80
             
-            withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {
-                sheetHeight = snappedHeight
-                print(sheetHeight)
+            if sheetHeight < detentSnapPoints[0] {
+                // Sheet is too small (below minimum detent)
+                // Snap UP to minimum detent
+                print("→ Below minimum detent, snapping to \(detentSnapPoints[0])pt")
+                targetSheetHeight = detentSnapPoints[0]
+                withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {
+                    sheetHeight = targetSheetHeight
+                }
+                
+            } else if sheetHeight > detentSnapPoints[detentSnapPoints.count - 1] {
+                // Sheet is too large (above maximum detent)
+                // Snap DOWN to maximum detent
+                print("→ Above maximum detent, snapping to \(detentSnapPoints.last!)pt")
+                targetSheetHeight = detentSnapPoints[detentSnapPoints.count - 1]
+                withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {
+                    sheetHeight = targetSheetHeight
+                }
+                
+            } else {
+                // Sheet is within valid range [min, max], no snapping needed
+                // User can leave it at any height between detents
+                print("→ Within bounds, staying at \(sheetHeight)pt")
+                targetSheetHeight = sheetHeight
             }
-            targetLocalY = sheetHeight  //saves the localY for reference on next drag
         }
         
-        previousHeight = containerHeight - targetLocalY
-        
-        //MARK: see below, this was the given code. have a look.
-        // let rawHeight = containerHeight - targetLocalY
-        // let resolvedHeight = resolveDetent(for: rawHeight, containerHeight: containerHeight)
-        
-        // previousHeight = resolvedHeight
+        // Store the final sheet height for next gesture
+        previousHeight = sheetHeight
     }
     
     // MARK: - Helper Methods
     
-    /// Calculates the final position with momentum dampening applied
+    /// Calculates where the sheet should end up based on gesture momentum
+    ///
+    /// COORDINATE SYSTEM EXPLANATION:
+    /// - We work in Y coordinates measured from TOP of container
+    /// - Y=0 is the TOP of the screen
+    /// - Y=containerHeight is the BOTTOM of the screen
+    /// - The sheet's TOP edge position is what we calculate here
+    /// - Sheet height = containerHeight - sheetTopY
+    ///
+    /// MOMENTUM DAMPENING:
+    /// - iOS predicts where gesture would end (predictedLocalY)
+    /// - We dampen that by `momentumDampening` factor (default 0.1 = 10%)
+    /// - This prevents the sheet from flying to extreme positions
+    ///
     /// - Parameters:
-    ///   - predictedLocalY: The predicted end position based on gesture velocity
-    ///   - currentLocalY: The current touch position in local coordinates
-    ///   - momentumDifference: The difference between predicted and current positions
-    ///   - containerHeight: Total height of the container
-    /// - Returns: The adjusted target Y position
+    ///   - predictedLocalY: Where iOS predicts the finger would end (Y from top)
+    ///   - currentLocalY: Where the finger currently is (Y from top)
+    ///   - momentumDifference: predicted - current (positive = downward motion)
+    ///   - containerHeight: Total height of the container in points
+    /// - Returns: The adjusted Y position for the sheet's TOP edge
     private func calculateMomentumAdjustedPosition(
         predictedLocalY: CGFloat,
         currentLocalY: CGFloat,
         momentumDifference: CGFloat,
         containerHeight: CGFloat
     ) -> CGFloat {
-        let adjustedPrediction: CGFloat
-        let clampedPosition: CGFloat
+        let dampenedPrediction: CGFloat
+        let clampedSheetTopY: CGFloat
         
         if predictedLocalY > currentLocalY {
-            // Dragging downward - dampen momentum and clamp to minimum sheet height
-            adjustedPrediction = predictedLocalY - momentumDifference * momentumDampening
-            clampedPosition = min(adjustedPrediction, containerHeight - minimumHeight)
+            // === DRAGGING DOWNWARD (increasing Y) ===
+            // Sheet is collapsing/shrinking
+            // Dampen the momentum: reduce how far down it goes
+            dampenedPrediction = predictedLocalY - (momentumDifference * momentumDampening)
+            
+            // Clamp: don't let sheet top go below minimum sheet height
+            // If containerHeight=800 and minimumHeight=120, max Y for sheet top is 680
+            let maxAllowedY = containerHeight - minimumHeight
+            clampedSheetTopY = min(dampenedPrediction, maxAllowedY)
+            
+            print("  ↓ Downward swipe: predicted Y=\(predictedLocalY) → dampened=\(dampenedPrediction) → clamped=\(clampedSheetTopY)")
+            
         } else {
-            // Dragging upward - dampen momentum and clamp to top of container
-            adjustedPrediction = predictedLocalY + momentumDifference * momentumDampening
-            clampedPosition = max(adjustedPrediction, 0)
+            // === DRAGGING UPWARD (decreasing Y) ===
+            // Sheet is expanding/growing
+            // Dampen the momentum: reduce how far up it goes
+            // Note: momentumDifference is negative here, so we ADD it
+            dampenedPrediction = predictedLocalY + (momentumDifference * momentumDampening)
+            
+            // Clamp: don't let sheet top go above 0 (top of screen)
+            clampedSheetTopY = max(dampenedPrediction, 0)
+            
+            print("  ↑ Upward swipe: predicted Y=\(predictedLocalY) → dampened=\(dampenedPrediction) → clamped=\(clampedSheetTopY)")
         }
         
-        return clampedPosition
+        return clampedSheetTopY
     }
     
-    private func updateContainerMetrics(newHeight: CGFloat) {
-        // Update detents based on new container height
-        adjustedDetentSizes = customDetents.map { $0 * newHeight }
-    }
     
-    /// Finds the nearest detent height to the target height, clamped within min and max bounds.
+    /// Finds the nearest detent snap point to a target height
+    ///
+    /// SNAPPING ALGORITHM:
+    /// - Compares target height against all detent heights
+    /// - Finds the one with smallest absolute difference
+    /// - Example: target=500pt, detents=[80, 240, 560]
+    ///   → distances: |80-500|=420, |240-500|=260, |560-500|=60
+    ///   → nearest is 560pt (smallest distance)
+    ///
     /// - Parameters:
-    ///   - targetHeight: The desired height to snap to.
-    ///   - detents: Array of available detent heights.
-    ///   - minHeight: Minimum allowed height.
-    ///   - maxHeight: Maximum allowed height.
-    /// - Returns: The snapped height closest to the target.
+    ///   - targetHeight: The sheet height we want to snap from (in points)
+    ///   - detents: Array of valid detent snap points (absolute heights in points)
+    ///   - minHeight: Minimum allowed sheet height (safety clamp)
+    ///   - maxHeight: Maximum allowed sheet height (safety clamp)
+    /// - Returns: The nearest detent height, clamped to [minHeight, maxHeight]
     private func findNearestDetent(
-        for targetHeight: CGFloat, detents: [CGFloat], minHeight: CGFloat, maxHeight: CGFloat
+        for targetHeight: CGFloat, 
+        detents: [CGFloat], 
+        minHeight: CGFloat, 
+        maxHeight: CGFloat
     ) -> CGFloat {
-        // Find the detent with the smallest absolute difference to the target height
-        let nearestDetent =
-        detents.min(by: { abs($0 - targetHeight) < abs($1 - targetHeight) }) ?? targetHeight
-        // Clamp the result to ensure it's within valid bounds
-        return min(max(nearestDetent, minHeight), maxHeight)
+        // Find detent with smallest absolute distance to target
+        let nearestDetent = detents.min(by: { detentA, detentB in
+            let distanceA = abs(detentA - targetHeight)
+            let distanceB = abs(detentB - targetHeight)
+            return distanceA < distanceB
+        }) ?? targetHeight  // Fallback to target if no detents exist
+        
+        // Safety clamp to ensure result is within valid bounds
+        // This prevents edge cases where detents might be misconfigured
+        let clampedDetent = min(max(nearestDetent, minHeight), maxHeight)
+        
+        return clampedDetent
     }
-    
 }
