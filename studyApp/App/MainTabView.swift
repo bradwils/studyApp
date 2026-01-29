@@ -4,45 +4,40 @@ struct MainTabView: View {
 
     var body: some View {
         TabView {
-            NavigationStack {
-                SocialView()
-            }
-            .tabItem {
-                Label("Debug", systemImage: "exclamationmark.triangle.fill")
-            }
-            NavigationStack {
-                SocialView()
-            }
-            .tabItem {
-                Label("Social", systemImage: "figure.2")
+            Tab("Debug", systemImage: "exclamationmark.triangle.fill") {
+                NavigationStack {
+                    SocialView()
+                }
             }
             
-            NavigationStack {
-                StudyTrackingView()
-            }
-            .tabItem {
-                Label("Focus", systemImage: "magnifyingglass")
-            }
-            
-            NavigationStack {
-                GroupsView()
-            }
-            .tabItem {
-                Label("Groups", systemImage: "person.3.fill")
+            Tab("Social", systemImage: "figure.2") {
+                NavigationStack {
+                    SocialView()
+                }
             }
             
-            NavigationStack {
-                ModesView()
-            }
-            .tabItem {
-                Label("Modes", systemImage: "ellipsis.circle")
+            Tab("Focus", systemImage: "book.badge.plus", role: .search) {
+                NavigationStack {
+                    StudyTrackingView()
+                }
             }
             
             
+            Tab("Groups", systemImage: "person.3.fill") {
+                NavigationStack {
+                    GroupsView()
+                }
+            }
+            
+            Tab("Modes", systemImage: "ellipsis.circle") {
+                NavigationStack {
+                    ModesView()
+                }
+            }
         }
-        .tabViewSidebarBottomBar {
-            SocialView()
-        }
+        // .tabViewSidebarBottomBar {
+        //     SocialView()
+        // }
 
     }
     
