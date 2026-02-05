@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SubjectsEditor: View {
-    @StateObject private var subjectStore = SubjectStore()
+    @StateObject private var userProfileStore = UserProfileStore.shared
     @State private var newSubjectName = ""
     @State private var newSubjectCode = ""
     @FocusState private var isNameFocused: Bool
@@ -31,13 +31,13 @@ struct SubjectsEditor: View {
             }
             
             List {
-                if subjectStore.subjects.isEmpty {
+                if userProfileStore.profile.subjects.isEmpty {
                     Text("No subjects")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .listRowBackground(Color.clear)
                 } else {
-                    ForEach(subjectStore.subjects) { subject in
+                    ForEach(userProfileStore.profile.subjects) { subject in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(subject.name)
@@ -57,8 +57,8 @@ struct SubjectsEditor: View {
                     .onDelete { indexSet in
                         withAnimation(.easeInOut) {
                             indexSet.forEach { index in
-                                let subject = subjectStore.subjects[index]
-                                subjectStore.remove(id: subject.id)
+                                let subject = userProfileStore.profile.subjects[index]
+                                userProfileStore.removeSubject(id: subject.id)
                             }
                         }
                     }
@@ -109,7 +109,7 @@ struct SubjectsEditor: View {
     private func addSubject() {
         guard canAddSubject else { return }
         let subject = Subject(name: newSubjectName, code: newSubjectCode.uppercased())
-        subjectStore.add(subject)
+        userProfileStore.addSubject(subject)
         newSubjectName = ""
         newSubjectCode = ""
         isNameFocused = true

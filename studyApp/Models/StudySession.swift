@@ -61,7 +61,7 @@ struct StudySession: Identifiable, Codable {
         location: SessionLocation? = nil,
         studyScore: Int? = nil,
         notes: String? = nil,
-        interruptionCount: Int = 0
+        interruptionCount: Int? = 0
     ) {
         self.id = id
         self.subject = subject

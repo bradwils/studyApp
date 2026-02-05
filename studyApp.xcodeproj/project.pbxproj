@@ -27,6 +27,7 @@
 		984C5A502EAF2CD20048EB4D /* studyApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = studyApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		984C5A5D2EAF2CD40048EB4D /* studyAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = studyAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		984C5A672EAF2CD40048EB4D /* studyAppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = studyAppUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		98F8451D2F2B7329003E3C6B /* studyApp.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = studyApp.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -104,6 +105,7 @@
 		984C5A472EAF2CD20048EB4D = {
 			isa = PBXGroup;
 			children = (
+				98F8451D2F2B7329003E3C6B /* studyApp.xctestplan */,
 				984C5A512EAF2CD20048EB4D /* Products */,
 				984C5A522EAF2CD20048EB4D /* studyApp */,
 				984C5A602EAF2CD40048EB4D /* studyAppTests */,

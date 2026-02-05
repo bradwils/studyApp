@@ -17,7 +17,7 @@ struct StudyTrackingView: View {
     // MARK: - ViewModels
     
     @StateObject private var studyTrackingViewModel = StudyTrackingViewModel()
-    @StateObject private var subjectStore = SubjectStore()
+    @StateObject private var userProfileStore = UserProfileStore.shared
     
     
 
@@ -93,7 +93,7 @@ struct StudyTrackingView: View {
 //            
 //            
 //        }
-        .onChange(of: subjectStore.subjects) { old, new in
+        .onChange(of: userProfileStore.profile.subjects) { old, new in
             if studyTrackingViewModel.selectedSubject == nil, let first = new.first {
                 studyTrackingViewModel.updateSubjectSelection(first)
             }
@@ -122,7 +122,7 @@ struct StudyTrackingView: View {
 
                 ActiveSubjectList(
                     studyTrackingModel: studyTrackingViewModel,
-                    subjects: subjectStore.subjects,
+                    subjects: userProfileStore.profile.subjects,
                     isEnabled: !currentStudySessionInProgress
                 )
             }

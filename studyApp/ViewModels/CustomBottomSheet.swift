@@ -9,6 +9,9 @@ import SwiftUI
 
 /// A customizable bottom sheet component with drag gesture support and momentum-based animations.
 /// The sheet can be dragged to resize and will animate smoothly when released based on gesture velocity.
+/// 
+/// As the sheet expands, it smoothly transitions from a floating rounded card appearance
+/// to a full-width edge-to-edge sheet, similar to the system SwiftUI sheet behavior.
 struct CustomBottomSheet: View {
     
     // MARK: - Constants
@@ -17,12 +20,31 @@ struct CustomBottomSheet: View {
     private let minimumHeight: CGFloat = 120
     
     /// Threshold for considering a drag gesture as having significant momentum
-    private let momentumThreshold: CGFloat = 0
+    private let momentumThreshold: CGFloat = 10
     
     /// Momentum dampening factor (lower = more dampening)
     private let momentumDampening: CGFloat = 0.1
     
-
+    // MARK: - Layout Constants (Progress-Driven)
+    
+    /// Horizontal inset when sheet is collapsed (floating card appearance)
+    private let collapsedHorizontalInset: CGFloat = 16
+    
+    /// Horizontal inset when sheet is fully expanded (edge-to-edge)
+    private let expandedHorizontalInset: CGFloat = 0
+    
+    
+    /// Corner radius when sheet is collapsed
+    private let collapsedCornerRadius: CGFloat = 40
+    
+    /// Corner radius when sheet is fully expanded
+    private let expandedCornerRadius: CGFloat = 20
+    
+    /// Bottom padding when collapsed (floating above safe area)
+    private let collapsedBottomPadding: CGFloat = 12
+    
+    /// Bottom padding when expanded (extends into safe area)
+    private let expandedBottomPadding: CGFloat = 0
 
     // MARK: - State Properties
     
@@ -59,6 +81,36 @@ struct CustomBottomSheet: View {
             ratio * containerHeight  // Convert 0.0-1.0 ratio to actual pixel height
         }
     }
+    
+    // MARK: - Progress Calculation
+    
+    /// Calculates a normalized progress value (0.0 to 1.0) representing how expanded the sheet is.
+    /// - 0.0 = collapsed at minimum detent
+    /// - 1.0 = fully expanded at maximum detent
+    /// - Values can exceed 0-1 during over-drag, but layout interpolation is clamped
+    /// - Parameter containerHeight: The total height of the container
+    /// - Returns: Progress value where 0 = collapsed, 1 = expanded
+    private func expansionProgress(for containerHeight: CGFloat) -> CGFloat {
+        let detents = detentHeights(for: containerHeight)
+        guard let minDetent = detents.first, let maxDetent = detents.last, maxDetent > minDetent else {
+            return 0
+        }
+        
+        // Calculate progress: how far between min and max detent
+        let progress = (sheetHeight - minDetent) / (maxDetent - minDetent)
+        return progress
+    }
+    
+    /// Interpolates between two values based on progress (clamped to 0-1)
+    /// - Parameters:
+    ///   - from: Value at progress 0 (collapsed)
+    ///   - to: Value at progress 1 (expanded)
+    ///   - progress: Current expansion progress
+    /// - Returns: Interpolated value
+    private func interpolate(from: CGFloat, to: CGFloat, progress: CGFloat) -> CGFloat {
+        let clampedProgress = min(max(progress, 0), 1)
+        return from + (to - from) * clampedProgress
+    }
 
 
 
@@ -72,39 +124,79 @@ struct CustomBottomSheet: View {
     var body: some View {
         GeometryReader { geometry in
             let containerHeight = geometry.size.height
+            let containerWidth = geometry.size.width
+            let safeAreaBottom = geometry.safeAreaInsets.bottom
             
-            //set adjusted detents
+            // Calculate the single progress value driving all layout interpolations
+            let progress = expansionProgress(for: containerHeight)
             
-            //based on containerHeight, assert detents which are mapped against predictions
+            // Progress-driven layout values
+            let horizontalInset = interpolate(
+                from: collapsedHorizontalInset,
+                to: expandedHorizontalInset,
+                progress: progress
+            )
+            let cornerRadius = interpolate(
+                from: collapsedCornerRadius,
+                to: expandedCornerRadius,
+                progress: progress
+            )
+            let bottomPadding = interpolate(
+                from: collapsedBottomPadding,
+                to: expandedBottomPadding,
+                progress: progress
+            )
+            
+            // Width interpolates from inset width to full width
+            let sheetWidth = containerWidth - (horizontalInset * 2)
+            
+            // When expanded, extend into safe area; when collapsed, stay above it
+            let safeAreaExtension = interpolate(
+                from: 0,
+                to: safeAreaBottom,
+                progress: progress
+            )
+            
+            // Total visible height includes safe area extension when expanded
+            let visibleSheetHeight = sheetHeight + safeAreaExtension
+            
             let containerMinY = geometry.frame(in: .global).minY
             
-            var snappedHeight: CGFloat = 200; //used for when we want to snap the sheet to a specific detent.
-            
-            //calculate the wanted detent sizes. this is the set value given
-            
-            
-            sheetContent
-                .frame(width: geometry.size.width)
-                .frame(height: sheetHeight, alignment: .top)
-                .background(sheetBackground)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                .ignoresSafeArea(edges: .bottom)
-                .gesture(
-                    createDragGesture(
-                        containerHeight: containerHeight,
-                        containerMinY: containerMinY
+            ZStack(alignment: .bottom) {
+                // Sheet container with progress-driven styling
+                sheetContent
+                    .frame(width: sheetWidth)
+                    .frame(height: visibleSheetHeight, alignment: .top)
+                    .background(
+                        ContainerRelativeShape()
+                            .fill(Color(hex: "#7b3bff"))
                     )
+                    .clipShape(
+                        ContainerRelativeShape()
+//                        .fill(Color.gray)
+                        
+//                            topLeadingRadius: cornerRadius,
+//                            bottomLeadingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
+//                            bottomTrailingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
+//                    topTrailingRadius: cornerRadius,
+//                            style: .continuous
+                    )
+                    
+                    .padding(.bottom, bottomPadding)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+            .gesture(
+                createDragGesture(
+                    containerHeight: containerHeight,
+                    containerMinY: containerMinY
                 )
-                .onAppear {
-                    sheetHeight = minimumHeight
-                    previousHeight = minimumHeight
-
-
-
-
-                }
+            )
+            .onAppear {
+                sheetHeight = minimumHeight
+                previousHeight = minimumHeight
+            }
         }
-        .edgesIgnoringSafeArea(.bottom)
+        .ignoresSafeArea(edges: .bottom)
     }
     
     // MARK: - View Components
@@ -154,11 +246,17 @@ struct CustomBottomSheet: View {
             .padding(.bottom, 12)
     }
     
-    /// Background styling for the sheet
-    private var sheetBackground: some View {
-        RoundedRectangle(cornerRadius: 24)
-            .fill(Color.gray)
-            .shadow(radius: 10)
+    /// Background styling for the sheet with dynamic corner radius
+    /// - Parameter cornerRadius: The corner radius based on expansion progress
+    private func sheetBackground(cornerRadius: CGFloat) -> some View {
+        UnevenRoundedRectangle(
+            topLeadingRadius: cornerRadius,
+            bottomLeadingRadius: cornerRadius,
+            bottomTrailingRadius: cornerRadius,
+            topTrailingRadius: cornerRadius
+        )
+        .fill(Color.gray)
+        .shadow(radius: 10)
     }
     
     // MARK: - Gesture Handling
