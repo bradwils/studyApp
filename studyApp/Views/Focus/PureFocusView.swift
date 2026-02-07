@@ -13,6 +13,9 @@ struct PureFocusView: View {
     // MARK: - State Properties
     
     @StateObject private var viewModel = PureFocusViewModel()
+    
+    //Lock (focus feature)
+    @State private var focusLockEnabled: Bool = false;
 
     // Duration picker bounds (moved out of DurationPicker)
     @State private var minHours: Int = 0
@@ -25,7 +28,7 @@ struct PureFocusView: View {
             // Animated gradient background
             TimerGradientBackground(
                 progress: viewModel.timerProgress,
-                isTimerActive: $viewModel.isTimerRunning
+                isTimerActive: $viewModel.timerActivelyRunning
             )
             
             VStack() {
@@ -62,14 +65,23 @@ struct PureFocusView: View {
                 
             
             // Duration picker (when timer is not running)
-            if !viewModel.isTimerRunning && viewModel.elapsedTime == 0 {
+            if !viewModel.timerActivelyRunning && viewModel.elapsedTime == 0 {
                 durationPicker
             }
-            if (viewModel.isTimerRunning) {
-                Text("TRUE")
-            } else {
-                Text("FALSE")
-            }
+            
+//            //DEBUG
+//            if (viewModel.timerActivelyRunning) {
+//                Text("running: TRUE")
+//            } else {
+//                Text("running: FALSE")
+//            }
+//            
+//            if (viewModel.timerActivelyExists) { //DEBUG
+//                Text("exists: TRUE")
+//            } else {
+//                Text("exists: FALSE")
+//            }
+            
             
             // Timer control buttons
             HStack(spacing: 20) {
@@ -78,8 +90,13 @@ struct PureFocusView: View {
                     viewModel.toggleTimer()
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: viewModel.isTimerRunning ? "pause.fill" : "play.fill")
-                        Text(viewModel.isTimerRunning ? "Pause" : "Start")
+                        Image(systemName: viewModel.timerActivelyRunning ? "pause.fill" : "play.fill")
+                        
+                        if (viewModel.timerActivelyExists) {
+                            Text(viewModel.timerActivelyRunning ? "Pause" : "Resume")
+                        } else {
+                            Text("Start")
+                        }
                     }
                     .font(.title3)
                     .fontWeight(.semibold)
@@ -90,6 +107,28 @@ struct PureFocusView: View {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(dynamicButtonBackground)
                     )
+                }
+                
+                //lock button: PAID FEATURE
+                Button(action: {
+                    withAnimation(
+                        .easeInOut(duration: 0.5)
+                    ) {
+                        focusLockEnabled.toggle()
+                        
+                    }
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: focusLockEnabled ? "lock.fill" : "lock.open.fill")
+                            .contentTransition(.symbolEffect(.replace.magic(fallback: .offUp.byLayer), options: .nonRepeating))
+                            
+                        
+                        if (viewModel.timerActivelyExists) {
+                            Text(viewModel.timerActivelyRunning ? "Pause" : "Resume")
+                        } else {
+                            Text("Start")
+                        }
+                    }
                 }
                 
                 // Reset button (only show when timer has started)

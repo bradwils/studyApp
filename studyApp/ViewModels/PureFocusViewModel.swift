@@ -24,7 +24,9 @@ class PureFocusViewModel: ObservableObject {
     @Published var currentTimerTotalDuration: TimeInterval = 5 // default 5s, change to 0 later
     
     /// Whether the timer is currently running
-    @Published var isTimerRunning: Bool = false
+    @Published var timerActivelyRunning: Bool = false //no timers, initially
+    
+    @Published var timerActivelyExists: Bool = false //tracks if there is any timer that currently exists
     
     /// Computed progress value (0.0 to 1.0) for the gradient animation
     var timerProgress: CGFloat { //need this to track for background
@@ -50,9 +52,10 @@ class PureFocusViewModel: ObservableObject {
     
     /// Start the focus timer
     func startTimer(setTimerDuration: TimeInterval) { //parse through 
-        guard !isTimerRunning else { return }
+        guard !timerActivelyRunning else { return }
         
-        isTimerRunning = true
+        timerActivelyRunning = true
+        timerActivelyExists = true
            
            // Create a timer that fires every 0.1 seconds for smooth animation
            timerCancellable = Timer.publish(every: 0.1, on: .main, in: .common)
@@ -72,29 +75,38 @@ class PureFocusViewModel: ObservableObject {
     
     /// Pause the timer
     func pauseTimer() {
-        isTimerRunning = false
+        timerActivelyRunning = false
         timerCancellable?.cancel() //cancels the
         timerCancellable = nil
     }
     
     /// Stop and reset the timer
     func stopTimer() {
-        isTimerRunning = false
+        timerActivelyRunning = false
+        timerActivelyExists = false
+
+        
         timerCancellable?.cancel()
         timerCancellable = nil
+        
     }
     
     /// Reset timer to start
+    ///
     func resetTimer() {
         stopTimer()
         elapsedTime = 0
+        timerActivelyRunning = false
+        timerActivelyExists = false
+
     }
     
     /// Toggle timer between running and paused
-    func toggleTimer() {
-        if isTimerRunning {
+    func toggleTimer() { //needs to have 3 different functions:
+        if timerActivelyRunning { //pause timer ('break')
             pauseTimer()
-        } else {
+            
+        } else { //start a new timer
             startTimer(setTimerDuration: currentTimerTotalDuration)
         }
     }
@@ -102,6 +114,8 @@ class PureFocusViewModel: ObservableObject {
     func setDuration(timerDurationInSeconds: TimeInterval) { //this function takes seconds
         if elapsedTime > timerDurationInSeconds {
             elapsedTime = 0
+            timerActivelyRunning = false
+            timerActivelyExists = false
         }
     }
 }

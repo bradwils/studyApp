@@ -136,11 +136,7 @@ struct CustomBottomSheet: View {
                 to: expandedHorizontalInset,
                 progress: progress
             )
-            let cornerRadius = interpolate(
-                from: collapsedCornerRadius,
-                to: expandedCornerRadius,
-                progress: progress
-            )
+
             let bottomPadding = interpolate(
                 from: collapsedBottomPadding,
                 to: expandedBottomPadding,
@@ -165,12 +161,16 @@ struct CustomBottomSheet: View {
             ZStack(alignment: .bottom) {
                 // Sheet container with progress-driven styling
                 sheetContent
+                    
+
                     .frame(width: sheetWidth)
                     .frame(height: visibleSheetHeight, alignment: .top)
                     .background(
                         ContainerRelativeShape()
-                            .fill(Color(hex: "#7b3bff"))
+                            .glassEffect()
+//                            .fill(Color(hex: "#7b3bff"))
                     )
+                
                     .clipShape(
                         ContainerRelativeShape()
 //                        .fill(Color.gray)
@@ -214,7 +214,7 @@ struct CustomBottomSheet: View {
                         Text("Item \(index)")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.white)
+                            .background(Color.black)
                             .cornerRadius(12)
                     }
                 }
@@ -502,4 +502,9 @@ struct CustomBottomSheet: View {
         
         return clampedDetent
     }
+}
+
+
+#Preview {
+    PureFocusView()
 }

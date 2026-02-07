@@ -34,7 +34,7 @@ struct TimerGradientBackground: View {
         GeometryReader { geometry in
             ZStack {
                 // Show timer gradient when active OR when there is any progress (paused/partial)
-                var showTimer = isTimerActive || progress > 0.0001
+                let showTimer = isTimerActive || progress > 0.0001
                 
                 idleBackground
                     .opacity(showTimer ? 0 : 1)
