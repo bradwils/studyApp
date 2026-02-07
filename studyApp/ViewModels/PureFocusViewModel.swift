@@ -21,11 +21,13 @@ class PureFocusViewModel: ObservableObject {
     /// Elapsed time in seconds since timer started
     @Published var elapsedTime: TimeInterval = 0
     
+    @Published var currentTimerTotalDuration: TimeInterval = 5 // default 5s, change to 0 later
+    
     /// Whether the timer is currently running
-    @State var isTimerRunning: Bool = false
+    @Published var isTimerRunning: Bool = false
     
     /// Computed progress value (0.0 to 1.0) for the gradient animation
-    var timerProgress: CGFloat {
+    var timerProgress: CGFloat { //need this to track for background
         guard currentTimerTotalDuration > 0 else { return 0 }
         return CGFloat(min(elapsedTime / currentTimerTotalDuration, 1.0))
     }
@@ -93,7 +95,7 @@ class PureFocusViewModel: ObservableObject {
         if isTimerRunning {
             pauseTimer()
         } else {
-            startTimer()
+            startTimer(setTimerDuration: currentTimerTotalDuration)
         }
     }
     

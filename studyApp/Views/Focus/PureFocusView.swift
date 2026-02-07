@@ -14,6 +14,12 @@ struct PureFocusView: View {
     
     @StateObject private var viewModel = PureFocusViewModel()
 
+    // Duration picker bounds (moved out of DurationPicker)
+    @State private var minHours: Int = 0
+    @State private var maxHours: Int = 8
+    @State private var minMinutes: Int = 0
+    @State private var maxMinutes: Int = 59
+
     var body: some View {
         ZStack(alignment: .bottom) {
             // Animated gradient background
@@ -113,27 +119,8 @@ struct PureFocusView: View {
         
         
         VStack(spacing: 8) {
-            Text("Set Duration")
-                .font(.caption)
-                .foregroundColor(.white.opacity(0.7))
-            
-            
-            DurationPicker(duration: $timerTimeInterval, minHours: 0, maxHours: 8, minMinutes: 0, maxMinutes: 59) //
-            
-//            DatePicker(
-//                "Duration",
-//                selection: Binding(
-//                    get: { Date(timeIntervalSinceReferenceDate: viewModel.totalDuration) },
-//                    set: { newDate in
-//                        viewModel.totalDuration = newDate.timeIntervalSinceReferenceDate
-//                    }
-//                ),
-//                in: PureFocusView.dateRange, //need to say where it originates since the initial type is static, not individual to the instance.
-//                displayedComponents: .hourAndMinute
-//            )
-//            .datePickerStyle(.wheel)
-//            .labelsHidden()
-//            .colorScheme(.dark)
+
+            DurationPicker(duration: $viewModel.currentTimerTotalDuration, minHours: $minHours, maxHours: $maxHours, minMinutes: $minMinutes, maxMinutes: $maxMinutes) //
         }
     }
     
@@ -167,7 +154,7 @@ struct PureFocusView: View {
     
     //new timer stuff
     var remainingTime: some View {
-        Text("\(timerTimeInterval)")
+        Text("vm.totalduration: \(viewModel.currentTimerTotalDuration)")
     }
 }
     
@@ -176,3 +163,6 @@ struct PureFocusView: View {
     PureFocusView()
 }
     
+
+
+//TODO: make the picker bind to vm.currentTimerTotalDuration properly.

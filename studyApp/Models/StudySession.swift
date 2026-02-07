@@ -61,7 +61,7 @@ struct StudySession: Identifiable, Codable {
         location: SessionLocation? = nil,
         studyScore: Int? = nil,
         notes: String? = nil,
-        interruptionCount: Int? = 0
+        interruptionCount: Int? = nil
     ) {
         self.id = id
         self.subject = subject
@@ -78,7 +78,7 @@ struct StudySession: Identifiable, Codable {
         self.location = location
         self.studyScore = studyScore
         self.notes = notes
-        self.interruptionCount = interruptionCount
+        self.interruptionCount = interruptionCount ?? 0
     }
 
     var totalElapsed: TimeInterval {

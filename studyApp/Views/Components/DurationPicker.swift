@@ -20,13 +20,10 @@ struct DurationPicker: View {
     /// Binding to the total duration in seconds
     @Binding var duration: TimeInterval
     
-    @State var minHours: Int
-
-    @State var maxHours: Int
-    
-    @State var minMinutes: Int
-    
-    @State var maxMinutes: Int
+    @Binding var minHours: Int
+    @Binding var maxHours: Int
+    @Binding var minMinutes: Int
+    @Binding var maxMinutes: Int
     
     /// Maximum hours allowed (default: 8)
     
@@ -102,7 +99,7 @@ struct DurationPicker: View {
                 Color.black.ignoresSafeArea()
                 
                 VStack(spacing: 20) {
-                    DurationPicker(duration: $duration, minHours: 0, maxHours: 8, minMinutes: 0, maxMinutes: 30)
+                    DurationPicker(duration: $duration, minHours: .constant(0), maxHours: .constant(8), minMinutes: .constant(0), maxMinutes: .constant(30))
                     
                     Text("Selected: \(Int(duration / 60)) minutes")
                         .foregroundColor(.white)

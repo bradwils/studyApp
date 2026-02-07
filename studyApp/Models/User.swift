@@ -18,7 +18,7 @@ struct UserProfile: Codable { //holds all local data, as well as an optional lin
     var createdAt: Date
     var lastActiveAt: Date
     var subjects: [Subject]
-    var studySessions: [StudySession]
+    var studySessions: [StudySession] = []
 
 
     func storeStudySessionsLocally() { ///UNTESTED CODE
