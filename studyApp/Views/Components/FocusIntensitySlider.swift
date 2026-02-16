@@ -84,6 +84,7 @@ struct FocusIntensitySlider: View {
                         if value > 90 {
                             navigateToPureFocus = true
                             
+                            
                         } else {
                             withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.6, blendDuration: 0)) {
                                 value = 0

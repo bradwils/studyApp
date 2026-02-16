@@ -146,6 +146,13 @@ struct CustomBottomSheet: View {
             // Width interpolates from inset width to full width
             let sheetWidth = containerWidth - (horizontalInset * 2)
             
+            // Corner radius interpolates from large (collapsed) to small (expanded)
+            let cornerRadius = interpolate(
+                from: collapsedCornerRadius,
+                to: expandedCornerRadius,
+                progress: progress
+            )
+            
             // When expanded, extend into safe area; when collapsed, stay above it
             let safeAreaExtension = interpolate(
                 from: 0,
@@ -165,21 +172,24 @@ struct CustomBottomSheet: View {
 
                     .frame(width: sheetWidth)
                     .frame(height: visibleSheetHeight, alignment: .top)
-                    .background(
-                        ContainerRelativeShape()
-                            .glassEffect()
-//                            .fill(Color(hex: "#7b3bff"))
-                    )
-                
                     .clipShape(
-                        ContainerRelativeShape()
-//                        .fill(Color.gray)
-                        
-//                            topLeadingRadius: cornerRadius,
-//                            bottomLeadingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
-//                            bottomTrailingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
-//                    topTrailingRadius: cornerRadius,
-//                            style: .continuous
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: cornerRadius,
+                            bottomLeadingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
+                            bottomTrailingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
+                            topTrailingRadius: cornerRadius,
+                            style: .continuous
+                        )
+                    )
+                    .background(
+                        UnevenRoundedRectangle(
+                            topLeadingRadius: cornerRadius,
+                            bottomLeadingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
+                            bottomTrailingRadius: interpolate(from: cornerRadius, to: 0, progress: progress),
+                            topTrailingRadius: cornerRadius,
+                            style: .continuous
+                        )
+                        .glassEffect()
                     )
                     
                     .padding(.bottom, bottomPadding)
@@ -203,11 +213,12 @@ struct CustomBottomSheet: View {
     
     /// The main content of the bottom sheet
     private var sheetContent: some View {
+        
         VStack(spacing: 0) {
             dragIndicator
             
-
-
+            
+            
             ScrollView {
                 VStack(spacing: 16) {
                     ForEach(0..<40) { index in

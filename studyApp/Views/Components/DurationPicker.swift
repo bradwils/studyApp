@@ -69,7 +69,7 @@ struct DurationPicker: View {
                         duration = TimeInterval(hours * 3600 + minutes * 60)
                     }
                 )) {
-                    ForEach(minMinutes ..< maxMinutes, id: \.self) { minute in
+                    ForEach(minMinutes ... maxMinutes, id: \.self) { minute in
                         Text("\(minute)").tag(minute)
                             .foregroundColor(.white.opacity(0.8))
 
