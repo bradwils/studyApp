@@ -164,11 +164,11 @@ struct StudyTrackingView: View {
 
     private var MainTimerElement: some View {
         
-            TimerSection()
+            bigTotalElapsedTimeText()
             .padding(.top, 8)
     }
 
-    private func TimerSection() -> some View {
+    private func bigTotalElapsedTimeText() -> some View {
         VStack(spacing: 8) {
 
             Text("11:22")

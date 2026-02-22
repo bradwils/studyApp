@@ -67,8 +67,8 @@ struct TimerGradientBackground: View {
         ZStack {
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0.3),
-                    Color.gray.opacity(0.5),
+                    Color.black.opacity(1),
+                    Color.purple.opacity(0.9), //CHANGING THIS SIGNIFICANTLY CHANGES THE MOST PROMINENT BACKGROUND COLOR
                     Color.black.opacity(0.7)
                 ],
 //                startPoint: .topLeading,
@@ -92,7 +92,7 @@ struct TimerGradientBackground: View {
                     endRadius: 180 + (idleAnimationOffset * 5)
                 ))
                 .ignoresSafeArea()
-                .animation(.linear(duration: 6).repeatForever(autoreverses: true), value: idleAnimationOffset)
+                .animation(.linear(duration: 3).repeatForever(autoreverses: true), value: idleAnimationOffset)
             
             
             
@@ -102,27 +102,30 @@ struct TimerGradientBackground: View {
                     colors: [Color.red.opacity(0.2), Color.clear],
                     center: .bottom,
                     startRadius: 0 + (idleAnimationOffset * 0.2),
-                    endRadius: 50 + (idleAnimationOffset * 10)
+                    endRadius: 100 + (idleAnimationOffset * 10)
                 ))
                 .ignoresSafeArea()
-                .animation(.linear(duration: 7).repeatForever(autoreverses: true), value: idleAnimationOffset)
+                .animation(.linear(duration: 3).repeatForever(autoreverses: true), value: idleAnimationOffset)
             
             
-            Color.clear
-                .modifier(RadialAnimatedGradient( //peach radial background element
-                    colors: [Color(hex: "#FFC5AB").opacity(0.2), Color.clear],
+            Color.clear  //peach radial background element
+            
+            //TODO: this should probably match the master color with a lower opacity, which when layered will appear as a brighter version of that color.
+            
+            
+                .modifier(RadialAnimatedGradient(
+//                    colors: [Color(hex: "#FFC5AB").opacity(0.2), Color.clear],
+                    colors: [Color.purple.opacity(0.3), Color.clear],
+
                     center: UnitPoint(x: 0.9, y: 0.5 + peachRadialOffsetValue),
-                    startRadius: 40 + (idleAnimationOffset * 0),
-                    endRadius: 100 + (idleAnimationOffset * 5)
+                    startRadius: 120 + (idleAnimationOffset * 0), //do not use the manual radius changer
+                    endRadius: 250 + (idleAnimationOffset * 0)
                 ))
                 .ignoresSafeArea()
-            //animate the idleanimation for this section
-                .animation(.easeInOut(duration: 5).repeatForever(autoreverses: true), value: idleAnimationOffset)
                 //animate the peach y offset
-                .animation(.easeInOut(duration: getRandomTimeInterval(min: 20, max: 40)).repeatForever(autoreverses: true), value: peachRadialOffsetValue)
+                .animation(.easeInOut(duration: getRandomTimeInterval(min: 15, max: 15)).repeatForever(autoreverses: true), value: peachRadialOffsetValue)
             
             
-//            peachRadialOffsetValue = 0
             
             
         }
