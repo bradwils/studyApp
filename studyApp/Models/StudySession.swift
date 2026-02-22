@@ -54,8 +54,8 @@ struct StudySession: Identifiable, Codable {
         isPaused: Bool = false,
         lastResumedAt: Date = Date(),
         lastPausedAt: Date? = nil,
-        activeDuration: TimeInterval = 0,
-        totalBreakDuration: TimeInterval = 0,
+        activeDuration: TimeInterval = 0, //computed later
+        totalBreakDuration: TimeInterval = 0, //computed later
         breaks: [StudyBreak] = [],
         companions: [String] = [],
         location: SessionLocation? = nil,
@@ -65,7 +65,7 @@ struct StudySession: Identifiable, Codable {
     ) {
         self.id = id
         self.subject = subject
-        self.subjectName = subjectName ?? subject?.name
+        self.subjectName = subject?.name
         self.startedAt = startedAt
         self.endedAt = endedAt
         self.isPaused = isPaused

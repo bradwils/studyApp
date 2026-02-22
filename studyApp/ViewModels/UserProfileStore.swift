@@ -87,6 +87,8 @@ final class UserProfileStore: ObservableObject {
             userProfilePicturePath: nil,
             auth: AuthState(service: .anon, lastSignInAt: nil),
             createdAt: now,
+            isPaused: false,
+            lastResumedAt: false,
             lastActiveAt: now,
             subjects: []
         )

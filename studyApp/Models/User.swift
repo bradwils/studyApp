@@ -16,6 +16,8 @@ struct UserProfile: Codable { //holds all local data, as well as an optional lin
     var userProfilePicturePath: String?
     var auth: AuthState
     var createdAt: Date
+    var isPaused: Bool
+    var lastResumedAt: Bool
     var lastActiveAt: Date
     var subjects: [Subject]
     var studySessions: [StudySession] = []

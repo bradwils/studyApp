@@ -14,15 +14,22 @@ struct StudyTrackingView: View {
     @State private var isLeaderboardPresented: Bool = true
     @State private var currentStudySessionInProgress: Bool = false
     
+    @State var timeSinceLastBreakEnded: TimeInterval = 179 //time since last breal has ended
+    
+    @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
+    
     // MARK: - ViewModels
     
     @StateObject private var studyTrackingViewModel = StudyTrackingViewModel()
     @StateObject private var userProfileStore = UserProfileStore.shared
     
+    // MARK: - Helpers
     
-
-
-    
+    //TIMEINTERVAL -> HOURMINUTESECOND
+    private func formattedHMS(from timeInterval: TimeInterval) -> String {
+        let duration = Duration.seconds(timeInterval)
+        return duration.formatted(.time(pattern: .hourMinuteSecond))
+    }
     
     var body: some View {
         ZStack {
@@ -193,48 +200,78 @@ struct StudyTrackingView: View {
     
     
 
-    private var pauseStopRow: some View {
+    private var pauseStopRow: some View { //last paused / last resumed & start/resume and stop button
         ZStack {
-            // "Pause at" text: fades in and slides from left when paused
-            VStack(spacing: 4) {
-                Text("Pause at")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            HStack {
+                HStack { //child hstack1, aligned to be right-most within the available space
+                    // "Pause at" text: fades in and slides from left when paused
+                    VStack(spacing: 4) {
+                        if (timerInProgress) { //if we're currently tracking (not paused)
+                            Text("Since last break")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .frame(alignment: .center)
+                            
+                            Text(formattedHMS(from: timeSinceLastBreakEnded)) //parse through a helper; format the timeinterval as hour/minute/second
+                                .font(.headline.monospacedDigit())
+                                .frame(alignment: .center)
 
-                Text("00:12:34")
-                    .font(.headline.monospacedDigit())
-            } //                        t : f
-            //                    hidden : showing
-            .opacity(timerInProgress ? 0 : 1)
-            .offset(x: timerInProgress ? 50 : -80)
-            .animation(.easeInOut(duration: 0.3), value: timerInProgress)
+                        } else { //if we're paused
+                            Text("Break Timer")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .frame(alignment: .center)
 
-            // Button: centered when running, slides right when paused
-            Button {
-                withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
-                    timerInProgress.toggle()
+                            
+                            Text(formattedHMS(from: timeSinceLastBreakStarted)) //parse through a helper; format the timeinterval as hour/minute/second
+                                .font(.headline.monospacedDigit())
+                                .frame(alignment: .center)
+
+                        }
+
+                    } //                        t : f
+                    //                    hidden : showing
+                    .offset(x: timerInProgress ? 0 : 0)
+                    .animation(.easeInOut(duration: 0.3), value: timerInProgress)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
                 }
-            } label: {
-                ZStack {
-                    if timerInProgress {
-                        Text("Stop")
-                            .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .trailing).combined(with: .opacity)))
-                    } else {
-                        Text("Start")
-                        .transition(.asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))                    }
+                .padding(.horizontal, 20)
+                
+                
+                HStack { //child hstack2, aligned to be left-most within the available space
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
+                            timerInProgress.toggle()
+                        }
+                    } label: {
+                        ZStack {
+                            if timerInProgress {
+                                Text("Stop")
+                                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .trailing).combined(with: .opacity)))
+                            } else {
+                                Text("Start")
+                                    .transition(.asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
+                            }
+                        }
+                        .frame(height: 20) // keeps layout from jumping during the transition
+                        .font(.headline)
+                        .padding(.horizontal, 32) //padding for start button, makes button wider than text
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: 150)
+                        .background(
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(Color.white.opacity(0.18))
+                        )
+                    }
+                    .animation(.easeInOut(duration: 0.3), value: timerInProgress)
+                    .frame(alignment: .leading)
                 }
-                .frame(height: 20) // keeps layout from jumping during the transition
-                .font(.headline)
-                .padding(.horizontal, 32)
-                .padding(.vertical, 12)
-                .frame(maxWidth: 150)
-                .background(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .fill(Color.white.opacity(0.18))
-                )
+                .frame(maxWidth: .infinity, alignment: .leading) //align to left
+
+                
+                
             }
-            .offset(x: timerInProgress ? 0 : 80)
-            .animation(.easeInOut(duration: 0.3), value: timerInProgress)
+//            .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.top, 4)
 
