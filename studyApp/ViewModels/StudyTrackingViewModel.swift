@@ -106,4 +106,9 @@ final class StudyTrackingViewModel: ObservableObject {
         guard activeSession == nil else { return }
         selectedSubject = subject
     }
+    
+    public func hasAlreadyStudiedToday() -> Bool {
+        //todo
+        return false; //stub placeholder
+    }
 }

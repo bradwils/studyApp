@@ -2,8 +2,9 @@
 //  CustomBottomSheet.swift
 //  studyApp
 //
-//  Created by brad wils on 10/1/26.
+//  Created by brad wils on 23/2/26.
 //
+
 
 import SwiftUI
 
@@ -513,9 +514,4 @@ struct CustomBottomSheet: View {
         
         return clampedDetent
     }
-}
-
-
-#Preview {
-    PureFocusView()
 }

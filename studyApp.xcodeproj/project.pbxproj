@@ -31,18 +31,15 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		984C5BC72EAF2D7C0048EB4D /* Exceptions for "studyAppUITests" folder in "studyApp" target */ = {
+		989E5FB52F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyApp" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				.gitattributes,
-				.gitignore,
-				Assets.xcassets,
-				"misc assets/Capture-2025-10-22-170915.png",
-				"Preview Content/Preview Assets.xcassets",
+				studyAppUITests.swift,
+				studyAppUITestsLaunchTests.swift,
 			);
 			target = 984C5A4F2EAF2CD20048EB4D /* studyApp */;
 		};
-		984C5BC82EAF2D7C0048EB4D /* Exceptions for "studyAppUITests" folder in "studyAppTests" target */ = {
+		989E5FB62F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppTests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				.gitattributes,
@@ -52,6 +49,19 @@
 				"Preview Content/Preview Assets.xcassets",
 			);
 			target = 984C5A5C2EAF2CD40048EB4D /* studyAppTests */;
+		};
+		989E5FB72F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppUITests" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				.gitattributes,
+				.gitignore,
+				Assets.xcassets,
+				"misc assets/Capture-2025-10-22-170915.png",
+				"Preview Content/Preview Assets.xcassets",
+				studyAppUITests.swift,
+				studyAppUITestsLaunchTests.swift,
+			);
+			target = 984C5A662EAF2CD40048EB4D /* studyAppUITests */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
@@ -66,11 +76,12 @@
 			path = studyAppTests;
 			sourceTree = "<group>";
 		};
-		984C5A6A2EAF2CD40048EB4D /* studyAppUITests */ = {
+		989E5FA32F4BA3450025B96B /* studyAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				984C5BC72EAF2D7C0048EB4D /* Exceptions for "studyAppUITests" folder in "studyApp" target */,
-				984C5BC82EAF2D7C0048EB4D /* Exceptions for "studyAppUITests" folder in "studyAppTests" target */,
+				989E5FB52F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyApp" target */,
+				989E5FB62F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppTests" target */,
+				989E5FB72F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppUITests" target */,
 			);
 			path = studyAppUITests;
 			sourceTree = "<group>";
@@ -109,7 +120,7 @@
 				984C5A512EAF2CD20048EB4D /* Products */,
 				984C5A522EAF2CD20048EB4D /* studyApp */,
 				984C5A602EAF2CD40048EB4D /* studyAppTests */,
-				984C5A6A2EAF2CD40048EB4D /* studyAppUITests */,
+				989E5FA32F4BA3450025B96B /* studyAppUITests */,
 			);
 			sourceTree = "<group>";
 		};
@@ -140,6 +151,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				984C5A522EAF2CD20048EB4D /* studyApp */,
+				989E5FA32F4BA3450025B96B /* studyAppUITests */,
 			);
 			name = studyApp;
 			packageProductDependencies = (
@@ -183,9 +195,6 @@
 			);
 			dependencies = (
 				984C5A692EAF2CD40048EB4D /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				984C5A6A2EAF2CD40048EB4D /* studyAppUITests */,
 			);
 			name = studyAppUITests;
 			packageProductDependencies = (

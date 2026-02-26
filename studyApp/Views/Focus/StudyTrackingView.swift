@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 /// Represents the display state of the lightweight study timer.
 ///
@@ -20,7 +21,7 @@ struct StudyTrackingView: View {
     
     // MARK: - ViewModels
     
-    @StateObject private var studyTrackingViewModel = StudyTrackingViewModel()
+    @StateObject private var vm = StudyTrackingViewModel()
     @StateObject private var userProfileStore = UserProfileStore.shared
     
     // MARK: - Helpers
@@ -101,8 +102,8 @@ struct StudyTrackingView: View {
 //            
 //        }
         .onChange(of: userProfileStore.profile.subjects) { old, new in
-            if studyTrackingViewModel.selectedSubject == nil, let first = new.first {
-                studyTrackingViewModel.updateSubjectSelection(first)
+            if vm.selectedSubject == nil, let first = new.first {
+                vm.updateSubjectSelection(first)
             }
             
             
@@ -110,7 +111,7 @@ struct StudyTrackingView: View {
 //                    trackWidth = newValue
 //                }
         }
-        .onReceive(studyTrackingViewModel.$activeSession) { session in
+        .onReceive(vm.$activeSession) { session in
             currentStudySessionInProgress = session != nil
         }
 
@@ -128,7 +129,7 @@ struct StudyTrackingView: View {
                     .foregroundColor(.secondary)
 
                 ActiveSubjectList(
-                    studyTrackingModel: studyTrackingViewModel,
+                    studyTrackingModel: vm,
                     subjects: userProfileStore.profile.subjects,
                     isEnabled: !currentStudySessionInProgress
                 )
@@ -149,31 +150,41 @@ struct StudyTrackingView: View {
     }
 
     private var timeSummaryRow: some View {
-        HStack {
-            Text("Today")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+        Group {
+            if vm.hasAlreadyStudiedToday() {
+                HStack {
+                    Text("Time spent studying today")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
 
-            Spacer()
+                    Spacer()
 
-            Text("00:00:00")
-                .font(.subheadline.monospacedDigit())
-                .foregroundColor(.primary)
+                    Text("<- 00:00:00")
+                        .font(.subheadline.monospacedDigit())
+                        .foregroundColor(.primary)
+                }
+            } else {
+                EmptyView()
+            }
         }
     }
 
     private var MainTimerElement: some View {
         
-            bigTotalElapsedTimeText()
+            bigTotalElapsedTimeText
             .padding(.top, 8)
     }
 
-    private func bigTotalElapsedTimeText() -> some View {
-        VStack(spacing: 8) {
+    private var bigTotalElapsedTimeText: some View {
+        
+        VStack(spacing: -20) {
 
             Text("11:22")
                 .font(.system(size: 100).monospacedDigit())
                 .fontWeight(.semibold)
+            Text("(total time spent studying this session)")
+                .font(.caption)
+                
 
         }
     }
@@ -207,24 +218,26 @@ struct StudyTrackingView: View {
                     // "Pause at" text: fades in and slides from left when paused
                     VStack(spacing: 4) {
                         if (timerInProgress) { //if we're currently tracking (not paused)
-                            Text("Since last break")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .frame(alignment: .center)
-                            
+
                             Text(formattedHMS(from: timeSinceLastBreakEnded)) //parse through a helper; format the timeinterval as hour/minute/second
                                 .font(.headline.monospacedDigit())
                                 .frame(alignment: .center)
-
-                        } else { //if we're paused
-                            Text("Break Timer")
+                            
+                            Text("since last break")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .frame(alignment: .center)
+
+                        } else { //if we're paused
 
                             
                             Text(formattedHMS(from: timeSinceLastBreakStarted)) //parse through a helper; format the timeinterval as hour/minute/second
                                 .font(.headline.monospacedDigit())
+                                .frame(alignment: .center)
+                            
+                            Text("Break Length")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                                 .frame(alignment: .center)
 
                         }
@@ -246,25 +259,55 @@ struct StudyTrackingView: View {
                     } label: {
                         ZStack {
                             if timerInProgress {
-                                Text("Stop")
-                                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .trailing).combined(with: .opacity)))
+                                HStack {
+                                    
+                                    //resume button
+                                    Button {
+                                        timerInProgress.toggle()
+                                    } label: {
+                                        Text("Pause")
+                                    }
+                                    .buttonStyle(.glass)
+                                    .buttonSizing(.flexible)
+
+                                    
+
+                                    
+                                    //end button
+                                    Button {
+                                        
+                                    } label: {
+//                                        Text("end")
+                                    }
+                                    .buttonStyle(.glass)
+                                    .buttonSizing(.automatic)
+
+
+                                }
                             } else {
-                                Text("Start")
-                                    .transition(.asymmetric(insertion: .move(edge: .leading).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
+                            
+                                Button {
+                                    timerInProgress.toggle()
+                                    
+                                } label: {
+                                    Text("Start")
+                                }
+                                .buttonStyle(.glass)
+                                .buttonSizing(.automatic)
+
+
                             }
                         }
                         .frame(height: 20) // keeps layout from jumping during the transition
                         .font(.headline)
-                        .padding(.horizontal, 32) //padding for start button, makes button wider than text
+                        .padding(.horizontal, 10) //padding for start button, makes button wider than text
                         .padding(.vertical, 12)
                         .frame(maxWidth: 150)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .fill(Color.white.opacity(0.18))
-                        )
+
                     }
                     .animation(.easeInOut(duration: 0.3), value: timerInProgress)
                     .frame(alignment: .leading)
+                    
                 }
                 .frame(maxWidth: .infinity, alignment: .leading) //align to left
 
