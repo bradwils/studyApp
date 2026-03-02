@@ -207,10 +207,7 @@ struct StudyTrackingView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
-        .background(
-            Capsule(style: .continuous)
-                .glassEffect(.regular, in: .capsule)
-        )
+        .glassEffect()
         //UIEND
     }
     
@@ -347,10 +344,7 @@ struct StudyTrackingView: View {
             .frame(height: 40)
             .accessibilityLabel("Focus intensity")
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 24))
-            )
+            .glassEffect()
         //UIEND
     }
 

@@ -25,7 +25,7 @@ struct MediaContentTabView: View {
                     // Album art placeholder uses glass so it blends into the gradient
                     // background of the Focus screen rather than floating as a flat shape.
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                        .glassEffect()
                         .aspectRatio(1.0, contentMode: .fill)
                         .frame(maxWidth: 120, maxHeight: 120)
                     //UIEND
@@ -50,7 +50,7 @@ struct MediaContentTabView: View {
                     // of a glass disc — matching the style of native Now Playing widgets.
                     ZStack {
                         Circle()
-                            .glassEffect(.regular, in: .circle)
+                            .glassEffect()
                         
                         Circle()
                             .trim(from: 0, to: 0.35)

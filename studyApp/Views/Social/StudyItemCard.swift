@@ -7,60 +7,64 @@ import SwiftUI
 struct StudyItemCard: View {
     var item: SocialFeedItem
 
+    /// Returns the first character of the member's name uppercased, used as an avatar initial.
+    private var initial: String {
+        String(item.name.prefix(1)).uppercased()
+    }
+
     var body: some View {
-        HStack(alignment: .center, spacing: 6) {
-            ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0))
-                    .frame(width: 56, height: 56)
-                Image(systemName: item.photo)
-                    .foregroundColor(.primary)
-                    .offset(x: -6, y: -6)
+        //UITWEAK
+        // Redesigned card: replaced the generic SF Symbol icon with an initials circle,
+        // tightened up the info hierarchy, and removed the location placeholder row.
+        // .glassEffect(.regular.interactive()) gives the card a native pressed highlight
+        // with no shape parameter needed — the system infers the shape from the view.
+        HStack(alignment: .center, spacing: 14) {
+
+            // MARK: Initials avatar
+            // A simple circle with the member's first initial is much more personal
+            // than a generic system icon, and scales well when real photos are added later.
+            ZStack {
+                Circle()
+                    .fill(item.isLocked ? Color.red.opacity(0.15) : Color.green.opacity(0.15))
+                    .frame(width: 46, height: 46)
+                Text(initial)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(item.isLocked ? Color.red : Color.green)
             }
 
-            VStack(alignment: .leading, spacing: 4) {
+            // MARK: Name + subject
+            VStack(alignment: .leading, spacing: 3) {
                 Text(item.name)
                     .font(.headline)
                     .foregroundStyle(Color.primary)
-                Text(item.subjectCode)
+                Text(item.subject)
                     .font(.subheadline)
                     .foregroundStyle(Color.secondary)
             }
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 8) {
-                HStack(spacing: 4) {
-                    Image(systemName: "location.fill")
-                        .foregroundStyle(Color.blue)
-                    Text("location placeholder")
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                }
+            // MARK: Session status
+            VStack(alignment: .trailing, spacing: 6) {
+                // Session timer in a small monospaced label so digits don't jump
+                Text(item.timer)
+                    .font(.subheadline.monospacedDigit().weight(.medium))
+                    .foregroundStyle(Color.primary)
 
-                HStack(spacing: 8) {
+                // Lock indicator + daily total
+                HStack(spacing: 4) {
                     Image(systemName: item.isLocked ? "lock.fill" : "lock.open.fill")
+                        .font(.caption2)
                         .foregroundStyle(item.isLocked ? Color.red : Color.green)
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(item.timer)
-                            .font(.caption)
-                            .foregroundStyle(Color.blue)
-                        Text(item.dailyTotalTime)
-                            .font(.caption2)
-                            .foregroundStyle(Color.secondary)
-                    }
+                    Text(item.dailyTotalTime)
+                        .font(.caption2)
+                        .foregroundStyle(Color.secondary)
                 }
             }
         }
-        .padding(20)
-        //UITWEAK
-        // glassEffect with .interactive() makes the card subtly react to touch — it brightens
-        // slightly when the user presses it, giving the list a native, physical feel without
-        // needing a custom pressed-state style.
-        .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 28))
-        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .glassEffect(.regular.interactive())
         //UIEND
     }
 }

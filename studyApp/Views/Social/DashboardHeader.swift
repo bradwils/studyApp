@@ -3,130 +3,93 @@
 
 import SwiftUI
 
+//UITWEAK
+// Redesigned DashboardHeader:
+// - Removed the embedded avatar/menu (it now lives as a standard toolbar button in SocialView).
+// - The greeting row now shows a cleaner online-friends chip instead of the old freeform HStack.
+// - Stats card uses .glassEffect() directly on the HStack background — no shape needed.
+// - Spacing and typography tightened to match SwiftUI List/Form conventions.
+
 /// Summary banner reused across the social feed and related dashboards.
 struct DashboardHeader: View {
     var currentSessionTime: String
-
     var currentSubject: String
     var streakCount: Int
     var totalDailyTime: String
-    var onlineFriends = 2 //placeholder
+    var onlineFriends = 2 // placeholder
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .center, spacing: 30) {
-                
-                
-                
+        VStack(alignment: .leading, spacing: 16) {
 
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Your Friends")
-                            .bold()
-                            .italic()
-                            .font(.system(size: 36))
-                        
-                        
-                        if onlineFriends > 0 {
-                            HStack {
-                                Text("\(onlineFriends) Friends studying ")
-                                    .foregroundColor(.green)
-//                                    .padding(.leading, 8)
-                                Image(systemName: "wave.3.forward")
-                                    .foregroundColor(.green)
-                                
-                            }
-                        } else {
-                            Text("No friends studying")
-//                                .padding(.leading, 8)
-                            
-                            
-                        }
-                        
-                    }
-                    
-                    
-                    Spacer()
-                    
-                    
-                    //UITWEAK
-                    // Wrap the avatar in a glass circle so it subtly reacts on tap —
-                    // the interactive modifier provides a built-in pressed-highlight without
-                    // any custom gesture code.
-                    Menu {
-                        NavigationLink("Settings") { SettingsView() }
-                        NavigationLink("Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
-                    } label: {
-                        Image(systemName: "person.crop.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 44, height: 44)
-                            .foregroundStyle(.primary)
-                            .padding(6)
-                            .background {
-                                Circle()
-                                    .glassEffect(.regular.interactive(), in: .circle)
-                            }
-                    }
-                    .buttonStyle(.plain)
-                    //UIEND
-                }
-                
-            }
-            
-            ZStack {
-                if #available(iOS 26.0, *) {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .glassEffect(in: .rect(cornerRadius: 28))
-                        .padding(-15)
-                        .frame(maxHeight: 50)
-
+            // MARK: Online friends indicator
+            // Shown inline below the navigation title so the page reads:
+            // title → status → stats → list.
+            HStack(spacing: 6) {
+                if onlineFriends > 0 {
+                    // Green pulse dot to signal live activity
+                    Circle()
+                        .fill(Color.green)
+                        .frame(width: 8, height: 8)
+                    Text("\(onlineFriends) friends studying now")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(Color.primary)
                 } else {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .padding(-15)
-                        .frame(height: 50)
-                }
-                
-                HStack(spacing: 20) {
-                    
-                    VStack(alignment: .center, spacing: 6) {
-                        Text("Total: \(totalDailyTime)")
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
-                        Text(currentSessionTime)
-                            .font(.title2.weight(.semibold))
-                    }
-                    
-                    Rectangle()
-                        .fill(Color.primary.opacity(0.08))
-                        .frame(width: 1, height: 48)
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Subject")
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
-                        Text(currentSubject)
-                            .font(.headline)
-                            .foregroundStyle(Color.primary)
-                    }
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 6) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(Color.orange)
-                        Text("\(streakCount)")
-                            .font(.headline)
-                            .foregroundStyle(Color.orange)
-                    }
+                    Circle()
+                        .fill(Color.secondary.opacity(0.5))
+                        .frame(width: 8, height: 8)
+                    Text("No friends studying right now")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.secondary)
                 }
             }
-            .padding(15)
+
+            // MARK: Session stats card
+            // .glassEffect() applied directly — no explicit shape argument needed.
+            HStack(spacing: 20) {
+                VStack(alignment: .center, spacing: 4) {
+                    Text("Session")
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                    Text(currentSessionTime)
+                        .font(.title2.weight(.semibold))
+                        .monospacedDigit()
+                }
+
+                Divider()
+                    .frame(height: 40)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Subject")
+                        .font(.caption)
+                        .foregroundStyle(Color.secondary)
+                    Text(currentSubject)
+                        .font(.headline)
+                        .foregroundStyle(Color.primary)
+                        .lineLimit(1)
+                }
+
+                Spacer()
+
+                // Streak badge
+                HStack(spacing: 4) {
+                    Image(systemName: "flame.fill")
+                        .foregroundStyle(Color.orange)
+                    Text("\(streakCount)")
+                        .font(.headline.weight(.semibold))
+                        .foregroundStyle(Color.orange)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 14)
+            .glassEffect()
         }
-        .padding(.horizontal, 20)
     }
 }
+//UIEND
 
 #Preview {
-    DashboardHeader(currentSessionTime: "One", currentSubject: "CurrentSubj", streakCount: 4, totalDailyTime: "100")
+    NavigationStack {
+        DashboardHeader(currentSessionTime: "01:22", currentSubject: "Mathematics", streakCount: 4, totalDailyTime: "02:34")
+            .padding()
+    }
 }
