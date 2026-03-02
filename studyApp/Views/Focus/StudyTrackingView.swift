@@ -193,23 +193,36 @@ struct StudyTrackingView: View {
     }
 
     private var connectionRow: some View {
+        //UITWEAK
+        // Add glass effect to connection status for subtle visual emphasis
+        // This makes the online friends indicator feel more like a status badge
         HStack(spacing: 6) {
 
-            
+
+
             Text("\(onlineFriendCount) online friends")
                 .font(.caption)
-            
-            
+
+
+
             Image(systemName: "dot.radiowaves.up.forward")
-            
+
                 .font(.subheadline)
                 .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.periodic(delay: 4.0)))
                 .foregroundColor(.green)
         }
-        
-        
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.white.opacity(0.05)) // Subtle background for glass effect
+        )
+        .glassEffect() // Apply glass effect to the connection status
+        //UIEND
+
+
 //        .foregroundColor(.secondary)
-        
+
     }
     
     
@@ -218,6 +231,9 @@ struct StudyTrackingView: View {
         ZStack {
             HStack {
                 HStack { //child hstack1, aligned to be right-most within the available space
+                    //UITWEAK
+                    // Add glass effect to time tracking status (break time / study time)
+                    // This creates visual consistency with other glass elements
                     // "Pause at" text: fades in and slides from left when paused
                     VStack(spacing: 4) {
                         if (timerInProgress) { //if we're currently tracking (not paused)
@@ -225,7 +241,7 @@ struct StudyTrackingView: View {
                             Text(formattedHMS(from: timeSinceLastBreakEnded)) //parse through a helper; format the timeinterval as hour/minute/second
                                 .font(.headline.monospacedDigit())
                                 .frame(alignment: .center)
-                            
+
                             Text("since last break")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -233,11 +249,11 @@ struct StudyTrackingView: View {
 
                         } else { //if we're paused
 
-                            
+
                             Text(formattedHMS(from: timeSinceLastBreakStarted)) //parse through a helper; format the timeinterval as hour/minute/second
                                 .font(.headline.monospacedDigit())
                                 .frame(alignment: .center)
-                            
+
                             Text("Break Length")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -250,6 +266,14 @@ struct StudyTrackingView: View {
                     .offset(x: timerInProgress ? 0 : 0)
                     .animation(.easeInOut(duration: 0.3), value: timerInProgress)
                     .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .fill(Color.white.opacity(0.06)) // Subtle background for glass effect
+                    )
+                    .glassEffect() // Apply glass effect to time status
+                    //UIEND
                 }
                 .padding(.horizontal, 20)
                 
@@ -264,6 +288,9 @@ struct StudyTrackingView: View {
                             if timerInProgress {
                                 HStack {
                                     
+                                    //UITWEAK
+                                    // Pause button with interactive glass effect for real-time tactile feedback
+                                    // Interactive mode makes the button respond dynamically to touch/press
                                     //resume button
                                     Button {
                                         timerInProgress.toggle()
@@ -272,31 +299,42 @@ struct StudyTrackingView: View {
                                     }
                                     .buttonStyle(.glass)
                                     .buttonSizing(.flexible)
+                                    .glassEffect(.regular.interactive()) // Add interactive glass feedback
+                                    //UIEND
 
                                     
 
-                                    
+
+                                    //UITWEAK
+                                    // End button with interactive glass effect (currently hidden/no label)
                                     //end button
                                     Button {
-                                        
+
                                     } label: {
 //                                        Text("end")
                                     }
                                     .buttonStyle(.glass)
                                     .buttonSizing(.automatic)
+                                    .glassEffect(.regular.interactive()) // Add interactive glass feedback
+                                    //UIEND
 
 
                                 }
                             } else {
-                            
+
+                                //UITWEAK
+                                // Start button with interactive glass effect for responsive feedback
+                                // This is the primary action button to begin a study session
                                 Button {
                                     timerInProgress.toggle()
-                                    
+
                                 } label: {
                                     Text("Start")
                                 }
                                 .buttonStyle(.glass)
                                 .buttonSizing(.automatic)
+                                .glassEffect(.regular.interactive()) // Add interactive glass feedback
+                                //UIEND
 
 
                             }

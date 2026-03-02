@@ -13,6 +13,9 @@ struct ActiveSubjectList: View {
     @State private var subjectSelection: Subject?
 
     var body: some View {
+        //UITWEAK
+        // Apply glass effect to the subject picker for a cohesive, modern look
+        // This makes the picker feel more integrated with other glass elements in the UI
         Group {
             if subjects.isEmpty {
                 Text("No subjects yet")
@@ -52,6 +55,14 @@ struct ActiveSubjectList: View {
                 }
             }
         }
+        .padding(.horizontal, 12) // Add horizontal padding for visual spacing
+        .padding(.vertical, 8) // Add vertical padding for better touch target
+        .background(
+            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                .fill(Color.white.opacity(0.06)) // Subtle background for glass effect
+        )
+        .glassEffect(.regular.interactive()) // Interactive glass effect for picker responsiveness
+        //UIEND
     }
 
     private var selectionBinding: Binding<Subject> {

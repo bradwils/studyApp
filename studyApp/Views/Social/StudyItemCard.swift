@@ -53,11 +53,15 @@ struct StudyItemCard: View {
             }
         }
         .padding(20)
+        //UITWEAK
+        // Apply interactive glass effect to social feed cards for subtle reactivity
+        // The glass effect provides a modern, translucent appearance that responds to user interaction
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color.white.opacity(0.08)) // Subtle background tint for glass effect
         )
-        .shadow(color: Color.black.opacity(0.05), radius: 12, x: 0, y: 8)
+        .glassEffect(.regular.interactive()) // Native SwiftUI glass effect with interactive feedback
+        //UIEND
     }
 }
 

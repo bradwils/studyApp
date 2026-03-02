@@ -31,13 +31,16 @@ struct DurationPicker: View {
     var title: String? = "Set Duration"
     
     var body: some View {
+        //UITWEAK
+        // Wrap the entire duration picker in a glass effect container
+        // This gives the picker a cohesive, modern appearance with subtle translucency
         VStack(spacing: 8) {
             if let title = title {
                 Text(title)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.7))
             }
-            
+
             HStack(spacing: 0) {
                 // Hours picker
                 Picker("Hours", selection: Binding(
@@ -56,11 +59,11 @@ struct DurationPicker: View {
                 .pickerStyle(.wheel)
                 .frame(width: 60)
                 .clipped()
-                
+
                 Text("h")
                     .foregroundColor(.white.opacity(0.6))
                     .padding(.horizontal, 4)
-                
+
                 // Minutes picker
                 Picker("Minutes", selection: Binding(
                     get: { (Int(duration) % 3600) / 60 },
@@ -78,13 +81,20 @@ struct DurationPicker: View {
                 .pickerStyle(.wheel)
                 .frame(width: 60)
                 .clipped()
-                
+
                 Text("m")
                     .foregroundColor(.white.opacity(0.6))
                     .padding(.horizontal, 4)
             }
             .frame(height: 100)
         }
+        .padding(16) // Add padding around the picker for better visual spacing
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white.opacity(0.05)) // Subtle background for glass effect
+        )
+        .glassEffect() // Apply glass effect to the entire picker container
+        //UIEND
     }
 }
 
