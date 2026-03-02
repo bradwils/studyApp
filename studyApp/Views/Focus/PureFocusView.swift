@@ -103,10 +103,20 @@ struct PureFocusView: View {
                     .foregroundColor(dynamicButtonColor)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 14)
+                    //UITWEAK: Glass effect background for native iOS feel
                     .background(
                         RoundedRectangle(cornerRadius: 12)
-                            .fill(dynamicButtonBackground)
+                            // Use glass effect for modern appearance with blur
+                            .glassEffect(.regular.interactive())
+                            // Fallback with subtle shadow for depth
+                            .shadow(
+                                color: Color.black.opacity(0.1),
+                                radius: 10,
+                                x: 0,
+                                y: 4
+                            )
                     )
+                    //UIEND
                 }
                 
                 //lock button: PAID FEATURE
@@ -143,10 +153,19 @@ struct PureFocusView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(dynamicButtonColor)
                             .padding(14)
+                            //UITWEAK: Glass effect for reset button
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .fill(dynamicButtonBackground)
+                                    .glassEffect(.regular.interactive())
+                                    // Subtle shadow for depth
+                                    .shadow(
+                                        color: Color.black.opacity(0.1),
+                                        radius: 10,
+                                        x: 0,
+                                        y: 4
+                                    )
                             )
+                            //UIEND
                     }
                 }
             }
