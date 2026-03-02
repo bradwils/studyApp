@@ -53,11 +53,15 @@ struct StudyItemCard: View {
             }
         }
         .padding(20)
+        //UITWEAK
+        // glassEffect with .interactive() makes the card subtly react to touch — it brightens
+        // slightly when the user presses it, giving the list a native, physical feel without
+        // needing a custom pressed-state style.
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 28))
         )
-        .shadow(color: Color.black.opacity(0.05), radius: 12, x: 0, y: 8)
+        //UIEND
     }
 }
 

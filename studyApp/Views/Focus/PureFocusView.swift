@@ -85,6 +85,10 @@ struct PureFocusView: View {
             
             // Timer control buttons
             HStack(spacing: 20) {
+                //UITWEAK
+                // .buttonStyle(.glass) is an iOS 26 style that provides the system glass
+                // appearance + the interactive press highlight for free. We no longer need
+                // to manually manage foreground/background colors or pressed states.
                 // Start/Pause button
                 Button(action: {
                     viewModel.toggleTimer()
@@ -100,14 +104,11 @@ struct PureFocusView: View {
                     }
                     .font(.title3)
                     .fontWeight(.semibold)
-                    .foregroundColor(dynamicButtonColor)
                     .padding(.horizontal, 30)
                     .padding(.vertical, 14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(dynamicButtonBackground)
-                    )
                 }
+                .buttonStyle(.glass)
+                //UIEND
                 
                 //lock button: PAID FEATURE
                 Button(action: {
@@ -130,8 +131,11 @@ struct PureFocusView: View {
                         }
                     }
                 }
+                .buttonStyle(.glass)
                 
+                //UITWEAK
                 // Reset button (only show when timer has started)
+                // Uses the same .glass style so it visually matches the other controls.
                 if viewModel.elapsedTime > 0 {
                     Button(action: {
                         withAnimation {
@@ -141,14 +145,11 @@ struct PureFocusView: View {
                         Image(systemName: "arrow.counterclockwise")
                             .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(dynamicButtonColor)
                             .padding(14)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(dynamicButtonBackground)
-                            )
                     }
+                    .buttonStyle(.glass)
                 }
+                //UIEND
             }
             .padding(.top, 10)
         }
@@ -179,17 +180,6 @@ struct PureFocusView: View {
     private var dynamicForegroundColor: Color {
         viewModel.timerProgress > 0.6 ? .black : .white
     }
-    
-    /// Dynamically adjust button colors for contrast
-    private var dynamicButtonColor: Color {
-        viewModel.timerProgress > 0.6 ? .white : .black
-    }
-    
-    private var dynamicButtonBackground: Color {
-        viewModel.timerProgress > 0.6 ? .black.opacity(0.8) : .white.opacity(0.85)
-    }
-    
-    
     
     //new timer stuff
     var remainingTime: some View {

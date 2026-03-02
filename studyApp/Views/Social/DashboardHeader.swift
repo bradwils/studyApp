@@ -49,6 +49,10 @@ struct DashboardHeader: View {
                     Spacer()
                     
                     
+                    //UITWEAK
+                    // Wrap the avatar in a glass circle so it subtly reacts on tap —
+                    // the interactive modifier provides a built-in pressed-highlight without
+                    // any custom gesture code.
                     Menu {
                         NavigationLink("Settings") { SettingsView() }
                         NavigationLink("Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
@@ -58,8 +62,14 @@ struct DashboardHeader: View {
                             .scaledToFit()
                             .frame(width: 44, height: 44)
                             .foregroundStyle(.primary)
+                            .padding(6)
+                            .background {
+                                Circle()
+                                    .glassEffect(.regular.interactive(), in: .circle)
+                            }
                     }
                     .buttonStyle(.plain)
+                    //UIEND
                 }
                 
             }

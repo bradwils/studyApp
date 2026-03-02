@@ -65,6 +65,9 @@ struct SocialView: View {
 
                     LazyVStack(spacing: 5) {
                         ForEach(viewModel.items) { item in
+                            //UITWEAK
+                            // .hoverEffect(.highlight) adds the system pointer hover highlight
+                            // on iPadOS/macOS (Catalyst), keeping the feel native across platforms.
                             NavigationLink {
                                 StudyMemberDetailView(memberName: item.name)
                             } label: {
@@ -72,7 +75,9 @@ struct SocialView: View {
                                     .padding(.horizontal, 15)
                             }
                             .buttonStyle(.plain)
+                            .hoverEffect(.highlight)
                             .padding(.bottom, 5)
+                            //UIEND
                         }
                     }
                     .padding(.top, 16)
