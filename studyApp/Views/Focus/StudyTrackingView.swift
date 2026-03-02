@@ -63,6 +63,9 @@ struct StudyTrackingView: View {
                 headerRow
                 timeSummaryRow
                 MainTimerElement
+                
+                Spacer()
+                    .frame(height: .infinity)
                 connectionRow
                 pauseStopRow
                 

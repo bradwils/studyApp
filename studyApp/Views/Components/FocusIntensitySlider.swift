@@ -93,6 +93,7 @@ struct FocusIntensitySlider: View {
                     }
                 
                 ZStack(alignment: .leading) {
+                    //MARK: ending capsule
                     Capsule() //ending capsule outline
                         .glassEffect()
                         .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
@@ -101,9 +102,7 @@ struct FocusIntensitySlider: View {
                                 Capsule()
                                     .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 10]))
                                 Button(action: {}) {
-                                    Text("")
-                                        .font(.system(size: focusSliderFontSize, weight: .heavy))
-                                        .foregroundColor(.primary)
+                                
                                 }
                                 .buttonStyle(.plain)
                                 .allowsHitTesting(false)
@@ -113,6 +112,8 @@ struct FocusIntensitySlider: View {
                         .opacity(0.4)
                         .foregroundColor(.secondary)
                     
+                    
+                    //MARK: trailing capsule for bg effect
                     Capsule()
                         .fill(
                             LinearGradient(
@@ -123,23 +124,20 @@ struct FocusIntensitySlider: View {
                         )
                         .frame(width: knobTotalOffset + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
                     
+                        
+
+                    
                     Capsule()
-                        .glassEffect()
                         .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-                        .overlay {
-                            Button(action: {}) {
-                                Text("Focus")
-                                    .font(.system(size: focusSliderFontSize, weight: .heavy))
-                                    .foregroundColor(.primary)
-                            }
-                            .buttonStyle(.plain)
-                            .allowsHitTesting(false)
-                        }
-                        .scaleEffect(isSliderElementPressed ? 1.05 : 1)
-                        .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0), value: isSliderElementPressed)
-                        .shadow(color: Color.black.opacity(isSliderElementPressed ? 0.4 : 0.25), radius: isSliderElementPressed ? 10 : 8, x: 0, y: 4)
+                        .glassEffect(.regular.interactive())
+                    
+
+//                        .scaleEffect(isSliderElementPressed ? 1.05 : 1)
+
+                        
                         .offset(x: knobTotalOffset)
                         .gesture(dragGesture)
+
                 }
                 .frame(height: sliderDraggableElementHeight)
                 .onAppear {
@@ -152,7 +150,6 @@ struct FocusIntensitySlider: View {
         }
         //MIGHT BE MISSING THIS HERE:
         .frame(height: sliderDraggableElementHeight)
-        //think it's offset as of
 
         .navigationDestination(isPresented: $navigateToPureFocus) {
             PureFocusView()
