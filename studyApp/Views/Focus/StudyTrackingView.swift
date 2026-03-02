@@ -14,7 +14,12 @@ struct StudyTrackingView: View {
     @State var onlineFriendCount: Int = 0 //to be dynamic later
     @State private var isLeaderboardPresented: Bool = true
     @State private var currentStudySessionInProgress: Bool = false
-    
+
+    //UITWEAK: Track button press states for interactive feedback
+    @State private var isPausePressed = false
+    @State private var isStartPressed = false
+    //UIEND
+
     @State var timeSinceLastBreakEnded: TimeInterval = 179 //time since last breal has ended
     
     @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
@@ -265,6 +270,7 @@ struct StudyTrackingView: View {
                                 HStack {
                                     
                                     //resume button
+                                    //UITWEAK: Enhanced glass button with scale effect for tactile feedback
                                     Button {
                                         timerInProgress.toggle()
                                     } label: {
@@ -272,6 +278,15 @@ struct StudyTrackingView: View {
                                     }
                                     .buttonStyle(.glass)
                                     .buttonSizing(.flexible)
+                                    // Subtle scale effect on press for interactive feel
+                                    .scaleEffect(isPausePressed ? 0.96 : 1.0)
+                                    .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.6), value: isPausePressed)
+                                    .simultaneousGesture(
+                                        DragGesture(minimumDistance: 0)
+                                            .onChanged { _ in isPausePressed = true }
+                                            .onEnded { _ in isPausePressed = false }
+                                    )
+                                    //UIEND
 
                                     
 
@@ -288,15 +303,25 @@ struct StudyTrackingView: View {
 
                                 }
                             } else {
-                            
+
+                                //UITWEAK: Enhanced Start button with scale effect for tactile feedback
                                 Button {
                                     timerInProgress.toggle()
-                                    
+
                                 } label: {
                                     Text("Start")
                                 }
                                 .buttonStyle(.glass)
                                 .buttonSizing(.automatic)
+                                // Subtle scale effect on press for interactive feel
+                                .scaleEffect(isStartPressed ? 0.96 : 1.0)
+                                .animation(.interactiveSpring(response: 0.25, dampingFraction: 0.6), value: isStartPressed)
+                                .simultaneousGesture(
+                                    DragGesture(minimumDistance: 0)
+                                        .onChanged { _ in isStartPressed = true }
+                                        .onEnded { _ in isStartPressed = false }
+                                )
+                                //UIEND
 
 
                             }
@@ -324,28 +349,25 @@ struct StudyTrackingView: View {
     }
 
     private var focusSliderSection: some View {
-        
-            
-//                Text("Focus intensity")
-//                    .font(.subheadline.weight(.semibold))
-//                    .foregroundStyle(.primary)
 
-                
-
-//                Text("DEBUG: \(Int(focusSliderValue))%")
-//                    .font(.subheadline.monospacedDigit())
-//                    .foregroundStyle(.secondary)
-        
-
-        
+        //UITWEAK: Enhanced focus slider container with glass effect
         FocusIntensitySlider(value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
             .frame(height: 40)
             .accessibilityLabel("Focus intensity")
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.white.opacity(0.08))
+                    // Use glass effect for modern native iOS feel with subtle blur
+                    .glassEffect(.regular.interactive())
+                    // Subtle shadow for depth perception
+                    .shadow(
+                        color: Color.black.opacity(0.06),
+                        radius: 10,
+                        x: 0,
+                        y: 4
+                    )
             )
+        //UIEND
     }
 
     public var horizontalContentScrollRow: some View {

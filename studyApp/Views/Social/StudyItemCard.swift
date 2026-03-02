@@ -7,6 +7,10 @@ import SwiftUI
 struct StudyItemCard: View {
     var item: SocialFeedItem
 
+    //UITWEAK: Track press state for interactive glass effect
+    @State private var isPressed = false
+    //UIEND
+
     var body: some View {
         HStack(alignment: .center, spacing: 6) {
             ZStack(alignment: .topLeading) {
@@ -53,11 +57,36 @@ struct StudyItemCard: View {
             }
         }
         .padding(20)
+        //UITWEAK: Glass effect background with interactive states for native iOS feel
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
+                // Use glass effect for modern native iOS appearance with blur and translucency
+                .glassEffect(.regular.interactive())
         )
-        .shadow(color: Color.black.opacity(0.05), radius: 12, x: 0, y: 8)
+        // Enhanced shadow with interactive depth changes
+        .shadow(
+            color: Color.black.opacity(isPressed ? 0.12 : 0.08),
+            radius: isPressed ? 16 : 12,
+            x: 0,
+            y: isPressed ? 10 : 8
+        )
+        // Subtle scale effect for tactile feedback
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        // Smooth spring animation for press interactions
+        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.7), value: isPressed)
+        // Gesture to track press state for interactive feedback
+        .onTapGesture {
+            // Animate press then release
+            withAnimation(.interactiveSpring(response: 0.2, dampingFraction: 0.6)) {
+                isPressed = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                withAnimation(.interactiveSpring(response: 0.3, dampingFraction: 0.7)) {
+                    isPressed = false
+                }
+            }
+        }
+        //UIEND
     }
 }
 

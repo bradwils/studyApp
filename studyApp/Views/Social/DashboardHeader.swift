@@ -64,18 +64,21 @@ struct DashboardHeader: View {
                 
             }
             
+            //UITWEAK: Enhanced glass effect background with consistent styling across iOS versions
             ZStack {
-                if #available(iOS 26.0, *) {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .glassEffect(in: .rect(cornerRadius: 28))
-                        .padding(-15)
-                        .frame(maxHeight: 50)
-
-                } else {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .padding(-15)
-                        .frame(height: 50)
-                }
+                // Use native glass effect for modern iOS feel with shadow for depth
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .glassEffect(.regular.interactive())
+                    .padding(-15)
+                    .frame(maxHeight: 50)
+                    // Enhanced shadow for visual depth and hierarchy
+                    .shadow(
+                        color: Color.black.opacity(0.08),
+                        radius: 14,
+                        x: 0,
+                        y: 6
+                    )
+                //UIEND
                 
                 HStack(spacing: 20) {
                     

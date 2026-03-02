@@ -21,10 +21,20 @@ struct MediaContentTabView: View {
         HStack {
             VStack(spacing: 0) {
                 HStack(spacing: 16) {
+                    //UITWEAK: Glass effect on media card for native iOS feel
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color.white.opacity(0.2))
+                        // Use glass effect instead of flat color for modern iOS appearance
+                        .glassEffect(.regular.interactive())
                         .aspectRatio(1.0, contentMode: .fill)
                         .frame(maxWidth: 120, maxHeight: 120)
+                        // Subtle shadow for depth
+                        .shadow(
+                            color: Color.black.opacity(0.1),
+                            radius: 10,
+                            x: 0,
+                            y: 4
+                        )
+                    //UIEND
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Now playing")

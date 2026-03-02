@@ -127,16 +127,24 @@ struct FocusIntensitySlider: View {
                         
 
                     
+                    //UITWEAK: Enhanced interactive glass knob with scale and shadow feedback
                     Capsule()
                         .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
                         .glassEffect(.regular.interactive())
-                    
-
-//                        .scaleEffect(isSliderElementPressed ? 1.05 : 1)
-
-                        
+                        // Scale effect provides tactile feedback when pressed
+                        .scaleEffect(isSliderElementPressed ? 1.08 : 1)
+                        // Enhanced shadow depth when pressed for depth perception
+                        .shadow(
+                            color: .black.opacity(isSliderElementPressed ? 0.25 : 0.15),
+                            radius: isSliderElementPressed ? 16 : 10,
+                            x: 0,
+                            y: isSliderElementPressed ? 6 : 4
+                        )
+                        // Smooth spring animation for natural feel
+                        .animation(.interactiveSpring(response: 0.3, dampingFraction: 0.65), value: isSliderElementPressed)
                         .offset(x: knobTotalOffset)
                         .gesture(dragGesture)
+                    //UIEND
 
                 }
                 .frame(height: sliderDraggableElementHeight)

@@ -182,6 +182,8 @@ struct CustomBottomSheet: View {
                             style: .continuous
                         )
                     )
+                    //UITWEAK: Enhanced glass effect with shadow that responds to expansion progress
+                    // Shadow depth increases as sheet expands for better visual hierarchy
                     .background(
                         UnevenRoundedRectangle(
                             topLeadingRadius: cornerRadius,
@@ -191,7 +193,15 @@ struct CustomBottomSheet: View {
                             style: .continuous
                         )
                         .glassEffect()
+                        // Dynamic shadow that grows with expansion for depth perception
+                        .shadow(
+                            color: Color.black.opacity(interpolate(from: 0.1, to: 0.2, progress: progress)),
+                            radius: interpolate(from: 12, to: 24, progress: progress),
+                            x: 0,
+                            y: interpolate(from: -8, to: -12, progress: progress)
+                        )
                     )
+                    //UIEND
                     
                     .padding(.bottom, bottomPadding)
             }

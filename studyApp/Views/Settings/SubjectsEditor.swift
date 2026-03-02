@@ -21,13 +21,21 @@ struct SubjectsEditor: View {
                     .font(.title.weight(.bold))
                     
                 Spacer()
+                //UITWEAK: Enhanced close button with scale effect for tactile feedback
                 Button(action: { isPresented.toggle() }) {
                     Image(systemName: "xmark")
                 }
                 .buttonStyle(.glass)
                 .clipShape(.circle)
-                .shadow(radius: 10)
+                // Enhanced shadow for better depth perception
+                .shadow(
+                    color: Color.black.opacity(0.15),
+                    radius: 12,
+                    x: 0,
+                    y: 4
+                )
                 .accessibilityLabel("Close editor")
+                //UIEND
             }
             
             List {
@@ -67,14 +75,15 @@ struct SubjectsEditor: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
             
+            //UITWEAK: Enhanced input area with glass effect for native iOS feel
             ZStack {
-                
+
                 VStack(spacing: 12) {
                     TextField("Subject name", text: $newSubjectName)
                         .textContentType(.givenName)
                         .submitLabel(.next)
                         .focused($isNameFocused)
-                        
+
                     ZStack(alignment: .trailing) {
                         TextField("Subject code (e.g. MATH101)", text: $newSubjectCode)
                             .autocorrectionDisabled()
@@ -90,9 +99,20 @@ struct SubjectsEditor: View {
                     }
                 }
                 .padding()
-                .background(.thinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                // Use glass effect instead of thinMaterial for consistency
+                .background(
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .glassEffect(.regular.interactive())
+                )
+                // Enhanced shadow for depth
+                .shadow(
+                    color: Color.black.opacity(0.08),
+                    radius: 12,
+                    x: 0,
+                    y: 4
+                )
             }
+            //UIEND
             
             Button(action: addSubject) {
                 Label("Add Subject", systemImage: "plus.circle.fill")
