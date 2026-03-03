@@ -1,13 +1,15 @@
 import SwiftUI
 
 struct SocialView: View {
-    /// Dedicated ViewModel keeps the feed data and summary in one place.
     @StateObject private var viewModel = SocialFeedViewModel()
     @Environment(\.colorScheme) var colorScheme
 
+    // MARK: - Derived lists
+    // Split friends into active (studying) and resting for separate sections.
+    private var studyingFriends: [SocialFeedItem] { viewModel.items.filter { !$0.isLocked } }
+    private var restingFriends:  [SocialFeedItem] { viewModel.items.filter {  $0.isLocked } }
+
     // MARK: - Background gradient
-    // Layered radial + linear gradients give the header area a colourful tint
-    // that fades into the plain background below the fold.
     private var backgroundGradient: some View {
         ZStack {
             RadialGradient(
@@ -58,7 +60,7 @@ struct SocialView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     //UITWEAK
-                    // Session summary card sits just below the nav title.
+                    // Header: "Your Study Day" with stat cards + friends chip
                     DashboardHeader(
                         currentSessionTime: viewModel.currentSessionTime,
                         currentSubject: viewModel.currentSubject,
@@ -68,31 +70,20 @@ struct SocialView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
 
-                    // Section label above the friends list
-                    Text("Friends")
-                        .font(.title3.weight(.semibold))
-                        .padding(.horizontal, 20)
-                        .padding(.top, 28)
-                        .padding(.bottom, 10)
-
-                    LazyVStack(spacing: 8) {
-                        ForEach(viewModel.items) { item in
-                            // .hoverEffect(.highlight) adds the system pointer hover highlight
-                            // on iPadOS/macOS (Catalyst), keeping the feel native across platforms.
-                            NavigationLink {
-                                StudyMemberDetailView(memberName: item.name)
-                            } label: {
-                                StudyItemCard(item: item)
-                                    .padding(.horizontal, 16)
-                            }
-                            .buttonStyle(.plain)
-                            .hoverEffect(.highlight)
-                        }
+                    // MARK: "Studying Now" section
+                    if !studyingFriends.isEmpty {
+                        feedSectionHeader(title: "Studying Now", count: studyingFriends.count, color: .green)
+                        friendList(studyingFriends)
                     }
-                    .scrollIndicators(.hidden)
-                    .scrollEdgeEffectStyle(.automatic, for: .top)
-                    .padding(.bottom, 24)
+
+                    // MARK: "Taking a Break" section
+                    if !restingFriends.isEmpty {
+                        feedSectionHeader(title: "Taking a Break", count: restingFriends.count, color: .gray.opacity(0.6))
+                        friendList(restingFriends)
+                    }
                     //UIEND
+
+                    Spacer().frame(height: 24)
                 }
             }
         }
@@ -100,10 +91,6 @@ struct SocialView: View {
         .navigationBarTitleDisplayMode(.large)
         .toolbarBackground(.visible, for: .navigationBar)
         .background(colorScheme == .dark ? Color.black : Color.white)
-        //UITWEAK
-        // Avatar/profile menu moved into the navigation toolbar — this is the standard
-        // iOS pattern (see Mail, Contacts, Health). It keeps the scroll area clean and
-        // gives the button a consistent, expected location for users.
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
@@ -116,9 +103,46 @@ struct SocialView: View {
                 }
             }
         }
-        //UIEND
     }
 
+    // MARK: - Section helpers
+
+    /// A section header row with a title and a coloured count pill.
+    @ViewBuilder
+    private func feedSectionHeader(title: String, count: Int, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Text(title)
+                .font(.title3.weight(.semibold))
+            Text("\(count)")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(color, in: Capsule())
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 28)
+        .padding(.bottom, 10)
+    }
+
+    /// A lazy list of friend cards with navigation links.
+    @ViewBuilder
+    private func friendList(_ items: [SocialFeedItem]) -> some View {
+        LazyVStack(spacing: 8) {
+            ForEach(items) { item in
+                NavigationLink {
+                    StudyMemberDetailView(memberName: item.name)
+                } label: {
+                    StudyItemCard(item: item)
+                        .padding(.horizontal, 16)
+                }
+                .buttonStyle(.plain)
+                .hoverEffect(.highlight)
+            }
+        }
+        .scrollIndicators(.hidden)
+        .scrollEdgeEffectStyle(.automatic, for: .top)
+    }
 }
 
 #Preview {

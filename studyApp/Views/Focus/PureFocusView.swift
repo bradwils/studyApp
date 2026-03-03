@@ -46,7 +46,6 @@ struct PureFocusView: View {
 
             CustomBottomSheet()
         }
-        .toolbar(.hidden, for: .tabBar)
         .foregroundColor(dynamicForegroundColor)
         .navigationBarBackButtonHidden(false)
     }

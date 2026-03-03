@@ -190,7 +190,8 @@ struct CustomBottomSheet: View {
                             topTrailingRadius: cornerRadius,
                             style: .continuous
                         )
-                        .glassEffect()
+                        .fill(.regularMaterial)
+                        .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: -6)
                     )
                     
                     .padding(.bottom, bottomPadding)

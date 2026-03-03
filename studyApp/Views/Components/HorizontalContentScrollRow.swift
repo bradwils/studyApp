@@ -21,14 +21,10 @@ struct MediaContentTabView: View {
         HStack {
             VStack(spacing: 0) {
                 HStack(spacing: 16) {
-                    //UITWEAK
-                    // Album art placeholder uses glass so it blends into the gradient
-                    // background of the Focus screen rather than floating as a flat shape.
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .glassEffect()
+                        .fill(Color.primary.opacity(0.08))
                         .aspectRatio(1.0, contentMode: .fill)
                         .frame(maxWidth: 120, maxHeight: 120)
-                    //UIEND
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Now playing")
@@ -45,12 +41,9 @@ struct MediaContentTabView: View {
                     
                     Spacer()
                     
-                    //UITWEAK
-                    // Playback ring uses glass on the circle so the progress stroke sits on top
-                    // of a glass disc — matching the style of native Now Playing widgets.
                     ZStack {
                         Circle()
-                            .glassEffect()
+                            .fill(Color.primary.opacity(0.12))
                         
                         Circle()
                             .trim(from: 0, to: 0.35)
@@ -64,7 +57,6 @@ struct MediaContentTabView: View {
                             .font(.system(size: 12, weight: .bold))
                     }
                     .frame(width: 34, height: 34)
-                    //UIEND
                 }
                 .padding(.vertical, 12)
             }
