@@ -153,11 +153,10 @@ struct FocusIntensitySlider: View {
 
         .navigationDestination(isPresented: $navigateToPureFocus) {
             PureFocusView()
-                .onDisappear {
-                    // Reset slider to 0 when returning from PureFocusView
-                    withAnimation(.interactiveSpring(response: 0.4, dampingFraction: 0.7)) {
-                        value = 0
-                    }
+                .onAppear {
+                    // Reset slider to 0 as soon as PureFocusView appears
+                    // (i.e., while StudyTrackingView is being hidden from view).
+                    value = 0
                 }
         }
     }

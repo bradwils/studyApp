@@ -3,31 +3,39 @@
 
 import SwiftUI
 
-//UITWEAK
-// Redesigned DashboardHeader v2:
-// - "Your Study Day" heading with streak badge inline at the top
-// - Three equal-width stat cards (session time, subject, today total) with icons
-// - Online-friends indicator stays as a minimal dot + text chip below the stats
-// All glass effects applied without shape arguments per project convention.
+// MARK: - DashboardHeader
 
-/// Summary banner displayed above the friends feed.
+//UITWEAK
+// DashboardHeader v3: three stats grouped into one glass container
+// separated by Dividers, rather than three independent glass cards.
+// The heading row and streak badge are unchanged.
+// All glass effects applied without shape arguments.
+
+/// Summary banner displayed above the friends feed on the Social screen.
 struct DashboardHeader: View {
+
+    // MARK: Properties
+
     var currentSessionTime: String
     var currentSubject: String
     var streakCount: Int
     var totalDailyTime: String
     var onlineFriends = 2
 
+    // MARK: Body
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
 
             // MARK: Heading row
+            // Title on the left, streak badge on the right.
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Your Study Day")
                         .font(.title2.weight(.bold))
                         .foregroundStyle(.primary)
-                    // Live friends chip
+
+                    // MARK: Live friends indicator
                     HStack(spacing: 5) {
                         Circle()
                             .fill(onlineFriends > 0 ? Color.green : Color.secondary.opacity(0.4))
@@ -42,7 +50,7 @@ struct DashboardHeader: View {
 
                 Spacer()
 
-                // Streak badge — prominent but compact
+                // MARK: Streak badge
                 HStack(spacing: 5) {
                     Image(systemName: "flame.fill")
                         .foregroundStyle(.orange)
@@ -55,44 +63,27 @@ struct DashboardHeader: View {
                 .glassEffect()
             }
 
-            // MARK: Stat cards row
-            // Three equal-width cards each carrying a label, icon, and value.
-            HStack(spacing: 10) {
-                StudyStatCard(
-                    icon: "timer",
-                    iconColor: .blue,
-                    label: "Session",
-                    value: currentSessionTime
-                )
-                StudyStatCard(
-                    icon: "book.fill",
-                    iconColor: .purple,
-                    label: "Subject",
-                    value: currentSubject
-                )
-                StudyStatCard(
-                    icon: "clock.fill",
-                    iconColor: .green,
-                    label: "Today",
-                    value: totalDailyTime
-                )
+            // MARK: Stats group
+            // One glass container with three cells separated by Dividers —
+            // gives variety over having three separate floating cards.
+            HStack(spacing: 0) {
+                statCell(icon: "timer",      iconColor: .blue,   label: "Session", value: currentSessionTime)
+                Divider().padding(.vertical, 10)
+                statCell(icon: "book.fill",  iconColor: .purple, label: "Subject",  value: currentSubject)
+                Divider().padding(.vertical, 10)
+                statCell(icon: "clock.fill", iconColor: .green,  label: "Today",    value: totalDailyTime)
             }
+            .frame(maxWidth: .infinity)
+            .glassEffect()
         }
     }
-}
-//UIEND
 
-// MARK: - Helper: individual stat card
+    // MARK: - Helpers
 
-/// A compact glass card showing a single study metric.
-private struct StudyStatCard: View {
-    let icon: String
-    let iconColor: Color
-    let label: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
+    /// A single stat cell used inside the stats group.
+    @ViewBuilder
+    private func statCell(icon: String, iconColor: Color, label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
             HStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.caption.weight(.semibold))
@@ -111,9 +102,11 @@ private struct StudyStatCard: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassEffect()
     }
 }
+//UIEND
+
+// MARK: - Preview
 
 #Preview {
     NavigationStack {
@@ -126,3 +119,4 @@ private struct StudyStatCard: View {
         .padding()
     }
 }
+
