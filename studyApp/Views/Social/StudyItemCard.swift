@@ -3,75 +3,37 @@
 
 import SwiftUI
 
-// MARK: - CardVariant
+// MARK: - OnlineUserCard
 
-/// Three visual styles for a friend row.
-/// Shown one-per-entry in the list so you can compare them at a glance.
-/// Once you've chosen a favourite, delete the other two cases and set a
-/// single default in SocialFeedView.friendList.
-enum CardVariant {
-    /// Coloured left bar + initials circle + subject code (current design).
-    case accentBar
-    /// Large initials ring + subject shown as a tinted capsule tag.
-    case bubbleCard
-    /// Minimal single-line row: status dot + name + subject + timer.
-    case compactRow
-}
-
-// MARK: - StudyItemCard
-
-/// Compact summary row for a study member.
-/// The `variant` parameter controls which of the three layouts is rendered.
-struct StudyItemCard: View {
-
-    // MARK: Properties
+/// Friend row for someone who is currently studying.
+/// Accent bar layout: coloured left bar, initials circle, name + subject, timer + lock badge.
+struct OnlineUserCard: View {
 
     var item: SocialFeedItem
-    var variant: CardVariant = .accentBar
 
-    // MARK: Derived
-
-    private var initial: String  { String(item.name.prefix(1)).uppercased() }
-    private var isActive: Bool   { !item.isLocked }
-    private var accentColor: Color { isActive ? .green : .secondary.opacity(0.5) }
-
-    // MARK: Body
+    private var initial: String { String(item.name.prefix(1)).uppercased() }
 
     var body: some View {
-        Group {
-            switch variant {
-            case .accentBar:  accentBarLayout
-            case .bubbleCard: bubbleCardLayout
-            case .compactRow: compactRowLayout
-            }
-        }
-    }
-
-    // MARK: - Variant A: Accent bar
-    // Left coloured bar signals status instantly.
-    // Initials circle, name + subject code, timer + lock badge on right.
-
-    private var accentBarLayout: some View {
         HStack(alignment: .center, spacing: 0) {
 
-            // Status bar
+            // MARK: Status bar (green = studying)
             Capsule()
-                .fill(accentColor)
+                .fill(Color.green)
                 .frame(width: 3, height: 40)
                 .padding(.trailing, 14)
 
-            // Initials avatar
+            // MARK: Initials avatar
             ZStack {
                 Circle()
-                    .fill(isActive ? Color.green.opacity(0.14) : Color.secondary.opacity(0.1))
+                    .fill(Color.green.opacity(0.14))
                     .frame(width: 44, height: 44)
                 Text(initial)
                     .font(.headline.weight(.semibold))
-                    .foregroundStyle(isActive ? Color.green : Color.secondary)
+                    .foregroundStyle(Color.green)
             }
             .padding(.trailing, 12)
 
-            // Name + subject
+            // MARK: Name + subject
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.name)
                     .font(.headline)
@@ -90,15 +52,15 @@ struct StudyItemCard: View {
 
             Spacer()
 
-            // Timer + lock status
+            // MARK: Timer + lock status
             VStack(alignment: .trailing, spacing: 5) {
                 Text(item.timer)
                     .font(.subheadline.monospacedDigit().weight(.semibold))
                     .foregroundStyle(.primary)
                 HStack(spacing: 4) {
-                    Image(systemName: isActive ? "lock.open.fill" : "lock.fill")
+                    Image(systemName: "lock.open.fill")
                         .font(.caption2)
-                        .foregroundStyle(isActive ? Color.green : Color.red)
+                        .foregroundStyle(Color.green)
                     Text(item.dailyTotalTime)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
@@ -109,66 +71,22 @@ struct StudyItemCard: View {
         .padding(.vertical, 14)
         .glassEffect(.regular.interactive())
     }
+}
 
-    // MARK: - Variant B: Bubble card
-    // Larger avatar with a tinted stroke ring.
-    // Subject displayed as a small coloured capsule tag below the name.
+// MARK: - OfflineUserCard
 
-    private var bubbleCardLayout: some View {
-        HStack(spacing: 14) {
+/// Friend row for someone who is on a break or not currently studying.
+/// Compact row layout: status dot, name, subject, timer — all on one line.
+struct OfflineUserCard: View {
 
-            // Large initials ring
-            ZStack {
-                Circle()
-                    .fill(isActive ? Color.green.opacity(0.15) : Color.secondary.opacity(0.08))
-                    .frame(width: 52, height: 52)
-                Circle()
-                    .strokeBorder(accentColor, lineWidth: 2)
-                    .frame(width: 52, height: 52)
-                Text(initial)
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(isActive ? Color.green : Color.secondary)
-            }
+    var item: SocialFeedItem
 
-            // Name + subject tag
-            VStack(alignment: .leading, spacing: 5) {
-                Text(item.name)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                Text(item.subject)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(isActive ? Color.green : Color.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(accentColor.opacity(0.12), in: Capsule())
-            }
-
-            Spacer()
-
-            // Timer + status label
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(item.timer)
-                    .font(.subheadline.monospacedDigit().weight(.semibold))
-                    .foregroundStyle(.primary)
-                Text(isActive ? "Studying" : "On break")
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(accentColor)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .glassEffect(.regular.interactive())
-    }
-
-    // MARK: - Variant C: Compact row
-    // Minimal horizontal row: status dot, name, subject, timer — all on one line.
-
-    private var compactRowLayout: some View {
+    var body: some View {
         HStack(spacing: 10) {
 
-            // Tiny status dot
+            // MARK: Status dot (muted = not studying)
             Circle()
-                .fill(accentColor)
+                .fill(Color.secondary.opacity(0.5))
                 .frame(width: 9, height: 9)
 
             Text(item.name)
@@ -191,5 +109,4 @@ struct StudyItemCard: View {
         .glassEffect(.regular.interactive())
     }
 }
-
 

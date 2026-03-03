@@ -64,14 +64,14 @@ struct DashboardHeader: View {
             }
 
             // MARK: Stats group
-            // One glass container with three cells separated by Dividers —
-            // gives variety over having three separate floating cards.
+            // One glass container with three cells separated by Dividers.
+            // Cells are aligned left / center / right for visual variety.
             HStack(spacing: 0) {
-                statCell(icon: "timer",      iconColor: .blue,   label: "Session", value: currentSessionTime)
+                statCell(icon: "timer",      iconColor: .blue,   label: "Session", value: currentSessionTime, alignment: .leading)
                 Divider().padding(.vertical, 10)
-                statCell(icon: "book.fill",  iconColor: .purple, label: "Subject",  value: currentSubject)
+                statCell(icon: "book.fill",  iconColor: .purple, label: "Subject",  value: currentSubject,        alignment: .center)
                 Divider().padding(.vertical, 10)
-                statCell(icon: "clock.fill", iconColor: .green,  label: "Today",    value: totalDailyTime)
+                statCell(icon: "clock.fill", iconColor: .green,  label: "Today",    value: totalDailyTime,         alignment: .trailing)
             }
             .frame(maxWidth: .infinity)
             .glassEffect()
@@ -82,8 +82,14 @@ struct DashboardHeader: View {
 
     /// A single stat cell used inside the stats group.
     @ViewBuilder
-    private func statCell(icon: String, iconColor: Color, label: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
+    private func statCell(icon: String, iconColor: Color, label: String, value: String, alignment: HorizontalAlignment) -> some View {
+        let frameAlignment: Alignment
+        switch alignment {
+        case .leading:  frameAlignment = .leading
+        case .trailing: frameAlignment = .trailing
+        default:        frameAlignment = .center
+        }
+        VStack(alignment: alignment, spacing: 5) {
             HStack(spacing: 4) {
                 Image(systemName: icon)
                     .font(.caption.weight(.semibold))
@@ -101,7 +107,7 @@ struct DashboardHeader: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: frameAlignment)
     }
 }
 //UIEND

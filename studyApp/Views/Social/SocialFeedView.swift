@@ -41,13 +41,13 @@ struct SocialView: View {
                     // MARK: "Studying Now" section
                     if !studyingFriends.isEmpty {
                         feedSectionHeader(title: "Studying Now", count: studyingFriends.count, color: .green)
-                        friendList(studyingFriends)
+                        friendList(studyingFriends, online: true)
                     }
 
                     // MARK: "Taking a Break" section
                     if !restingFriends.isEmpty {
                         feedSectionHeader(title: "Taking a Break", count: restingFriends.count, color: .gray.opacity(0.6))
-                        friendList(restingFriends)
+                        friendList(restingFriends, online: false)
                     }
 
                     Spacer().frame(height: 24)
@@ -138,18 +138,21 @@ struct SocialView: View {
     }
 
     /// A list of friend cards with navigation links.
-    /// Each entry cycles through a different CardVariant so variants can be compared.
-    /// Once you pick a favourite, replace the cycling logic with a single variant.
+    /// Uses OnlineUserCard for studying friends, OfflineUserCard for resting friends.
     @ViewBuilder
-    private func friendList(_ items: [SocialFeedItem]) -> some View {
-        let variants: [CardVariant] = [.accentBar, .bubbleCard, .compactRow]
+    private func friendList(_ items: [SocialFeedItem], online: Bool) -> some View {
         LazyVStack(spacing: 8) {
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+            ForEach(items) { item in
                 NavigationLink {
                     StudyMemberDetailView(memberName: item.name)
                 } label: {
-                    StudyItemCard(item: item, variant: variants[index % variants.count])
-                        .padding(.horizontal, 16)
+                    if online {
+                        OnlineUserCard(item: item)
+                            .padding(.horizontal, 16)
+                    } else {
+                        OfflineUserCard(item: item)
+                            .padding(.horizontal, 16)
+                    }
                 }
                 .buttonStyle(.plain)
                 .hoverEffect(.highlight)
