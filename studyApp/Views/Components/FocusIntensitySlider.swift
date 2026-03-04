@@ -129,12 +129,7 @@ struct FocusIntensitySlider: View {
                     
                     Capsule()
                         .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-                        .glassEffect(.regular.interactive())
-                    
-
-//                        .scaleEffect(isSliderElementPressed ? 1.05 : 1)
-
-                        
+                        .glassEffect(.regular.interactive())    
                         .offset(x: knobTotalOffset)
                         .gesture(dragGesture)
 
@@ -148,17 +143,23 @@ struct FocusIntensitySlider: View {
                 }
             }
         }
+            
         //MIGHT BE MISSING THIS HERE:
         .frame(height: sliderDraggableElementHeight)
 
         .navigationDestination(isPresented: $navigateToPureFocus) {
             PureFocusView()
                 .onAppear {
-                    // Reset slider to 0 as soon as PureFocusView appears
+                    // Reset slider tow 0 as soon as PureFocusView appears
                     // (i.e., while StudyTrackingView is being hidden from view).
                     value = 0
                 }
         }
+        //MARK: Slider background shaoe
+        .background(
+            Capsule()
+                .fill(Color.gray.opacity(0.2))
+        )
     }
 
         

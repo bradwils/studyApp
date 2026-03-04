@@ -83,12 +83,6 @@ struct DashboardHeader: View {
     /// A single stat cell used inside the stats group.
     @ViewBuilder
     private func statCell(icon: String, iconColor: Color, label: String, value: String, alignment: HorizontalAlignment) -> some View {
-        let frameAlignment: Alignment
-        switch alignment {
-        case .leading:  frameAlignment = .leading
-        case .trailing: frameAlignment = .trailing
-        default:        frameAlignment = .center
-        }
         VStack(alignment: alignment, spacing: 5) {
             HStack(spacing: 4) {
                 Image(systemName: icon)
@@ -107,7 +101,7 @@ struct DashboardHeader: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .frame(maxWidth: .infinity, alignment: frameAlignment)
+        .frame(maxWidth: .infinity)
     }
 }
 //UIEND

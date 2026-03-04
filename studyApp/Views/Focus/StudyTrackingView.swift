@@ -344,7 +344,8 @@ struct StudyTrackingView: View {
             .frame(height: 40)
             .accessibilityLabel("Focus intensity")
             .padding(.vertical, 14)
-            .glassEffect()
+            .padding(.horizontal, 5)
+
         //UIEND
     }
 
