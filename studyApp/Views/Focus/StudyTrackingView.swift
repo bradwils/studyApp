@@ -47,7 +47,7 @@ struct StudyTrackingView: View {
             )
             .ignoresSafeArea()
 
-            // “radial” highlight on the right side
+            // "radial" highlight on the right side
             RadialGradient(
                 gradient: Gradient(colors: [
                     Color.white.opacity(0.35),
@@ -64,18 +64,14 @@ struct StudyTrackingView: View {
                 headerRow
                 timeSummaryRow
                 MainTimerElement
-                
+
                 Spacer()
                     .frame(height: .infinity)
                 connectionRow
                 pauseStopRow
 
-                // Old slider navigation - disabled for pull-down gesture prototype
-                // focusSliderSection
-
                 horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    //.check if above modifier is needed or not
 
 
 
@@ -94,6 +90,9 @@ struct StudyTrackingView: View {
             .padding(.horizontal, 24)
             .padding(.top, 32)
             .padding(.bottom, 24)
+
+            // Swipe-up tab for focus mode navigation
+            SwipeUpFocusTab(isNavigating: $navigateToPureFocus)
         }
         .onChange(of: userProfileStore.profile.subjects) { old, new in
             if vm.selectedSubject == nil, let first = new.first {
@@ -108,7 +107,6 @@ struct StudyTrackingView: View {
         .onReceive(vm.$activeSession) { session in
             currentStudySessionInProgress = session != nil
         }
-        .pullDownNavigation(isNavigating: $navigateToPureFocus)
         .navigationDestination(isPresented: $navigateToPureFocus) {
             PureFocusView()
         }
