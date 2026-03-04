@@ -64,12 +64,21 @@ struct StudyTrackingView: View {
                 timeSummaryRow
                 MainTimerElement
                 
+                    
+                
                 Spacer()
                     .frame(height: .infinity)
-                connectionRow
+                
                 pauseStopRow
                 
+                Spacer()
+                    .frame(height: .infinity)
+
+                
                 focusSliderSection //complex and fucked
+                
+                connectionRow
+
                 
                 horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)

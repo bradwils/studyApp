@@ -18,6 +18,6 @@ struct RemoteUser: Codable {
     
 }
 
-enum activeStatus {
-    case offline, break, online, studying
+enum activeStatus: String, Codable {
+    case offline, paused, online, studying
 }
