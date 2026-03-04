@@ -14,7 +14,8 @@ struct StudyTrackingView: View {
     @State var onlineFriendCount: Int = 0 //to be dynamic later
     @State private var isLeaderboardPresented: Bool = true
     @State private var currentStudySessionInProgress: Bool = false
-    
+    @State private var navigateToPureFocus: Bool = false
+
     @State var timeSinceLastBreakEnded: TimeInterval = 179 //time since last breal has ended
     
     @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
@@ -68,9 +69,10 @@ struct StudyTrackingView: View {
                     .frame(height: .infinity)
                 connectionRow
                 pauseStopRow
-                
-                focusSliderSection //complex and fucked
-                
+
+                // Old slider navigation - disabled for pull-down gesture prototype
+                // focusSliderSection
+
                 horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     //.check if above modifier is needed or not
@@ -93,17 +95,6 @@ struct StudyTrackingView: View {
             .padding(.top, 32)
             .padding(.bottom, 24)
         }
-        
-//        .sheet(isPresented: $isLeaderboardPresented) {
-//            LeaderboardSheetView()
-//                .padding(10)
-//                .presentationDragIndicator(.visible)
-//                .presentationBackgroundInteraction(.enabled)
-//                .presentationDetents([.height(50), .fraction(0.3), .fraction(0.9)])
-//                
-//            
-//            
-//        }
         .onChange(of: userProfileStore.profile.subjects) { old, new in
             if vm.selectedSubject == nil, let first = new.first {
                 vm.updateSubjectSelection(first)
@@ -117,9 +108,10 @@ struct StudyTrackingView: View {
         .onReceive(vm.$activeSession) { session in
             currentStudySessionInProgress = session != nil
         }
-
-
-
+        .pullDownNavigation(isNavigating: $navigateToPureFocus)
+        .navigationDestination(isPresented: $navigateToPureFocus) {
+            PureFocusView()
+        }
     }
 
     // MARK: - Sections
