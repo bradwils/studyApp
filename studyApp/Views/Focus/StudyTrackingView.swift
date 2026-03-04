@@ -193,23 +193,22 @@ struct StudyTrackingView: View {
     }
 
     private var connectionRow: some View {
+        //UITWEAK
+        // Wrapping the online-friends indicator in a glass capsule gives it depth and
+        // makes it look like a live status chip — similar to AirPods/Dynamic Island pills.
         HStack(spacing: 6) {
-
-            
             Text("\(onlineFriendCount) online friends")
                 .font(.caption)
             
-            
             Image(systemName: "dot.radiowaves.up.forward")
-            
                 .font(.subheadline)
                 .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.periodic(delay: 4.0)))
                 .foregroundColor(.green)
         }
-        
-        
-//        .foregroundColor(.secondary)
-        
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .glassEffect()
+        //UIEND
     }
     
     
@@ -338,14 +337,16 @@ struct StudyTrackingView: View {
         
 
         
+        //UITWEAK
+        // Replace the semi-transparent white fill with a glass effect background so the
+        // slider tray adapts to the gradient behind it and feels part of the OS chrome.
         FocusIntensitySlider(value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
             .frame(height: 40)
             .accessibilityLabel("Focus intensity")
             .padding(.vertical, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.white.opacity(0.08))
-            )
+            .padding(.horizontal, 5)
+
+        //UIEND
     }
 
     public var horizontalContentScrollRow: some View {

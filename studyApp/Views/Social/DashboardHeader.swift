@@ -3,120 +3,120 @@
 
 import SwiftUI
 
-/// Summary banner reused across the social feed and related dashboards.
-struct DashboardHeader: View {
-    var currentSessionTime: String
+// MARK: - DashboardHeader
 
+//UITWEAK
+// DashboardHeader v3: three stats grouped into one glass container
+// separated by Dividers, rather than three independent glass cards.
+// The heading row and streak badge are unchanged.
+// All glass effects applied without shape arguments.
+
+/// Summary banner displayed above the friends feed on the Social screen.
+struct DashboardHeader: View {
+
+    // MARK: Properties
+
+    var currentSessionTime: String
     var currentSubject: String
     var streakCount: Int
     var totalDailyTime: String
-    var onlineFriends = 2 //placeholder
+    var onlineFriends = 2
+
+    // MARK: Body
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .center, spacing: 30) {
-                
-                
-                
+        VStack(alignment: .leading, spacing: 16) {
 
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text("Your Friends")
-                            .bold()
-                            .italic()
-                            .font(.system(size: 36))
-                        
-                        
-                        if onlineFriends > 0 {
-                            HStack {
-                                Text("\(onlineFriends) Friends studying ")
-                                    .foregroundColor(.green)
-//                                    .padding(.leading, 8)
-                                Image(systemName: "wave.3.forward")
-                                    .foregroundColor(.green)
-                                
-                            }
-                        } else {
-                            Text("No friends studying")
-//                                .padding(.leading, 8)
-                            
-                            
-                        }
-                        
-                    }
-                    
-                    
-                    Spacer()
-                    
-                    
-                    Menu {
-                        NavigationLink("Settings") { SettingsView() }
-                        NavigationLink("Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
-                    } label: {
-                        Image(systemName: "person.crop.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 44, height: 44)
-                            .foregroundStyle(.primary)
-                    }
-                    .buttonStyle(.plain)
-                }
-                
-            }
-            
-            ZStack {
-                if #available(iOS 26.0, *) {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .glassEffect(in: .rect(cornerRadius: 28))
-                        .padding(-15)
-                        .frame(maxHeight: 50)
+            // MARK: Heading row
+            // Title on the left, streak badge on the right.
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Your Study Day")
+                        .font(.title2.weight(.bold))
+                        .foregroundStyle(.primary)
 
-                } else {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .padding(-15)
-                        .frame(height: 50)
-                }
-                
-                HStack(spacing: 20) {
-                    
-                    VStack(alignment: .center, spacing: 6) {
-                        Text("Total: \(totalDailyTime)")
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
-                        Text(currentSessionTime)
-                            .font(.title2.weight(.semibold))
-                    }
-                    
-                    Rectangle()
-                        .fill(Color.primary.opacity(0.08))
-                        .frame(width: 1, height: 48)
-                    
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Subject")
-                            .font(.caption)
-                            .foregroundStyle(Color.secondary)
-                        Text(currentSubject)
-                            .font(.headline)
-                            .foregroundStyle(Color.primary)
-                    }
-                    
-                    Spacer()
-                    
-                    HStack(spacing: 6) {
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(Color.orange)
-                        Text("\(streakCount)")
-                            .font(.headline)
-                            .foregroundStyle(Color.orange)
+                    // MARK: Live friends indicator
+                    HStack(spacing: 5) {
+                        Circle()
+                            .fill(onlineFriends > 0 ? Color.green : Color.secondary.opacity(0.4))
+                            .frame(width: 7, height: 7)
+                        Text(onlineFriends > 0
+                             ? "\(onlineFriends) friends studying now"
+                             : "No friends online right now")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
                 }
+
+                Spacer()
+
+                // MARK: Streak badge
+                HStack(spacing: 5) {
+                    Image(systemName: "flame.fill")
+                        .foregroundStyle(.orange)
+                    Text("\(streakCount)")
+                        .font(.title3.weight(.bold))
+                        .foregroundStyle(.orange)
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 9)
+                .glassEffect()
             }
-            .padding(15)
+
+            // MARK: Stats group
+            // One glass container with three cells separated by Dividers.
+            // Cells are aligned left / center / right for visual variety.
+            HStack(spacing: 0) {
+                statCell(icon: "timer",      iconColor: .blue,   label: "Session", value: currentSessionTime, alignment: .leading)
+                Divider().padding(.vertical, 10)
+                statCell(icon: "book.fill",  iconColor: .purple, label: "Subject",  value: currentSubject,        alignment: .center)
+                Divider().padding(.vertical, 10)
+                statCell(icon: "clock.fill", iconColor: .green,  label: "Today",    value: totalDailyTime,         alignment: .trailing)
+            }
+            .frame(maxWidth: .infinity)
+            .glassEffect()
         }
-        .padding(.horizontal, 20)
+    }
+
+    // MARK: - Helpers
+
+    /// A single stat cell used inside the stats group.
+    @ViewBuilder
+    private func statCell(icon: String, iconColor: Color, label: String, value: String, alignment: HorizontalAlignment) -> some View {
+        VStack(alignment: alignment, spacing: 5) {
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(iconColor)
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text(value)
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .frame(maxWidth: .infinity)
+    }
+}
+//UIEND
+
+// MARK: - Preview
+
+#Preview {
+    NavigationStack {
+        DashboardHeader(
+            currentSessionTime: "01:22",
+            currentSubject: "Mathematics",
+            streakCount: 12,
+            totalDailyTime: "03:41"
+        )
+        .padding()
     }
 }
 
-#Preview {
-    DashboardHeader(currentSessionTime: "One", currentSubject: "CurrentSubj", streakCount: 4, totalDailyTime: "100")
-}

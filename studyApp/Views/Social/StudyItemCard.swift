@@ -3,61 +3,110 @@
 
 import SwiftUI
 
-/// Compact summary row for a study member.
-struct StudyItemCard: View {
+// MARK: - OnlineUserCard
+
+/// Friend row for someone who is currently studying.
+/// Accent bar layout: coloured left bar, initials circle, name + subject, timer + lock badge.
+struct OnlineUserCard: View {
+
     var item: SocialFeedItem
 
-    var body: some View {
-        HStack(alignment: .center, spacing: 6) {
-            ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.white.opacity(0))
-                    .frame(width: 56, height: 56)
-                Image(systemName: item.photo)
-                    .foregroundColor(.primary)
-                    .offset(x: -6, y: -6)
-            }
+    private var initial: String { String(item.name.prefix(1)).uppercased() }
 
-            VStack(alignment: .leading, spacing: 4) {
+    var body: some View {
+        HStack(alignment: .center, spacing: 0) {
+
+            // MARK: Status bar (green = studying)
+            Capsule()
+                .fill(Color.green)
+                .frame(width: 3, height: 40)
+                .padding(.trailing, 14)
+
+            // MARK: Initials avatar
+            ZStack {
+                Circle()
+                    .fill(Color.green.opacity(0.14))
+                    .frame(width: 44, height: 44)
+                Text(initial)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(Color.green)
+            }
+            .padding(.trailing, 12)
+
+            // MARK: Name + subject
+            VStack(alignment: .leading, spacing: 3) {
                 Text(item.name)
                     .font(.headline)
-                    .foregroundStyle(Color.primary)
-                Text(item.subjectCode)
-                    .font(.subheadline)
-                    .foregroundStyle(Color.secondary)
+                    .foregroundStyle(.primary)
+                HStack(spacing: 4) {
+                    Text(item.subject)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Text("·")
+                        .foregroundStyle(.secondary.opacity(0.5))
+                    Text(item.subjectCode)
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.secondary.opacity(0.8))
+                }
             }
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 8) {
+            // MARK: Timer + lock status
+            VStack(alignment: .trailing, spacing: 5) {
+                Text(item.timer)
+                    .font(.subheadline.monospacedDigit().weight(.semibold))
+                    .foregroundStyle(.primary)
                 HStack(spacing: 4) {
-                    Image(systemName: "location.fill")
-                        .foregroundStyle(Color.blue)
-                    Text("location placeholder")
-                        .font(.caption)
-                        .foregroundStyle(Color.secondary)
-                }
-
-                HStack(spacing: 8) {
-                    Image(systemName: item.isLocked ? "lock.fill" : "lock.open.fill")
-                        .foregroundStyle(item.isLocked ? Color.red : Color.green)
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text(item.timer)
-                            .font(.caption)
-                            .foregroundStyle(Color.blue)
-                        Text(item.dailyTotalTime)
-                            .font(.caption2)
-                            .foregroundStyle(Color.secondary)
-                    }
+                    Image(systemName: "lock.open.fill")
+                        .font(.caption2)
+                        .foregroundStyle(Color.green)
+                    Text(item.dailyTotalTime)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(.secondarySystemBackground))
-        )
-        .shadow(color: Color.black.opacity(0.05), radius: 12, x: 0, y: 8)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .glassEffect(.regular.interactive())
+    }
+}
+
+// MARK: - OfflineUserCard
+
+/// Friend row for someone who is on a break or not currently studying.
+/// Compact row layout: status dot, name, subject, timer — all on one line.
+struct OfflineUserCard: View {
+
+    var item: SocialFeedItem
+
+    var body: some View {
+        HStack(spacing: 10) {
+
+            // MARK: Status dot (muted = not studying)
+            Circle()
+                .fill(Color.secondary.opacity(0.5))
+                .frame(width: 9, height: 9)
+
+            Text(item.name)
+                .font(.body.weight(.medium))
+                .foregroundStyle(.primary)
+
+            Text(item.subject)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            Spacer()
+
+            Text(item.timer)
+                .font(.subheadline.monospacedDigit().weight(.medium))
+                .foregroundStyle(.primary)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 13)
+        .glassEffect(.regular.interactive())
     }
 }
 

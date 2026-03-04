@@ -190,7 +190,11 @@ struct CustomBottomSheet: View {
                             topTrailingRadius: cornerRadius,
                             style: .continuous
                         )
-                        .glassEffect()
+                        .fill(.regularMaterial)
+                        // TODO: Manually figure out how to apply a true glassEffect to this
+                        // custom-shaped background. .glassEffect() cannot currently be used
+                        // inside a .background() modifier on UnevenRoundedRectangle.
+                        .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: -6)
                     )
                     
                     .padding(.bottom, bottomPadding)

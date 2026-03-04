@@ -22,7 +22,7 @@ struct MediaContentTabView: View {
             VStack(spacing: 0) {
                 HStack(spacing: 16) {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color.white.opacity(0.2))
+                        .fill(Color.primary.opacity(0.08))
                         .aspectRatio(1.0, contentMode: .fill)
                         .frame(maxWidth: 120, maxHeight: 120)
                     
@@ -43,7 +43,7 @@ struct MediaContentTabView: View {
                     
                     ZStack {
                         Circle()
-                            .stroke(Color.white.opacity(0.25), lineWidth: 4)
+                            .fill(Color.primary.opacity(0.12))
                         
                         Circle()
                             .trim(from: 0, to: 0.35)
