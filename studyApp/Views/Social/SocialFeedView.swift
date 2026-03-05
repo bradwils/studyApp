@@ -44,7 +44,7 @@ struct SocialView: View {
                         friendList(studyingFriends, online: true)
                     }
 
-                    // MARK: "Taking a Break" section
+                    // MARK: "Offline" section
                     if !restingFriends.isEmpty {
                         feedSectionHeader(title: "Offline", count: restingFriends.count, color: .gray.opacity(0.6))
                         friendList(restingFriends, online: false)
