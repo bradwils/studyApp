@@ -12,7 +12,7 @@ import SwiftUI
 struct UserProfile: Codable { //holds all local data, as well as an optional link to an external account
     var id: UUID
     var userHandle: String? //todo, register online later
-    var activeStatus: activeStatus
+    var userStatus: ActiveStatus
     var profileName: String
     var userProfilePicturePath: String?
     var auth: AuthState
@@ -58,4 +58,8 @@ enum AuthProvider: String, Codable, CaseIterable {
     case emailPassword
     case custom
     case anon //for no sign in
+}
+
+enum ActiveStatus: String, Codable {
+    case offline, paused, online, studying
 }
