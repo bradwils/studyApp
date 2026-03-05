@@ -12,12 +12,19 @@
 struct RemoteUser: Codable {
     let id: String // Unique ID from the server (todo)
     var displayName: String
-    var activeStatus: activeStatus //user state
+    var userStatus: ActiveStatus // user state
     var isFriend: Bool
     var userPFPURL: String? //does not need to be grabbed everytime
     
+    enum CodingKeys: String, CodingKey {
+        case id
+        case displayName
+        case userStatus = "activeStatus"
+        case isFriend
+        case userPFPURL
+    }
 }
 
-enum activeStatus: String, Codable {
+enum ActiveStatus: String, Codable {
     case offline, paused, online, studying
 }
