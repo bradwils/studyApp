@@ -83,6 +83,7 @@ final class UserProfileStore: ObservableObject {
         return UserProfile(
             id: UUID(),
             userHandle: "",
+            userStatus: .offline,
             profileName: "",
             userProfilePicturePath: nil,
             auth: AuthState(service: .anon, lastSignInAt: nil),
