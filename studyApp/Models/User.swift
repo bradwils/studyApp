@@ -12,7 +12,7 @@ import SwiftUI
 struct UserProfile: Codable { //holds all local data, as well as an optional link to an external account
     let id: UUID
     var userHandle: String //todo, register online later
-    var userStatus: activeStatus
+    var activeStatus: activeStatus
     var profileName: String
     var userProfilePicturePath: String?
     var auth: AuthState
