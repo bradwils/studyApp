@@ -40,13 +40,13 @@ struct SocialView: View {
 
                     // MARK: "Studying Now" section
                     if !studyingFriends.isEmpty {
-                        feedSectionHeader(title: "Studying Now", count: studyingFriends.count, color: .green)
+                        feedSectionHeader(title: "Active now", count: studyingFriends.count, color: .green) //TODO: change this, make it so then the color is not parsed but rather read by the user's current status.
                         friendList(studyingFriends, online: true)
                     }
 
-                    // MARK: "Taking a Break" section
+                    // MARK: "Offline" section
                     if !restingFriends.isEmpty {
-                        feedSectionHeader(title: "Taking a Break", count: restingFriends.count, color: .gray.opacity(0.6))
+                        feedSectionHeader(title: "Offline", count: restingFriends.count, color: .gray.opacity(0.6))
                         friendList(restingFriends, online: false)
                     }
 
@@ -119,6 +119,7 @@ struct SocialView: View {
 
     // MARK: - Section helpers
 
+    
     /// A section header label with a coloured count pill.
     @ViewBuilder
     private func feedSectionHeader(title: String, count: Int, color: Color) -> some View {
