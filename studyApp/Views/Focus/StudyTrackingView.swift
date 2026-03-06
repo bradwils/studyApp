@@ -135,9 +135,9 @@ struct StudyTrackingView: View {
 
     private var headerRow: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Current Subject")
-                    .font(.caption)
+                    .font(.subheadline.weight(.medium))
                     .foregroundColor(.secondary)
 
                 ActiveSubjectList(
@@ -149,14 +149,14 @@ struct StudyTrackingView: View {
 
              Spacer()
 
-            VStack(alignment: .trailing, spacing: 6) {
+            VStack(alignment: .trailing, spacing: 8) {
                 Text("Total")
-                    .font(.caption)
+                    .font(.subheadline.weight(.medium))
                     .foregroundColor(.secondary)
 
                 Text("00:00:00")
-                    .font(.title3.monospacedDigit())
-                    .fontWeight(.medium)
+                    .font(.title2.monospacedDigit())
+                    .fontWeight(.semibold)
             }
         }
     }

@@ -34,7 +34,7 @@ struct OnlineUserCard: View {
             .padding(.trailing, 12)
 
             // MARK: Name + subject
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(item.name)
                     .font(.headline)
                     .foregroundStyle(.primary)
@@ -45,24 +45,24 @@ struct OnlineUserCard: View {
                     Text("·")
                         .foregroundStyle(.secondary.opacity(0.5))
                     Text(item.subjectCode)
-                        .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary.opacity(0.8))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
                 }
             }
 
             Spacer()
 
             // MARK: Timer + lock status
-            VStack(alignment: .trailing, spacing: 5) {
+            VStack(alignment: .trailing, spacing: 6) {
                 Text(item.timer)
                     .font(.subheadline.monospacedDigit().weight(.semibold))
                     .foregroundStyle(.primary)
                 HStack(spacing: 4) {
                     Image(systemName: "lock.open.fill")
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(Color.green)
                     Text(item.dailyTotalTime)
-                        .font(.caption2)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -94,7 +94,7 @@ struct OfflineUserCard: View {
                 .foregroundStyle(.primary)
 
             Text(item.subject)
-                .font(.subheadline)
+                .font(.body)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
 

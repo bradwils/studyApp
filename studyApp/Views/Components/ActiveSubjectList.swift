@@ -27,6 +27,7 @@ struct ActiveSubjectList: View {
                     }
                 }
                 .pickerStyle(.menu)
+                .font(.body.weight(.semibold))
                 .disabled(!isEnabled)
                 .onAppear { //update the view before it appears
                     if subjectSelection == nil {

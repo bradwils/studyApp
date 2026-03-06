@@ -33,25 +33,25 @@ struct SubjectsEditor: View {
             List {
                 if userProfileStore.profile.subjects.isEmpty {
                     Text("No subjects")
-                        .font(.callout)
+                        .font(.body)
                         .foregroundStyle(.secondary)
                         .listRowBackground(Color.clear)
                 } else {
                     ForEach(userProfileStore.profile.subjects) { subject in
                         HStack {
-                            VStack(alignment: .leading, spacing: 4) {
+                            VStack(alignment: .leading, spacing: 6) {
                                 Text(subject.name)
                                     .font(.headline)
                                 Text(subject.code)
-                                    .font(.caption)
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
                             Text(formatCreatedDate(subject.createdAt))
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, 6)
                         .listRowBackground(Color.clear)
                     }
                     .onDelete { indexSet in
