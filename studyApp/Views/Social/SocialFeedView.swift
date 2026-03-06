@@ -78,37 +78,10 @@ struct SocialView: View {
 
     private var backgroundGradient: some View {
         ZStack {
-            RadialGradient(
-                colors: colorScheme == .dark
-                    ? [Color.yellow.opacity(0.8), Color.black.opacity(0.8)]
-                    : [Color.yellow.opacity(0.8), Color.white.opacity(0.8)],
-                center: .center,
-                startRadius: 100,
-                endRadius: 400
-            )
-            .ignoresSafeArea()
-            .frame(height: 300)
-
-            LinearGradient(
-                colors: [Color.white.opacity(0.5), Color.pink.opacity(0.5), Color.blue.opacity(0.5)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-            .frame(height: 300)
-
-            LinearGradient(
-                colors: [Color.blue.opacity(0.5), Color.purple.opacity(0.5)],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-            .ignoresSafeArea()
-            .frame(height: 300)
-
             LinearGradient(
                 colors: colorScheme == .dark
-                    ? [Color.black.opacity(0), Color.black.opacity(1)]
-                    : [Color.white.opacity(0), Color.white.opacity(1)],
+                    ? [Color.indigo.opacity(0.5), Color.black.opacity(0.9)]
+                    : [Color.yellow.opacity(0.4), Color.white.opacity(0.95)],
                 startPoint: .top,
                 endPoint: .bottom
             )

@@ -32,18 +32,18 @@ struct DashboardHeader: View {
             HStack(alignment: .center) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Your Study Day")
-                        .font(.title2.weight(.bold))
+                        .font(.title.weight(.bold))
                         .foregroundStyle(.primary)
 
                     // MARK: Live friends indicator
                     HStack(spacing: 5) {
                         Circle()
                             .fill(onlineFriends > 0 ? Color.green : Color.secondary.opacity(0.4))
-                            .frame(width: 7, height: 7)
+                            .frame(width: 8, height: 8)
                         Text(onlineFriends > 0
                              ? "\(onlineFriends) friends studying now"
                              : "No friends online right now")
-                            .font(.subheadline)
+                            .font(.body)
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -83,24 +83,24 @@ struct DashboardHeader: View {
     /// A single stat cell used inside the stats group.
     @ViewBuilder
     private func statCell(icon: String, iconColor: Color, label: String, value: String, alignment: HorizontalAlignment) -> some View {
-        VStack(alignment: alignment, spacing: 5) {
+        VStack(alignment: alignment, spacing: 6) {
             HStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.caption.weight(.semibold))
+                    .font(.footnote.weight(.semibold))
                     .foregroundStyle(iconColor)
                 Text(label)
-                    .font(.caption)
+                    .font(.footnote)
                     .foregroundStyle(.secondary)
             }
             Text(value)
-                .font(.subheadline.weight(.semibold))
+                .font(.body.weight(.semibold))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .monospacedDigit()
         }
         .padding(.horizontal, 14)
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
     }
 }
