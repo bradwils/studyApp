@@ -6,7 +6,7 @@ struct MainTabView: View {
         TabView {
             Tab("Debug", systemImage: "exclamationmark.triangle.fill") {
                 NavigationStack {
-                    SocialView()
+                    AppSettingsView()
                 }
             }
             
@@ -35,9 +35,6 @@ struct MainTabView: View {
                 }
             }
         }
-        // .tabViewSidebarBottomBar {
-        //     SocialView()
-        // }
 
     }
     
