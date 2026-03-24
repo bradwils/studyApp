@@ -49,14 +49,6 @@ struct AppSettings {
         AppTheme(name: "Default", prim: .white, sec: .blue, acc: .gray)
     ]
     
-    //mutating -> allows func to edit own properties.
-    mutating func addThemeToArray(theme: AppTheme) {
-        themesArray.append(theme)
-    }
-    
-    mutating func addDefaultThemesToDictionary() {
-//        for i..defaultThemes
-    }
     
 }
 
@@ -69,7 +61,7 @@ struct AppSettingsView: View {
     @State private var settings = AppSettings()
     
     
-    //SwiftData query for items of AppThemes
+    /// All persisted `AppTheme` records, automatically kept in sync by SwiftData.
     @Query var themes: [AppTheme]
 
     var body: some View {
@@ -110,6 +102,8 @@ struct AppSettingsView: View {
 
 
 //MARK: Preview
+// `.modelContainer` is only needed here for Xcode Previews.
+// In production the container is attached at the app root (StudyAppApp).
 #Preview {
     AppSettingsView()
         .modelContainer(for: AppTheme.self, inMemory: true)
