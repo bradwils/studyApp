@@ -9,7 +9,7 @@ import SwiftUI
 //Context: how we interact with our themes.
 
 @Model
-class AppTheme {
+final class AppTheme {
     var name: String
     
     // Store as hex strings for SwiftData persistence
@@ -17,11 +17,11 @@ class AppTheme {
     private var secondaryColorHex: String
     private var accentColorHex: String
 
-    init(name: String, prim: Color, sec: Color, acc: Color) {
+    init(name: String, primary: Color, secondary: Color, accent: Color) {
         self.name = name
-        self.primaryColorHex = prim.toHex() ?? "#FFFFFF"
-        self.secondaryColorHex = sec.toHex() ?? "#0000FF"
-        self.accentColorHex = acc.toHex() ?? "#808080"
+        self.primaryColorHex = primary.toHex() ?? "#FFFFFF"
+        self.secondaryColorHex = secondary.toHex() ?? "#0000FF"
+        self.accentColorHex = accent.toHex() ?? "#808080"
     }
     
     // MARK: - Computed Color Properties
@@ -29,7 +29,7 @@ class AppTheme {
     /// Returns the primary color as a SwiftUI Color
     var primaryColor: Color {
         get {
-            Color(hex: primaryColorHex) ?? .white //returns a color from the hex value stored
+            Color(hex: primaryColorHex) ?? .white
         }
         set {
             primaryColorHex = newValue.toHex() ?? "#FFFFFF"

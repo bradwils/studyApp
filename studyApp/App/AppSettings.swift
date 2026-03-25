@@ -1,8 +1,5 @@
 import SwiftUI
-import Combine
 import SwiftData
-
-
 struct AppSettings {
     
     //default themes
