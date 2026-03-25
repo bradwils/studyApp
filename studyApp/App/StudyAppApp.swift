@@ -2,6 +2,7 @@
 //  studyApp
 
 import SwiftUI
+import SwiftData
 
 @main
 struct StudyAppApp: App {
@@ -9,6 +10,7 @@ struct StudyAppApp: App {
         WindowGroup {
             MainTabView()
         }
+        .modelContainer(for: [AppTheme.self])
     }
 }
 
