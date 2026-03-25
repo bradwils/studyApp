@@ -9,7 +9,7 @@ import SwiftUI
 //Context: how we interact with our themes.
 
 @Model
-final class AppTheme {
+class AppTheme {
     var name: String
     
     // Store as hex strings for SwiftData persistence
@@ -29,7 +29,7 @@ final class AppTheme {
     /// Returns the primary color as a SwiftUI Color
     var primaryColor: Color {
         get {
-            Color(hex: primaryColorHex) ?? .white
+            Color(hex: primaryColorHex) ?? .white //returns a color from the hex value stored
         }
         set {
             primaryColorHex = newValue.toHex() ?? "#FFFFFF"
