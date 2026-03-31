@@ -5,6 +5,7 @@
 
 import Foundation
 import Combine
+import ActivityKit
 
 /// Manages the study timer lifecycle, break accounting, and derived labels that `StudyTrackingView` consumes.
 ///
@@ -32,6 +33,9 @@ final class StudyTrackingViewModel: ObservableObject {
     private let breakThreshold: TimeInterval = 60 * 3
     private var sessionTicker: AnyCancellable?
     private let calendar = Calendar.current
+
+    /// Live Activity for displaying the current study session
+    private var currentActivity: Activity<StudySessionAttributes>?
 
     init() {
         refreshDerivedState()
@@ -63,6 +67,9 @@ final class StudyTrackingViewModel: ObservableObject {
         )
         startTickerIfNeeded()
         refreshDerivedState()
+
+        // Start Live Activity
+        startLiveActivity()
     }
 
     /// Stops, starts, or resumes the timer depending on whether a session already exists.
@@ -97,6 +104,9 @@ final class StudyTrackingViewModel: ObservableObject {
         session.lastPausedAt = now
         activeSession = session
         refreshDerivedState()
+
+        // Update Live Activity to show paused state
+        updateLiveActivity()
     }
 
     /// Resumes timing and optionally logs a break if the pause exceeded `breakThreshold`.
@@ -118,6 +128,9 @@ final class StudyTrackingViewModel: ObservableObject {
         activeSession = session
         startTickerIfNeeded()
         refreshDerivedState()
+
+        // Update Live Activity to show resumed state
+        updateLiveActivity()
     }
 
     /// Finalize the active session and archive it.
@@ -159,6 +172,9 @@ final class StudyTrackingViewModel: ObservableObject {
         activeSession = nil
         stopTicker()
         refreshDerivedState()
+
+        // End Live Activity
+        endLiveActivity()
     }
 
     /// Abort an active session without persisting; use for user-initiated cancels.
@@ -166,6 +182,9 @@ final class StudyTrackingViewModel: ObservableObject {
         activeSession = nil
         stopTicker()
         refreshDerivedState()
+
+        // End Live Activity
+        endLiveActivity()
     }
 
     /// Increments the interruption counter so notifications or manual signals can track distractions.
@@ -174,6 +193,9 @@ final class StudyTrackingViewModel: ObservableObject {
         session.interruptionCount += 1
         activeSession = session
         refreshDerivedState()
+
+        // Update Live Activity to reflect new interruption count
+        updateLiveActivity()
     }
 
     /// Updates the queued subject only when no session is running (the picker is disabled while a session is active).
@@ -216,6 +238,9 @@ final class StudyTrackingViewModel: ObservableObject {
             breakMetricValueText = "00:00:00"
             breakMetricTitleText = "Break Length"
         }
+
+        // Update Live Activity with latest state
+        updateLiveActivity()
     }
 
     /// Sums today's completed sessions plus the running session duration (when it started today) for the total badge.
@@ -275,4 +300,72 @@ final class StudyTrackingViewModel: ObservableObject {
         formatter.zeroFormattingBehavior = [.pad]
         return formatter
     }()
+
+    // MARK: - Live Activity Management
+
+    /// Starts a Live Activity for the current study session
+    private func startLiveActivity() {
+        guard let session = activeSession else { return }
+
+        // Check if Live Activities are supported
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            print("Live Activities are not enabled")
+            return
+        }
+
+        let attributes = StudySessionAttributes(sessionId: session.id.uuidString)
+        let contentState = StudySessionAttributes.ContentState(
+            subjectName: session.subjectName ?? "Unknown Subject",
+            subjectCode: session.subject?.code ?? "",
+            sessionDuration: session.runningActiveDuration,
+            isPaused: session.isPaused,
+            startedAt: session.startedAt,
+            interruptionCount: session.interruptionCount,
+            totalBreakDuration: session.totalBreakDuration
+        )
+
+        do {
+            let activity = try Activity.request(
+                attributes: attributes,
+                content: .init(state: contentState, staleDate: nil),
+                pushType: nil
+            )
+            currentActivity = activity
+            print("✅ Live Activity started: \(activity.id)")
+        } catch {
+            print("❌ Failed to start Live Activity: \(error.localizedDescription)")
+        }
+    }
+
+    /// Updates the Live Activity with the current session state
+    private func updateLiveActivity() {
+        guard let activity = currentActivity, let session = activeSession else { return }
+
+        let contentState = StudySessionAttributes.ContentState(
+            subjectName: session.subjectName ?? "Unknown Subject",
+            subjectCode: session.subject?.code ?? "",
+            sessionDuration: session.runningActiveDuration,
+            isPaused: session.isPaused,
+            startedAt: session.startedAt,
+            interruptionCount: session.interruptionCount,
+            totalBreakDuration: session.totalBreakDuration
+        )
+
+        Task {
+            await activity.update(
+                .init(state: contentState, staleDate: nil)
+            )
+        }
+    }
+
+    /// Ends the Live Activity
+    private func endLiveActivity() {
+        guard let activity = currentActivity else { return }
+
+        Task {
+            await activity.end(nil, dismissalPolicy: .immediate)
+            currentActivity = nil
+            print("🛑 Live Activity ended")
+        }
+    }
 }
