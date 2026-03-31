@@ -1,9 +1,17 @@
 import SwiftUI
 
 struct SubjectsEditor: View {
-    @StateObject private var viewModel = SubjectsEditorViewModel()
+    @StateObject private var userProfileStore = UserProfileStore.shared
+    @State private var newSubjectName = ""
+    @State private var newSubjectCode = ""
     @FocusState private var isNameFocused: Bool
     @Binding var isPresented: Bool
+
+    private var canAddSubject: Bool {
+        !newSubjectName.trimmingCharacters(in: .whitespaces).isEmpty &&
+        newSubjectCode.trimmingCharacters(in: .whitespaces).count <= 4 &&
+        !newSubjectCode.trimmingCharacters(in: .whitespaces).isEmpty
+    }
 
     var body: some View {
         VStack(spacing: 20) {
@@ -23,13 +31,13 @@ struct SubjectsEditor: View {
             }
             
             List {
-                if viewModel.subjects.isEmpty {
+                if userProfileStore.profile.subjects.isEmpty {
                     Text("No subjects")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .listRowBackground(Color.clear)
                 } else {
-                    ForEach(viewModel.subjects) { subject in
+                    ForEach(userProfileStore.profile.subjects) { subject in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(subject.name)
@@ -39,7 +47,7 @@ struct SubjectsEditor: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(viewModel.relativeCreatedDate(for: subject.createdAt))
+                            Text(formatCreatedDate(subject.createdAt))
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }
@@ -48,7 +56,10 @@ struct SubjectsEditor: View {
                     }
                     .onDelete { indexSet in
                         withAnimation(.easeInOut) {
-                            viewModel.removeSubjects(at: indexSet)
+                            indexSet.forEach { index in
+                                let subject = userProfileStore.profile.subjects[index]
+                                userProfileStore.removeSubject(id: subject.id)
+                            }
                         }
                     }
                 }
@@ -59,20 +70,20 @@ struct SubjectsEditor: View {
             ZStack {
                 
                 VStack(spacing: 12) {
-                    TextField("Subject name", text: $viewModel.newSubjectName)
+                    TextField("Subject name", text: $newSubjectName)
                         .textContentType(.givenName)
                         .submitLabel(.next)
                         .focused($isNameFocused)
                         
                     ZStack(alignment: .trailing) {
-                        TextField("Subject code (e.g. MATH101)", text: $viewModel.newSubjectCode)
+                        TextField("Subject code (e.g. MATH101)", text: $newSubjectCode)
                             .autocorrectionDisabled()
                             .submitLabel(.done)
                             .onSubmit(addSubject)
                             .padding(.trailing, 40)
 
-                        Text("\(viewModel.trimmedSubjectCodeCount)/4")
-                            .foregroundColor(viewModel.trimmedSubjectCodeCount > 4 ? .red : .gray)
+                        Text("\(newSubjectCode.trimmingCharacters(in: .whitespaces).count)/4")
+                            .foregroundColor(newSubjectCode.count > 4 ? .red : .gray)
                             .font(.caption)
                             .padding(.trailing, 8)
                             .opacity(0.7)
@@ -89,16 +100,25 @@ struct SubjectsEditor: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!viewModel.canAddSubject)
-            .opacity(viewModel.canAddSubject ? 1 : 0.5)
+            .disabled(!canAddSubject)
+            .opacity(canAddSubject ? 1 : 0.5)
         }
         .padding([.top, .horizontal])
     }
 
     private func addSubject() {
-        if viewModel.addSubject() {
-            isNameFocused = true
-        }
+        guard canAddSubject else { return }
+        let subject = Subject(name: newSubjectName, code: newSubjectCode.uppercased())
+        userProfileStore.addSubject(subject)
+        newSubjectName = ""
+        newSubjectCode = ""
+        isNameFocused = true
+    }
+    
+    private func formatCreatedDate(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .abbreviated
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 }
 

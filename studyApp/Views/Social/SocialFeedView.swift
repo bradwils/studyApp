@@ -9,6 +9,11 @@ struct SocialView: View {
     @StateObject private var viewModel = SocialFeedViewModel()
     @Environment(\.colorScheme) var colorScheme
 
+    // MARK: Derived lists
+    // Friends are split so "studying" and "on break" get separate sections.
+    private var studyingFriends: [SocialFeedItem] { viewModel.items.filter { !$0.isLocked } }
+    private var restingFriends:  [SocialFeedItem] { viewModel.items.filter {  $0.isLocked } }
+
     // MARK: Body
 
     var body: some View {
@@ -28,15 +33,21 @@ struct SocialView: View {
                         currentSessionTime: viewModel.currentSessionTime,
                         currentSubject: viewModel.currentSubject,
                         streakCount: viewModel.streakCount,
-                        totalDailyTime: viewModel.totalDailyTime,
-                        onlineFriends: viewModel.onlineFriendsCount
+                        totalDailyTime: viewModel.totalDailyTime
                     )
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
 
-                    ForEach(viewModel.feedSections) { section in
-                        feedSectionHeader(title: section.title, count: section.count, color: section.color)
-                        friendList(section.items, online: section.isOnline)
+                    // MARK: "Studying Now" section
+                    if !studyingFriends.isEmpty {
+                        feedSectionHeader(title: "Active now", count: studyingFriends.count, color: .green) //TODO: change this, make it so then the color is not parsed but rather read by the user's current status.
+                        friendList(studyingFriends, online: true)
+                    }
+
+                    // MARK: "Offline" section
+                    if !restingFriends.isEmpty {
+                        feedSectionHeader(title: "Offline", count: restingFriends.count, color: .gray.opacity(0.6))
+                        friendList(restingFriends, online: false)
                     }
 
                     Spacer().frame(height: 24)
@@ -69,8 +80,8 @@ struct SocialView: View {
         ZStack {
             RadialGradient(
                 colors: colorScheme == .dark
-                    ? viewModel.backgroundRadialColors
-                    : viewModel.backgroundLightRadialColors,
+                    ? [Color.yellow.opacity(0.8), Color.black.opacity(0.8)]
+                    : [Color.yellow.opacity(0.8), Color.white.opacity(0.8)],
                 center: .center,
                 startRadius: 100,
                 endRadius: 400
@@ -158,3 +169,4 @@ struct SocialView: View {
         SocialView()
     }
 }
+

@@ -6,9 +6,11 @@
 import SwiftUI
 
 struct ActiveSubjectList: View {
+    @ObservedObject var studyTrackingModel: StudyTrackingViewModel
     var subjects: [Subject]
-    @Binding var selection: Subject?
     var isEnabled: Bool
+
+    @State private var subjectSelection: Subject?
 
     var body: some View {
         Group {
@@ -26,20 +28,26 @@ struct ActiveSubjectList: View {
                 }
                 .pickerStyle(.menu)
                 .disabled(!isEnabled)
-                .onAppear {
-                    if selection == nil {
-                        selection = subjects.first
+                .onAppear { //update the view before it appears
+                    if subjectSelection == nil {
+                        subjectSelection = studyTrackingModel.selectedSubject ?? subjects.first
+                    }
+                    if studyTrackingModel.selectedSubject == nil, let fallback = subjectSelection {
+                        studyTrackingModel.updateSubjectSelection(fallback)
                     }
                 }
-                .onChange(of: subjects) { _, new in
-                    if selection == nil {
-                        selection = new.first
-                        return
+                .onChange(of: subjects) { old, new in
+                    if subjectSelection == nil, let fallback = new.first {
+                        subjectSelection = fallback
+                        studyTrackingModel.updateSubjectSelection(fallback)
                     }
-
-                    if let selectedID = selection?.id,
-                       !new.contains(where: { $0.id == selectedID }) {
-                        selection = new.first
+                }
+                .onChange(of: subjectSelection) { old, new in //if selected subject changes,
+                    studyTrackingModel.updateSubjectSelection(new)
+                }
+                .onChange(of: studyTrackingModel.selectedSubject) { old, new in //if subject changes elsewhere, update
+                    if new != subjectSelection {
+                        subjectSelection = new
                     }
                 }
             }
@@ -48,8 +56,8 @@ struct ActiveSubjectList: View {
 
     private var selectionBinding: Binding<Subject> {
         Binding(
-            get: { selection ?? subjects.first! },
-            set: { selection = $0 }
+            get: { subjectSelection ?? subjects.first! },
+            set: { subjectSelection = $0 }
         )
     }
 }

@@ -4,17 +4,7 @@ import Combine
 
 /// ViewModel powering the Social feed.
 /// Holds the feed items and dashboard summary so the view stays declarative.
-/// Keeps the dashboard stats, sections, and colors derived from the current `SocialFeedItem` list.
 final class SocialFeedViewModel: ObservableObject {
-    struct FeedSection: Identifiable {
-        let id: String
-        let title: String
-        let count: Int
-        let color: Color
-        let items: [SocialFeedItem]
-        let isOnline: Bool
-    }
-
     static let sampleItems: [SocialFeedItem] = [
         SocialFeedItem(name: "A", subject: "Math", subjectCode: "MATH", isLocked: false, timer: "00:10", photo: "person.crop.square", dailyTotalTime: "4:00"),
         SocialFeedItem(name: "Bob", subject: "Physics", subjectCode: "PHYS", isLocked: true, timer: "00:20", photo: "person.crop.square.fill", dailyTotalTime: "5:00"),
@@ -29,52 +19,6 @@ final class SocialFeedViewModel: ObservableObject {
     @Published var currentSubject: String
     @Published var streakCount: Int
     @Published var totalDailyTime: String
-
-    var studyingFriends: [SocialFeedItem] { items.filter { !$0.isLocked } }
-    var restingFriends: [SocialFeedItem] { items.filter { $0.isLocked } }
-    var onlineFriendsCount: Int { studyingFriends.count }
-
-    var feedSections: [FeedSection] {
-        var sections: [FeedSection] = []
-
-        if !studyingFriends.isEmpty {
-            sections.append(
-                FeedSection(
-                    id: "active",
-                    title: "Active now",
-                    count: studyingFriends.count,
-                    color: .green,
-                    items: studyingFriends,
-                    isOnline: true
-                )
-            )
-        }
-
-        if !restingFriends.isEmpty {
-            sections.append(
-                FeedSection(
-                    id: "offline",
-                    title: "Offline",
-                    count: restingFriends.count,
-                    color: .gray.opacity(0.6),
-                    items: restingFriends,
-                    isOnline: false
-                )
-            )
-        }
-
-        return sections
-    }
-
-    /// Primary gradient colors used by `SocialView`.
-    var backgroundRadialColors: [Color] {
-        [Color.yellow.opacity(0.8), Color.black.opacity(0.8)]
-    }
-
-    /// Softer gradient variant used for light-themed sections.
-    var backgroundLightRadialColors: [Color] {
-        [Color.yellow.opacity(0.8), Color.white.opacity(0.8)]
-    }
 
     init(
         items: [SocialFeedItem] = SocialFeedViewModel.sampleItems,
