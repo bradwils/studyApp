@@ -43,7 +43,7 @@ struct AppSettings {
     //MARK: Themes
 
     let defaultThemes: [AppTheme] = [
-        AppTheme(name: "Default", prim: .white, sec: .blue, acc: .gray)
+        AppTheme(name: "Default", primary: .white, secondary: .blue, accent: .gray)
     ]
     
     
@@ -66,17 +66,17 @@ struct AppSettingsView: View {
             ColorPicker("Background", selection: $selectedColor)
             Text("Create a new theme")
             Button("Create Summer Theme") {
-                let newTheme = AppTheme(name: "Summer", prim: selectedColor, sec: .orange, acc: .red)
+                let newTheme = AppTheme(name: "Summer", primary: selectedColor, secondary: .orange, accent: .red)
                 context.insert(newTheme)
 
             }
             Button("Create Winter Theme") {
-                let newTheme = AppTheme(name: "Winter", prim: selectedColor, sec: .blue, acc: .white)
+                let newTheme = AppTheme(name: "Winter", primary: selectedColor, secondary: .blue, accent: .white)
                 context.insert(newTheme)
 
             }
             Button("Create dummy") {
-                let newTheme = AppTheme(name: "Dummy", prim: selectedColor, sec: .green, acc: .blue)
+                let newTheme = AppTheme(name: "Dummy", primary: selectedColor, secondary: .green, accent: .blue)
                 context.insert(newTheme)
             }
         }
