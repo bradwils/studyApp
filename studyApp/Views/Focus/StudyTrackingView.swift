@@ -1,40 +1,12 @@
 import SwiftUI
-import Combine
 
 /// Represents the display state of the lightweight study timer.
-///
 struct StudyTrackingView: View {
-    
-    // MARK: - State Properties
-    
-    @State private var focusSliderValue: Double = 0
-    @State private var timerInProgress: Bool = false
-    @State var sliderDraggableElementWidth: CGFloat = 90
-    @State var sliderDraggableElementHeight: CGFloat = 60
-    @State var onlineFriendCount: Int = 0 //to be dynamic later
-    @State private var isLeaderboardPresented: Bool = true
-    @State private var currentStudySessionInProgress: Bool = false
-    
-    @State var timeSinceLastBreakEnded: TimeInterval = 179 //time since last breal has ended
-    
-    @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
-    
-    // MARK: - ViewModels
-    
     @StateObject private var vm = StudyTrackingViewModel()
     @StateObject private var userProfileStore = UserProfileStore.shared
-    
-    // MARK: - Helpers
-    
-    //TIMEINTERVAL -> HOURMINUTESECOND
-    private func formattedHMS(from timeInterval: TimeInterval) -> String {
-        let duration = Duration.seconds(timeInterval)
-        return duration.formatted(.time(pattern: .hourMinuteSecond))
-    }
-    
+
     var body: some View {
         ZStack {
-            // base gradient
             LinearGradient(
                 colors: [
                     Color.pink.opacity(0.35),
@@ -46,7 +18,6 @@ struct StudyTrackingView: View {
             )
             .ignoresSafeArea()
 
-            // “radial” highlight on the right side
             RadialGradient(
                 gradient: Gradient(colors: [
                     Color.white.opacity(0.35),
@@ -62,76 +33,33 @@ struct StudyTrackingView: View {
             VStack(spacing: 24) {
                 headerRow
                 timeSummaryRow
-                MainTimerElement
-                
-                    
-                
+                mainTimerElement
+
                 Spacer()
                     .frame(height: .infinity)
-                
+
                 pauseStopRow
-                
+
                 Spacer()
                     .frame(height: .infinity)
 
-                
-                focusSliderSection //complex and fucked
-                
+                focusSliderSection
                 connectionRow
-
-                
                 horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
-                    //.check if above modifier is needed or not
-
-
-
-
-
-
-
-
-
-
-
-
-
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 24)
             .padding(.top, 32)
             .padding(.bottom, 24)
         }
-        
-//        .sheet(isPresented: $isLeaderboardPresented) {
-//            LeaderboardSheetView()
-//                .padding(10)
-//                .presentationDragIndicator(.visible)
-//                .presentationBackgroundInteraction(.enabled)
-//                .presentationDetents([.height(50), .fraction(0.3), .fraction(0.9)])
-//                
-//            
-//            
-//        }
-        .onChange(of: userProfileStore.profile.subjects) { old, new in
-            if vm.selectedSubject == nil, let first = new.first {
-                vm.updateSubjectSelection(first)
-            }
-            
-            
-//                .onChange(of: currentTrackWidth) { oldValue, newValue in
-//                    trackWidth = newValue
-//                }
+        .onAppear {
+            vm.configureSubjects(userProfileStore.profile.subjects)
         }
-        .onReceive(vm.$activeSession) { session in
-            currentStudySessionInProgress = session != nil
+        .onChange(of: userProfileStore.profile.subjects) { _, newSubjects in
+            vm.configureSubjects(newSubjects)
         }
-
-
-
     }
-
-    // MARK: - Sections
 
     private var headerRow: some View {
         HStack {
@@ -141,20 +69,20 @@ struct StudyTrackingView: View {
                     .foregroundColor(.secondary)
 
                 ActiveSubjectList(
-                    studyTrackingModel: vm,
                     subjects: userProfileStore.profile.subjects,
-                    isEnabled: !currentStudySessionInProgress
+                    selection: subjectSelectionBinding,
+                    isEnabled: !vm.currentStudySessionInProgress
                 )
             }
 
-             Spacer()
+            Spacer()
 
             VStack(alignment: .trailing, spacing: 6) {
                 Text("Total")
                     .font(.caption)
                     .foregroundColor(.secondary)
 
-                Text("00:00:00")
+                Text(vm.totalStudyDurationText)
                     .font(.title3.monospacedDigit())
                     .fontWeight(.medium)
             }
@@ -171,7 +99,7 @@ struct StudyTrackingView: View {
 
                     Spacer()
 
-                    Text("<- 00:00:00")
+                    Text(vm.totalStudyDurationText)
                         .font(.subheadline.monospacedDigit())
                         .foregroundColor(.primary)
                 }
@@ -181,34 +109,23 @@ struct StudyTrackingView: View {
         }
     }
 
-    private var MainTimerElement: some View {
-        
-            bigTotalElapsedTimeText
-            .padding(.top, 8)
-    }
-
-    private var bigTotalElapsedTimeText: some View {
-        
+    private var mainTimerElement: some View {
         VStack(spacing: -20) {
-
-            Text("11:22")
+            Text(vm.sessionDurationText)
                 .font(.system(size: 100).monospacedDigit())
                 .fontWeight(.semibold)
+
             Text("(total time spent studying this session)")
                 .font(.caption)
-                
-
         }
+        .padding(.top, 8)
     }
 
     private var connectionRow: some View {
-        //UITWEAK
-        // Wrapping the online-friends indicator in a glass capsule gives it depth and
-        // makes it look like a live status chip — similar to AirPods/Dynamic Island pills.
         HStack(spacing: 6) {
-            Text("\(onlineFriendCount) online friends")
+            Text("\(vm.onlineFriendCount) online friends")
                 .font(.caption)
-            
+
             Image(systemName: "dot.radiowaves.up.forward")
                 .font(.subheadline)
                 .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.periodic(delay: 4.0)))
@@ -217,158 +134,70 @@ struct StudyTrackingView: View {
         .padding(.horizontal, 14)
         .padding(.vertical, 8)
         .glassEffect()
-        //UIEND
     }
-    
-    
 
-    private var pauseStopRow: some View { //last paused / last resumed & start/resume and stop button
-        ZStack {
-            HStack {
-                HStack { //child hstack1, aligned to be right-most within the available space
-                    // "Pause at" text: fades in and slides from left when paused
-                    VStack(spacing: 4) {
-                        if (timerInProgress) { //if we're currently tracking (not paused)
-
-                            Text(formattedHMS(from: timeSinceLastBreakEnded)) //parse through a helper; format the timeinterval as hour/minute/second
-                                .font(.headline.monospacedDigit())
-                                .frame(alignment: .center)
-                            
-                            Text("since last break")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .frame(alignment: .center)
-
-                        } else { //if we're paused
-
-                            
-                            Text(formattedHMS(from: timeSinceLastBreakStarted)) //parse through a helper; format the timeinterval as hour/minute/second
-                                .font(.headline.monospacedDigit())
-                                .frame(alignment: .center)
-                            
-                            Text("Break Length")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .frame(alignment: .center)
-
-                        }
-
-                    } //                        t : f
-                    //                    hidden : showing
-                    .offset(x: timerInProgress ? 0 : 0)
-                    .animation(.easeInOut(duration: 0.3), value: timerInProgress)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .padding(.horizontal, 20)
-                
-                
-                HStack { //child hstack2, aligned to be left-most within the available space
-                    Button {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
-                            timerInProgress.toggle()
-                        }
-                    } label: {
-                        ZStack {
-                            if timerInProgress {
-                                HStack {
-                                    
-                                    //resume button
-                                    Button {
-                                        timerInProgress.toggle()
-                                    } label: {
-                                        Text("Pause")
-                                    }
-                                    .buttonStyle(.glass)
-                                    .buttonSizing(.flexible)
-
-                                    
-
-                                    
-                                    //end button
-                                    Button {
-                                        
-                                    } label: {
-//                                        Text("end")
-                                    }
-                                    .buttonStyle(.glass)
-                                    .buttonSizing(.automatic)
-
-
-                                }
-                            } else {
-                            
-                                Button {
-                                    timerInProgress.toggle()
-                                    
-                                } label: {
-                                    Text("Start")
-                                }
-                                .buttonStyle(.glass)
-                                .buttonSizing(.automatic)
-
-
-                            }
-                        }
-                        .frame(height: 20) // keeps layout from jumping during the transition
-                        .font(.headline)
-                        .padding(.horizontal, 10) //padding for start button, makes button wider than text
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: 150)
-
-                    }
-                    .animation(.easeInOut(duration: 0.3), value: timerInProgress)
-                    .frame(alignment: .leading)
-                    
-                }
-                .frame(maxWidth: .infinity, alignment: .leading) //align to left
-
-                
-                
+    private var pauseStopRow: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .trailing, spacing: 4) {
+                Text(vm.breakMetricValueText)
+                    .font(.headline.monospacedDigit())
+                Text(vm.breakMetricTitleText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-//            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+
+            HStack(spacing: 8) {
+                Button(vm.currentStudySessionInProgress ? (vm.timerInProgress ? "Pause" : "Resume") : "Start") {
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
+                        vm.toggleSessionProgress()
+                    }
+                }
+                .buttonStyle(.glass)
+                .buttonSizing(.automatic)
+
+                if vm.currentStudySessionInProgress {
+                    Button("End") {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
+                            vm.endCurrentSession()
+                        }
+                    }
+                    .buttonStyle(.glass)
+                    .buttonSizing(.automatic)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.top, 4)
-
     }
 
     private var focusSliderSection: some View {
-        
-            
-//                Text("Focus intensity")
-//                    .font(.subheadline.weight(.semibold))
-//                    .foregroundStyle(.primary)
-
-                
-
-//                Text("DEBUG: \(Int(focusSliderValue))%")
-//                    .font(.subheadline.monospacedDigit())
-//                    .foregroundStyle(.secondary)
-        
-
-        
-        //UITWEAK
-        // Replace the semi-transparent white fill with a glass effect background so the
-        // slider tray adapts to the gradient behind it and feels part of the OS chrome.
-        FocusIntensitySlider(value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
-            .frame(height: 40)
-            .accessibilityLabel("Focus intensity")
-            .padding(.vertical, 14)
-            .padding(.horizontal, 5)
-
-        //UIEND
+        FocusIntensitySlider(
+            value: $vm.focusSliderValue,
+            range: 0...100,
+            sliderDraggableElementWidth: $vm.sliderDraggableElementWidth,
+            sliderDraggableElementHeight: $vm.sliderDraggableElementHeight
+        )
+        .frame(height: 40)
+        .accessibilityLabel("Focus intensity")
+        .padding(.vertical, 14)
+        .padding(.horizontal, 5)
     }
 
-    public var horizontalContentScrollRow: some View {
+    private var horizontalContentScrollRow: some View {
         HorizontalContentScrollRow()
     }
 
+    private var subjectSelectionBinding: Binding<Subject?> {
+        Binding(
+            get: { vm.selectedSubject },
+            set: { vm.updateSubjectSelection($0) }
+        )
+    }
 }
-
-// MARK: - Preview
 
 #Preview {
     NavigationStack {
         StudyTrackingView()
     }
 }
-
