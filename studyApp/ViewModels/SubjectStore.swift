@@ -6,6 +6,8 @@
 import Foundation
 import Combine
 
+/// Simple observable store that persists a `Subject` array to disk.
+/// Intended for standalone editors or migrations that need the raw subject list.
 final class SubjectStore: ObservableObject {
     @Published var subjects: [Subject] = []
     private let fileURL: URL
