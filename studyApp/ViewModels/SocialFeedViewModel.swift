@@ -4,6 +4,7 @@ import Combine
 
 /// ViewModel powering the Social feed.
 /// Holds the feed items and dashboard summary so the view stays declarative.
+/// Keeps the dashboard stats, sections, and colors derived from the current `SocialFeedItem` list.
 final class SocialFeedViewModel: ObservableObject {
     struct FeedSection: Identifiable {
         let id: String
@@ -65,10 +66,12 @@ final class SocialFeedViewModel: ObservableObject {
         return sections
     }
 
+    /// Primary gradient colors used by `SocialView`.
     var backgroundRadialColors: [Color] {
         [Color.yellow.opacity(0.8), Color.black.opacity(0.8)]
     }
 
+    /// Softer gradient variant used for light-themed sections.
     var backgroundLightRadialColors: [Color] {
         [Color.yellow.opacity(0.8), Color.white.opacity(0.8)]
     }

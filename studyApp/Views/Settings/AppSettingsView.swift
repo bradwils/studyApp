@@ -13,7 +13,7 @@ struct AppSettingsView: View {
                 Text("Create a new theme")
                     .font(.headline)
 
-                ForEach(viewModel.templates) { template in
+                ForEach(viewModel.defaultThemes) { template in
                     Button("Create \(template.name) Theme") {
                         viewModel.createTheme(from: template, using: context)
                     }

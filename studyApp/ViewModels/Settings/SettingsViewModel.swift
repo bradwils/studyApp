@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 
+/// Holds UI state for the Settings tab, such as theme preference and subjects editor presentation.
 final class SettingsViewModel: ObservableObject {
     enum ThemePreference: String, CaseIterable, Identifiable {
         case system

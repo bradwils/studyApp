@@ -7,6 +7,8 @@
 import SwiftUI
 import Combine
 
+/// Drives the Pomodoro-style mini timer inside `PureFocusView`.
+/// Handles the per-second ticker, tracking whether a timer exists, and exposes progress helpers for the background animation.
 class PureFocusViewModel: ObservableObject {
     
     // MARK: - Sheet Properties
@@ -50,7 +52,9 @@ class PureFocusViewModel: ObservableObject {
     
     // MARK: - Timer Methods
     
-    /// Start the focus timer
+    /// Starts or resumes the focus timer with the supplied duration.
+    /// 
+    /// The timer publishes every 0.1 seconds so the background animation stays smooth.
     func startTimer(setTimerDuration: TimeInterval) { //parse through 
         guard !timerActivelyRunning else { return }
         
@@ -74,6 +78,7 @@ class PureFocusViewModel: ObservableObject {
     }
     
     /// Pause the timer
+    /// Pauses the timer while keeping the current elapsed time so it can resume later.
     func pauseTimer() {
         timerActivelyRunning = false
         timerCancellable?.cancel() //cancels the
@@ -81,6 +86,7 @@ class PureFocusViewModel: ObservableObject {
     }
     
     /// Stop and reset the timer
+    /// Stops the timer, cancels the ticker, and marks that no timer currently exists.
     func stopTimer() {
         timerActivelyRunning = false
         timerActivelyExists = false
@@ -111,6 +117,7 @@ class PureFocusViewModel: ObservableObject {
         }
     }
     
+    /// Adjusts the stored duration and resets the timer if the new duration drops below the elapsed time.
     func setDuration(timerDurationInSeconds: TimeInterval) { //this function takes seconds
         if elapsedTime > timerDurationInSeconds {
             elapsedTime = 0

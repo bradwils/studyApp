@@ -6,6 +6,9 @@
 import Foundation
 import Combine
 
+/// Manages the study timer lifecycle, break accounting, and derived labels that `StudyTrackingView` consumes.
+///
+/// The viewmodel owns the active/completed session arrays, formats readable totals, and exposes the start/pause/end helpers wired directly to the buttons in `StudyTrackingView`.
 final class StudyTrackingViewModel: ObservableObject {
     @Published private(set) var activeSession: StudySession?
     @Published private(set) var completedSessions: [StudySession] = []
@@ -34,10 +37,14 @@ final class StudyTrackingViewModel: ObservableObject {
         refreshDerivedState()
     }
 
+    /// Display label used by the UI to describe the currently queued subject.
     var selectedSubjectDisplayName: String {
         selectedSubject?.name ?? "No subject"
     }
 
+    /// Establishes a default subject when the view first loads and recalculates derived labels.
+    ///
+    /// Called by `StudyTrackingView` as soon as the user profile subjects arrive or change.
     func configureSubjects(_ subjects: [Subject]) {
         if selectedSubject == nil {
             selectedSubject = subjects.first
@@ -58,7 +65,9 @@ final class StudyTrackingViewModel: ObservableObject {
         refreshDerivedState()
     }
 
-    /// Convenience for the UI start/pause button.
+    /// Stops, starts, or resumes the timer depending on whether a session already exists.
+    ///
+    /// Bound to the round primary button inside `StudyTrackingView` so taps naturally start/resume/pause.
     func toggleSessionProgress() {
         guard activeSession != nil else {
             startSession(subject: selectedSubject, subjectName: selectedSubject?.name)
@@ -68,13 +77,18 @@ final class StudyTrackingViewModel: ObservableObject {
         togglePause()
     }
 
-    /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
+    /// Switches between pause/resume while leaving the underlying session intact.
+    ///
+    /// Used as a helper by the UI layer to keep `toggleSessionProgress()` concise.
     func togglePause() {
         guard let session = activeSession else { return }
         session.isPaused ? resumeSession() : pauseSession()
     }
 
     /// Pause timing and accumulate active duration; call when the user taps Stop/Pause.
+    /// Accumulates the active duration before setting `isPaused` so the pause button honors elapsed time.
+    ///
+    /// Triggered from `toggleSessionProgress()` when the timer is running.
     func pauseSession() {
         guard var session = activeSession, !session.isPaused else { return }
         let now = Date()
@@ -85,7 +99,9 @@ final class StudyTrackingViewModel: ObservableObject {
         refreshDerivedState()
     }
 
-    /// Resume timing and log a break if the pause exceeded the break threshold; call when the user resumes.
+    /// Resumes timing and optionally logs a break if the pause exceeded `breakThreshold`.
+    ///
+    /// Called from `toggleSessionProgress()` when the user taps the same button while paused.
     func resumeSession() {
         guard var session = activeSession, session.isPaused, let pausedAt = session.lastPausedAt else { return }
         let now = Date()
@@ -105,11 +121,14 @@ final class StudyTrackingViewModel: ObservableObject {
     }
 
     /// Finalize the active session and archive it.
+    /// Ends the current session with optional metadata so the view can call it from the End button.
     func endCurrentSession(score: Int? = nil, companions: [String] = [], locationDescription: String? = nil) {
         endSession(score: score, companions: companions, locationDescription: locationDescription)
     }
 
-    /// Finalize the session, attach optional metadata (score, companions, location placeholder), and archive it.
+    /// Finalizes the passed-in session, persists companion/location details, archives it, and clears the timer state.
+    ///
+    /// `StudyTrackingView` invokes this when the End button is visible while a session is active.
     func endSession(score: Int? = nil, companions: [String] = [], locationDescription: String? = nil) {
         guard var session = activeSession else { return }
         let now = Date()
@@ -149,7 +168,7 @@ final class StudyTrackingViewModel: ObservableObject {
         refreshDerivedState()
     }
 
-    /// Increment an interruption counter (e.g., notifications/away events); can be wired to external signals later.
+    /// Increments the interruption counter so notifications or manual signals can track distractions.
     func addInterruption() {
         guard var session = activeSession else { return }
         session.interruptionCount += 1
@@ -157,17 +176,21 @@ final class StudyTrackingViewModel: ObservableObject {
         refreshDerivedState()
     }
 
-    /// Update the subject selection for the next session (only allowed when no session is active).
+    /// Updates the queued subject only when no session is running (the picker is disabled while a session is active).
     func updateSubjectSelection(_ subject: Subject?) {
         guard activeSession == nil else { return }
         selectedSubject = subject
         refreshDerivedState()
     }
 
+    /// Convenience exposed to `StudyTrackingView` so the summary row only shows after study time exists.
     func hasAlreadyStudiedToday() -> Bool {
         shouldShowTodaySummary
     }
 
+    /// Syncs all derived published strings (timer text, break info, totals) whenever the session timeline changes.
+    ///
+    /// Runs after every state mutation and every second while the ticker fires so the UI labels remain accurate.
     private func refreshDerivedState(referenceDate: Date = Date()) {
         currentStudySessionInProgress = activeSession != nil
         timerInProgress = activeSession != nil && !(activeSession?.isPaused ?? true)
@@ -195,6 +218,7 @@ final class StudyTrackingViewModel: ObservableObject {
         }
     }
 
+    /// Sums today's completed sessions plus the running session duration (when it started today) for the total badge.
     private func totalStudyDurationToday(referenceDate: Date) -> TimeInterval {
         let completedDuration = completedSessions
             .filter { calendar.isDate($0.startedAt, inSameDayAs: referenceDate) }
@@ -210,6 +234,7 @@ final class StudyTrackingViewModel: ObservableObject {
         return completedDuration + activeDuration
     }
 
+    /// Creates the 1 Hz timer that keeps the published strings in sync while a session is running.
     private func startTickerIfNeeded() {
         guard sessionTicker == nil else { return }
 
@@ -225,10 +250,12 @@ final class StudyTrackingViewModel: ObservableObject {
         sessionTicker = nil
     }
 
+    /// Formats a duration as `hh:mm:ss` for the daily totals and break metrics.
     private static func formatHoursMinutesSeconds(from timeInterval: TimeInterval) -> String {
         hmsFormatter.string(from: max(timeInterval, 0)) ?? "00:00:00"
     }
 
+    /// Formats a duration as `mm:ss` for the live running session text.
     private static func formatMinutesSeconds(from timeInterval: TimeInterval) -> String {
         msFormatter.string(from: max(timeInterval, 0)) ?? "00:00"
     }
