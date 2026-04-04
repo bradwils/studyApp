@@ -3,3 +3,6 @@ studyAppUITests/
 *.backup
 .DS_Store
 *.xcuserstate
+build/
+xcuserdata/
+*.xcbkptlist
