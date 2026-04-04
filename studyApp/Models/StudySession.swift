@@ -4,25 +4,65 @@
 //  Data models for study sessions.
 
 import Foundation
+import SwiftData
 
 // MARK: - Supporting Types
 
-struct SessionLocation: Codable, Equatable { //optional placeholder for future location tagging
-    var description: String?
+@Model
+class SessionLocation { //optional placeholder for future location tagging
+    var locationName: String
     var latitude: Double?
     var longitude: Double?
+    var sessionCount: Int
+    
+    init(locationName: String, latitude: Double? = nil, longitude: Double? = nil, sessionCount: Int = 0) {
+        self.locationName = locationName
+        self.latitude = latitude
+        self.longitude = longitude
+        self.sessionCount = sessionCount
+    }
+        
+    //second type without long/lat
+        
+    init(locationName: String, sessionCount: Int = 0) {
+        self.locationName = locationName
+        self.latitude = nil
+        self.longitude = nil
+        self.sessionCount = sessionCount
+    }
 }
 
-struct StudyBreak: Identifiable, Codable, Equatable { //records a single breakPeriod
+@Model
+class Distraction {
+    var apps: [Int] //placeholder -> will be app identifiers later
+    var totalTime: TimeInterval
+    var rating: Int
+    
+    init(apps: [Int], totalTime: TimeInterval, rating: Int) {
+        self.apps = apps
+        self.totalTime = totalTime
+        self.rating = rating
+    }
+}
+
+@Model
+class StudyBreak { //records a single breakPeriod
     var id: UUID = UUID()
     var startedAt: Date
     var endedAt: Date
 
     var duration: TimeInterval { endedAt.timeIntervalSince(startedAt) } //computed property
+    
+    init(id: UUID, startedAt: Date, endedAt: Date) {
+        self.id = id
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+    }
 }
 
 /// Represents an individual study session, both while active and once completed.
-struct StudySession: Identifiable, Codable {
+@Model
+class StudySession {
     var id: UUID
     var subject: Subject?
     var subjectName: String?

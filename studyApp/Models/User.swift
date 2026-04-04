@@ -7,59 +7,83 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
-
-struct UserProfile: Codable { //holds all local data, as well as an optional link to an external account
+@Model
+class UserProfile { // holds all local data, as well as an optional link to an external account
+    // SwiftData can synthesize an identifier; keep a stable UUID if you need to share across systems
     var id: UUID
-    var userHandle: String? //todo, register online later
+
+    var userHandle: String? // todo, register online later
+
     var userStatus: ActiveStatus
+
     var profileName: String
     var userProfilePicturePath: String?
-    var auth: AuthState
+
+    var auth: AuthState?
+
     var createdAt: Date
     var isPaused: Bool
-    var lastResumedAt: Bool
+
+    // This sounds like a timestamp; use Date? instead of Bool
+    var lastResumedAt: Date?
+
     var lastActiveAt: Date
+
+    // Relationships
+    @Relationship(deleteRule: .cascade)
     var subjects: [Subject]
-    var studySessions: [StudySession] = []
 
+    @Relationship(deleteRule: .cascade)
+    var studySessions: [StudySession]
 
-    func storeStudySessionsLocally() { ///UNTESTED CODE
-        // Encode the sessions array and write it to the app's Documents directory.
-        let encoder = JSONEncoder()
-        encoder.dateEncodingStrategy = .iso8601
- ///UNTESTED CODE
-        do {
-            let data = try encoder.encode(studySessions)
-            let fm = FileManager.default
-            let docsURL = try fm.url(for: .documentDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
-            let fileURL = docsURL.appendingPathComponent("studySessions_\(id.uuidString).json")
- ///UNTESTED CODE
-            try data.write(to: fileURL, options: [.atomic])
-            #if DEBUG
-            print("Stored study sessions to: \(fileURL.path)")
-            #endif
-        } catch {
-            print("Failed to store study sessions: \(error)")
-        }
-         ///UNTESTED CODE
+    init(
+        id: UUID = UUID(),
+        userHandle: String? = nil,
+        userStatus: ActiveStatus = .offline,
+        profileName: String,
+        userProfilePicturePath: String? = nil,
+        auth: AuthState? = nil,
+        createdAt: Date = .now,
+        isPaused: Bool = false,
+        lastResumedAt: Date? = nil,
+        lastActiveAt: Date = .now,
+        subjects: [Subject] = [],
+        studySessions: [StudySession] = []
+    ) {
+        self.id = id
+        self.userHandle = userHandle
+        self.userStatus = userStatus
+        self.profileName = profileName
+        self.userProfilePicturePath = userProfilePicturePath
+        self.auth = auth
+        self.createdAt = createdAt
+        self.isPaused = isPaused
+        self.lastResumedAt = lastResumedAt
+        self.lastActiveAt = lastActiveAt
+        self.subjects = subjects
+        self.studySessions = studySessions
     }
 }
 
-
 struct AuthState: Codable {
-    var service: AuthProvider? //
+    var service: AuthProvider?
     var lastSignInAt: Date?
 }
 
-enum AuthProvider: String, Codable, CaseIterable {
+enum AuthProvider: Codable {
     case apple
     case google
     case emailPassword
     case custom
-    case anon //for no sign in
+    case anon
 }
 
 enum ActiveStatus: String, Codable {
-    case offline, paused, online, studying
+    case offline
+    case online
+    case active
+    case inactive
+    case unknown
 }

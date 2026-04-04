@@ -1,4 +1,5 @@
 import SwiftUI
+import SwiftData
 
 struct SubjectsEditor: View {
     @StateObject private var userProfileStore = UserProfileStore.shared
@@ -6,20 +7,20 @@ struct SubjectsEditor: View {
     @State private var newSubjectCode = ""
     @FocusState private var isNameFocused: Bool
     @Binding var isPresented: Bool
-
+    
     private var canAddSubject: Bool {
         !newSubjectName.trimmingCharacters(in: .whitespaces).isEmpty &&
         newSubjectCode.trimmingCharacters(in: .whitespaces).count <= 4 &&
         !newSubjectCode.trimmingCharacters(in: .whitespaces).isEmpty
     }
-
+    
     var body: some View {
         VStack(spacing: 20) {
-
+            
             HStack {
                 Text("Edit Subjects")
                     .font(.title.weight(.bold))
-                    
+                
                 Spacer()
                 Button(action: { isPresented.toggle() }) {
                     Image(systemName: "xmark")
@@ -47,7 +48,7 @@ struct SubjectsEditor: View {
                                     .foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(formatCreatedDate(subject.createdAt))
+                            Text("Date")
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }
@@ -74,14 +75,13 @@ struct SubjectsEditor: View {
                         .textContentType(.givenName)
                         .submitLabel(.next)
                         .focused($isNameFocused)
-                        
+                    
                     ZStack(alignment: .trailing) {
                         TextField("Subject code (e.g. MATH101)", text: $newSubjectCode)
                             .autocorrectionDisabled()
                             .submitLabel(.done)
-                            .onSubmit(addSubject)
                             .padding(.trailing, 40)
-
+                        
                         Text("\(newSubjectCode.trimmingCharacters(in: .whitespaces).count)/4")
                             .foregroundColor(newSubjectCode.count > 4 ? .red : .gray)
                             .font(.caption)
@@ -94,33 +94,23 @@ struct SubjectsEditor: View {
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             
-            Button(action: addSubject) {
+            Button(action: doNothing) {
                 Label("Add Subject", systemImage: "plus.circle.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!canAddSubject)
-            .opacity(canAddSubject ? 1 : 0.5)
-        }
+            
+            }
         .padding([.top, .horizontal])
     }
+    func doNothing() {
+        return
+    }
 
-    private func addSubject() {
-        guard canAddSubject else { return }
-        let subject = Subject(name: newSubjectName, code: newSubjectCode.uppercased())
-        userProfileStore.addSubject(subject)
-        newSubjectName = ""
-        newSubjectCode = ""
-        isNameFocused = true
-    }
-    
-    private func formatCreatedDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
 }
+
+
 
 #Preview {
     ZStack {

@@ -35,6 +35,9 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				App/docs/AppSettings.md,
+				App/docs/SwiftData.md,
+				README.md,
+				"UX-TODO.md",
 			);
 			target = 984C5A4F2EAF2CD20048EB4D /* studyApp */;
 		};
@@ -72,23 +75,15 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		9858E5442F65612800BF49CC /* Exceptions for "studyApp" folder in "Compile Sources" phase from "studyApp" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 984C5A4C2EAF2CD20048EB4D /* Sources */;
-			membershipExceptions = (
-				App/docs/AppSettings.md,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		984C5A522EAF2CD20048EB4D /* studyApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				9858E5432F65612800BF49CC /* Exceptions for "studyApp" folder in "studyApp" target */,
-				9858E5442F65612800BF49CC /* Exceptions for "studyApp" folder in "Compile Sources" phase from "studyApp" target */,
 			);
+			explicitFileTypes = {
+				App/docs/SwiftData.md = net.daringfireball.markdown;
+			};
 			path = studyApp;
 			sourceTree = "<group>";
 		};

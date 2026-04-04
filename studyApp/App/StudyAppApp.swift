@@ -10,7 +10,7 @@ struct StudyAppApp: App {
         WindowGroup {
             MainTabView()
         }
-        .modelContainer(for: [AppTheme.self])
+        .modelContainer(for: [StudySession.self, StudyBreak.self, SessionLocation.self, AppTheme.self])
     }
 }
 
