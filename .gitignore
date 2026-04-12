@@ -3,3 +3,5 @@ studyAppUITests/
 *.backup
 .DS_Store
 *.xcuserstate
+.cloud/
+/.claude
