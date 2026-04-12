@@ -2,7 +2,10 @@ import SwiftUI
 import SwiftData
 
 struct SubjectsEditor: View {
-    @StateObject private var userProfileStore = UserProfileStore.shared
+    @Environment(\.modelContext) private var modelContext
+    @Query(sort: \Subject.createdAt, order: .reverse) private var subjects: [Subject]
+
+    
     @State private var newSubjectName = ""
     @State private var newSubjectCode = ""
     @FocusState private var isNameFocused: Bool
@@ -32,13 +35,13 @@ struct SubjectsEditor: View {
             }
             
             List {
-                if userProfileStore.profile.subjects.isEmpty {
+                if subjects.isEmpty {
                     Text("No subjects")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .listRowBackground(Color.clear)
                 } else {
-                    ForEach(userProfileStore.profile.subjects) { subject in
+                    ForEach(subjects) { subject in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(subject.name)
@@ -58,8 +61,8 @@ struct SubjectsEditor: View {
                     .onDelete { indexSet in
                         withAnimation(.easeInOut) {
                             indexSet.forEach { index in
-                                let subject = userProfileStore.profile.subjects[index]
-                                userProfileStore.removeSubject(id: subject.id)
+                                let subjectToDelete = subjects[index]
+                                modelContext.delete(subjectToDelete)
                             }
                         }
                     }
@@ -94,18 +97,33 @@ struct SubjectsEditor: View {
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
             
-            Button(action: doNothing) {
+            Button(action: addSubject) {
                 Label("Add Subject", systemImage: "plus.circle.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .disabled(!canAddSubject)
+            .opacity(canAddSubject ? 1 : 0.5)
             
             }
         .padding([.top, .horizontal])
     }
-    func doNothing() {
-        return
+    //MARK: MOVE TO SUBJECT VM (?) <-- TODO
+    private func addSubject() { //
+        guard canAddSubject else { return }
+
+        let cleanedName = newSubjectName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedCode = newSubjectCode.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+        let subject = Subject(name: cleanedName, code: cleanedCode, educationLevel: nil)
+
+        withAnimation(.easeInOut) {
+            modelContext.insert(subject)
+        }
+
+        newSubjectName = ""
+        newSubjectCode = ""
+        isNameFocused = true
     }
 
 }

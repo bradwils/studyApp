@@ -12,7 +12,7 @@ final class StudyTrackingViewModel: ObservableObject {
     @Published var selectedSubject: Subject?
 
     /// Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
-    private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
+    private let breakThreshold: TimeInterval = 60 * 3// 3 minutes to count as a break
 
     /// Start a fresh session (count-up) for an optional subject; discards any in-progress session.
     func startSession(subject: Subject? = nil, subjectName: String? = nil) {
@@ -28,9 +28,15 @@ final class StudyTrackingViewModel: ObservableObject {
     /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
     func togglePause() {
         guard let session = activeSession else { return }
-        session.isPaused ? resumeSession() : pauseSession()
+        if session.isPaused {
+            resumeSession()
+            session.lastResumedAt = Date()
+        } else {
+            pauseSession()
+            session.lastPausedAt = Date()
+            
+        }
     }
-
     /// Pause timing and accumulate active duration; call when the user taps Stop/Pause.
     func pauseSession() {
         guard var session = activeSession, !session.isPaused else { return }
@@ -48,8 +54,10 @@ final class StudyTrackingViewModel: ObservableObject {
         let pausedDuration = now.timeIntervalSince(pausedAt)
         session.totalBreakDuration += pausedDuration
 
+        
+        //append study break to StudySession
         if pausedDuration >= breakThreshold {
-            session.breaks.append(StudyBreak(startedAt: pausedAt, endedAt: now))
+            session.breaks.append(StudyBreak(id: UUID(), startedAt: pausedAt, endedAt: now, StudySession: activeSession!))
         }
 
         session.isPaused = false
@@ -73,17 +81,10 @@ final class StudyTrackingViewModel: ObservableObject {
         session.studyScore = score
 
         if !companions.isEmpty {
-            session.companions = companions
+            session.StudyPartners = companions
         }
 
-        if var existingLocation = session.location {
-            if existingLocation.description == nil {
-                existingLocation.description = locationDescription
-            }
-            session.location = existingLocation
-        } else if locationDescription != nil {
-            session.location = SessionLocation(description: locationDescription, latitude: nil, longitude: nil)
-        }
+
 
         completedSessions.append(session)
         activeSession = nil
@@ -107,7 +108,7 @@ final class StudyTrackingViewModel: ObservableObject {
         selectedSubject = subject
     }
     
-    public func hasAlreadyStudiedToday() -> Bool {
+    func hasAlreadyStudiedToday() -> Bool {
         //todo
         return false; //stub placeholder
     }
