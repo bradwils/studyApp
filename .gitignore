@@ -6,3 +6,4 @@ studyAppUITests/
 build/
 xcuserdata/
 *.xcbkptlist
+.claude/
