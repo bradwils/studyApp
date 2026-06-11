@@ -87,21 +87,20 @@ struct StudyTrackingView: View {
 
 
 
+                
 
 
 
 
-
-
-
-
-
+                
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 24)
             .padding(.top, 32)
             .padding(.bottom, 24)
+            .ignoresSafeArea(edges: .bottom)
         }
+        .ignoresSafeArea(edges: .bottom)
         
 //        .sheet(isPresented: $isLeaderboardPresented) {
 //            LeaderboardSheetView()
