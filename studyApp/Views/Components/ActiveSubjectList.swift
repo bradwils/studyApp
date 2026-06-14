@@ -4,10 +4,17 @@
 //  A picker component for selecting the active study subject.
 
 import SwiftUI
+import SwiftData
+
+
 
 struct ActiveSubjectList: View {
-    @ObservedObject var studyTrackingModel: StudyTrackingViewModel
-    var subjects: [Subject]
+    @State private var studyTrackingModel = StudyTrackingViewModel()
+
+    @Environment(\.modelContext) private var modelContext
+
+    @Query private var subjects: [Subject]
+
     var isEnabled: Bool
 
     @State private var subjectSelection: Subject?

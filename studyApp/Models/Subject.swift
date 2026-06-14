@@ -4,9 +4,11 @@
 //  Model representing a study subject.
 
 import Foundation
+import SwiftData
 
-struct Subject: Identifiable, Codable, Hashable {
-    let id: UUID
+@Model
+final class Subject {
+    var id: UUID
     var name: String
     var code: String
     var createdAt: Date

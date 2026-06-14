@@ -1,25 +1,22 @@
 import SwiftUI
+import SwiftData
 
 struct SubjectsEditor: View {
-    @StateObject private var userProfileStore = UserProfileStore.shared
-    @State private var newSubjectName = ""
-    @State private var newSubjectCode = ""
+    @Environment(\.modelContext) private var modelContext
+    @State private var vm = SubjectsEditorVM()
     @FocusState private var isNameFocused: Bool
+    
     @Binding var isPresented: Bool
+    @Binding var currentDetent: PresentationDetent
 
-    private var canAddSubject: Bool {
-        !newSubjectName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        newSubjectCode.trimmingCharacters(in: .whitespaces).count <= 4 &&
-        !newSubjectCode.trimmingCharacters(in: .whitespaces).isEmpty
-    }
+    @Query var subjects: [Subject]
 
     var body: some View {
         VStack(spacing: 20) {
-
             HStack {
                 Text("Edit Subjects")
                     .font(.title.weight(.bold))
-                    
+
                 Spacer()
                 Button(action: { isPresented.toggle() }) {
                     Image(systemName: "xmark")
@@ -29,15 +26,15 @@ struct SubjectsEditor: View {
                 .shadow(radius: 10)
                 .accessibilityLabel("Close editor")
             }
-            
+
             List {
-                if userProfileStore.profile.subjects.isEmpty {
+                if subjects.isEmpty {
                     Text("No subjects")
                         .font(.callout)
                         .foregroundStyle(.secondary)
                         .listRowBackground(Color.clear)
                 } else {
-                    ForEach(userProfileStore.profile.subjects) { subject in
+                    ForEach(subjects) { subject in
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(subject.name)
@@ -57,8 +54,7 @@ struct SubjectsEditor: View {
                     .onDelete { indexSet in
                         withAnimation(.easeInOut) {
                             indexSet.forEach { index in
-                                let subject = userProfileStore.profile.subjects[index]
-                                userProfileStore.removeSubject(id: subject.id)
+                                vm.removeSubject(subjects[index], context: modelContext)
                             }
                         }
                     }
@@ -66,55 +62,54 @@ struct SubjectsEditor: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            
+
             ZStack {
-                
                 VStack(spacing: 12) {
-                    TextField("Subject name", text: $newSubjectName)
+                    TextField("Subject name", text: $vm.newSubjectName)
                         .textContentType(.givenName)
                         .submitLabel(.next)
                         .focused($isNameFocused)
-                        
+                    
+                    DotStyleDivider(orientation: .horizontal)
+
                     ZStack(alignment: .trailing) {
-                        TextField("Subject code (e.g. MATH101)", text: $newSubjectCode)
+                        TextField("Subject code (e.g. MATH101)", text: $vm.newSubjectCode)
                             .autocorrectionDisabled()
                             .submitLabel(.done)
-                            .onSubmit(addSubject)
+                            .onSubmit { vm.addSubject(context: modelContext) }
                             .padding(.trailing, 40)
 
-                        Text("\(newSubjectCode.trimmingCharacters(in: .whitespaces).count)/4")
-                            .foregroundColor(newSubjectCode.count > 4 ? .red : .gray)
+                        Text("\(vm.newSubjectCode.count)/4")
+                            .foregroundColor(vm.newSubjectCode.count > 4 ? .red : .gray)
                             .font(.caption)
                             .padding(.trailing, 8)
                             .opacity(0.7)
                     }
                 }
                 .padding()
-                .background(.thinMaterial)
+                .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
-            
-            Button(action: addSubject) {
+
+            Button(action: { vm.addSubject(context: modelContext) }) {
                 Label("Add Subject", systemImage: "plus.circle.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
+                    .foregroundColor(Color(.red))
+
+                    
             }
             .buttonStyle(.borderedProminent)
-            .disabled(!canAddSubject)
-            .opacity(canAddSubject ? 1 : 0.5)
+            .disabled(!vm.canAddSubject)
+            .opacity(vm.canAddSubject ? 1 : 0.5)
+            .background(.thinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+
+
         }
         .padding([.top, .horizontal])
     }
 
-    private func addSubject() {
-        guard canAddSubject else { return }
-        let subject = Subject(name: newSubjectName, code: newSubjectCode.uppercased())
-        userProfileStore.addSubject(subject)
-        newSubjectName = ""
-        newSubjectCode = ""
-        isNameFocused = true
-    }
-    
     private func formatCreatedDate(_ date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .abbreviated
@@ -123,11 +118,16 @@ struct SubjectsEditor: View {
 }
 
 #Preview {
+    
+    @Previewable @State var currentDetent: PresentationDetent = .medium
+    
     ZStack {
         Color.gray.opacity(0.2).ignoresSafeArea()
         VStack {
             Spacer()
-            SubjectsEditor(isPresented: .constant(true))
+            SubjectsEditor(isPresented: .constant(true), currentDetent: $currentDetent)
+                
         }
     }
+    .modelContainer(for: Subject.self, inMemory: true)
 }

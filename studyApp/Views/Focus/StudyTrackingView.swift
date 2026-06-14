@@ -6,6 +6,7 @@ import Combine
 struct StudyTrackingView: View {
     
     // MARK: - State Properties
+    @State private var pureFocusViewState = false;
     
     @State private var focusSliderValue: Double = 0
     @State private var timerInProgress: Bool = false
@@ -20,9 +21,10 @@ struct StudyTrackingView: View {
     @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
     
     // MARK: - ViewModels
+
+    @State private var vm = StudyTrackingViewModel()
     
-    @StateObject private var vm = StudyTrackingViewModel()
-    @StateObject private var userProfileStore = UserProfileStore.shared
+    
     
     // MARK: - Helpers
     
@@ -102,30 +104,17 @@ struct StudyTrackingView: View {
             .padding(.top, 32)
             .padding(.bottom, 24)
         }
-        
+
 //        .sheet(isPresented: $isLeaderboardPresented) {
 //            LeaderboardSheetView()
 //                .padding(10)
 //                .presentationDragIndicator(.visible)
 //                .presentationBackgroundInteraction(.enabled)
 //                .presentationDetents([.height(50), .fraction(0.3), .fraction(0.9)])
-//                
-//            
-//            
+//
+//
+//
 //        }
-        .onChange(of: userProfileStore.profile.subjects) { old, new in
-            if vm.selectedSubject == nil, let first = new.first {
-                vm.updateSubjectSelection(first)
-            }
-            
-            
-//                .onChange(of: currentTrackWidth) { oldValue, newValue in
-//                    trackWidth = newValue
-//                }
-        }
-        .onReceive(vm.$activeSession) { session in
-            currentStudySessionInProgress = session != nil
-        }
 
 
 
@@ -141,8 +130,6 @@ struct StudyTrackingView: View {
                     .foregroundColor(.secondary)
 
                 ActiveSubjectList(
-                    studyTrackingModel: vm,
-                    subjects: userProfileStore.profile.subjects,
                     isEnabled: !currentStudySessionInProgress
                 )
             }
@@ -260,7 +247,7 @@ struct StudyTrackingView: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding(.horizontal, 20)
-                
+                         
                 
                 HStack { //child hstack2, aligned to be left-most within the available space
                     Button {
@@ -279,7 +266,7 @@ struct StudyTrackingView: View {
                                         Text("Pause")
                                     }
                                     .buttonStyle(.glass)
-                                    .buttonSizing(.flexible)
+                                    .frame(maxWidth: .infinity)
 
                                     
 
@@ -288,10 +275,10 @@ struct StudyTrackingView: View {
                                     Button {
                                         
                                     } label: {
-//                                        Text("end")
+                                        Text("end")
                                     }
                                     .buttonStyle(.glass)
-                                    .buttonSizing(.automatic)
+                                    .buttonSizing(.fitted)
 
 
                                 }
@@ -313,11 +300,12 @@ struct StudyTrackingView: View {
                         .font(.headline)
                         .padding(.horizontal, 10) //padding for start button, makes button wider than text
                         .padding(.vertical, 12)
-                        .frame(maxWidth: 150)
+                        .frame(maxWidth: .infinity)
 
                     }
                     .animation(.easeInOut(duration: 0.3), value: timerInProgress)
                     .frame(alignment: .leading)
+                    .padding(.leading, 0)
                     
                 }
                 .frame(maxWidth: .infinity, alignment: .leading) //align to left
@@ -349,7 +337,7 @@ struct StudyTrackingView: View {
         //UITWEAK
         // Replace the semi-transparent white fill with a glass effect background so the
         // slider tray adapts to the gradient behind it and feels part of the OS chrome.
-        FocusIntensitySlider(value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
+        FocusIntensitySlider(pureFocusViewActive: $pureFocusViewState ,value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
             .frame(height: 40)
             .accessibilityLabel("Focus intensity")
             .padding(.vertical, 14)

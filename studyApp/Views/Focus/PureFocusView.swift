@@ -8,12 +8,14 @@ import SwiftUI
 //need to use white UI elements exclusively.
 struct PureFocusView: View {
     
+    @Environment(\.dismiss) var dismiss //native dismiss function
+    
     @State var timerTimeInterval: TimeInterval = 0 //0.0 gets binded to our durationpicker, so this gets changed as the picker changes value.
     
     // MARK: - State Properties
     
-    @StateObject private var viewModel = PureFocusViewModel()
-    
+    @State private var vm = PureFocusViewModel()
+
     //Lock (focus feature)
     @State private var focusLockEnabled: Bool = false;
 
@@ -27,8 +29,8 @@ struct PureFocusView: View {
         ZStack(alignment: .bottom) {
             // Animated gradient background
             TimerGradientBackground(
-                progress: viewModel.timerProgress,
-                isTimerActive: $viewModel.timerActivelyRunning
+                progress: vm.timerProgress,
+                isTimerActive: $vm.timerActivelyRunning
             )
             
             VStack() {
@@ -47,6 +49,13 @@ struct PureFocusView: View {
             CustomBottomSheet()
         }
         .toolbar(.hidden, for: .tabBar)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Cancel") {
+                    dismiss() // Programmatic dismissal
+                }
+            }
+        }
         .foregroundColor(dynamicForegroundColor)
         .navigationBarBackButtonHidden(false)
     }
@@ -65,23 +74,9 @@ struct PureFocusView: View {
                 
             
             // Duration picker (when timer is not running)
-            if !viewModel.timerActivelyRunning && viewModel.elapsedTime == 0 {
+            if !vm.timerActivelyRunning && vm.elapsedTime == 0 {
                 durationPicker
             }
-            
-//            //DEBUG
-//            if (viewModel.timerActivelyRunning) {
-//                Text("running: TRUE")
-//            } else {
-//                Text("running: FALSE")
-//            }
-//            
-//            if (viewModel.timerActivelyExists) { //DEBUG
-//                Text("exists: TRUE")
-//            } else {
-//                Text("exists: FALSE")
-//            }
-            
             
             // Timer control buttons
             HStack(spacing: 20) {
@@ -91,13 +86,13 @@ struct PureFocusView: View {
                 // to manually manage foreground/background colors or pressed states.
                 // Start/Pause button
                 Button(action: {
-                    viewModel.toggleTimer()
+                    vm.toggleTimer()
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: viewModel.timerActivelyRunning ? "pause.fill" : "play.fill")
+                        Image(systemName: vm.timerActivelyRunning ? "pause.fill" : "play.fill")
                         
-                        if (viewModel.timerActivelyExists) {
-                            Text(viewModel.timerActivelyRunning ? "Pause" : "Resume")
+                        if (vm.timerActivelyExists) {
+                            Text(vm.timerActivelyRunning ? "Pause" : "Resume")
                         } else {
                             Text("Start")
                         }
@@ -124,8 +119,8 @@ struct PureFocusView: View {
                             .contentTransition(.symbolEffect(.replace.magic(fallback: .offUp.byLayer), options: .nonRepeating))
                             
                         
-                        if (viewModel.timerActivelyExists) {
-                            Text(viewModel.timerActivelyRunning ? "Pause" : "Resume")
+                        if (vm.timerActivelyExists) {
+                            Text(vm.timerActivelyRunning ? "Pause" : "Resume")
                         } else {
                             Text("Start")
                         }
@@ -136,10 +131,10 @@ struct PureFocusView: View {
                 //UITWEAK
                 // Reset button (only show when timer has started)
                 // Uses the same .glass style so it visually matches the other controls.
-                if viewModel.elapsedTime > 0 {
+                if vm.elapsedTime > 0 {
                     Button(action: {
                         withAnimation {
-                            viewModel.resetTimer()
+                            vm.resetTimer()
                         }
                     }) {
                         Image(systemName: "arrow.counterclockwise")
@@ -160,7 +155,7 @@ struct PureFocusView: View {
         
         VStack(spacing: 8) {
 
-            DurationPicker(duration: $viewModel.currentTimerTotalDuration, minHours: $minHours, maxHours: $maxHours, minMinutes: $minMinutes, maxMinutes: $maxMinutes) //
+            DurationPicker(duration: $vm.currentTimerTotalDuration, minHours: $minHours, maxHours: $maxHours, minMinutes: $minMinutes, maxMinutes: $maxMinutes) //
         }
     }
     
@@ -173,17 +168,17 @@ struct PureFocusView: View {
     // MARK: - Computed Properties
     
     private var remainingTimeFormatted: String {
-        viewModel.remainingTime.formattedClock
+        vm.remainingTime.formattedClock
     }
     
     /// Dynamically adjust foreground color based on background brightness
     private var dynamicForegroundColor: Color {
-        viewModel.timerProgress > 0.6 ? .black : .white
+        vm.timerProgress > 0.6 ? .black : .white
     }
     
     //new timer stuff
     var remainingTime: some View {
-        Text("vm.totalduration: \(viewModel.currentTimerTotalDuration)")
+        Text("vm.totalduration: \(vm.currentTimerTotalDuration)")
     }
 }
     
