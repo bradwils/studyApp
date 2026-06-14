@@ -7,7 +7,8 @@
 import SwiftUI
 import Combine
 
-class PureFocusViewModel: ObservableObject {
+@Observable
+final class PureFocusViewModel {
     
     // MARK: - Sheet Properties
     
@@ -15,18 +16,18 @@ class PureFocusViewModel: ObservableObject {
     // updates any Views observing this model when it changes
     
     // MARK: - Timer Properties
-    
+
     /// Total duration for the focus session in seconds (default: 25 minutes)
-    
+
     /// Elapsed time in seconds since timer started
-    @Published var elapsedTime: TimeInterval = 0
-    
-    @Published var currentTimerTotalDuration: TimeInterval = 5 // default 5s, change to 0 later
-    
+    var elapsedTime: TimeInterval = 0
+
+    var currentTimerTotalDuration: TimeInterval = 5 // default 5s, change to 0 later
+
     /// Whether the timer is currently running
-    @Published var timerActivelyRunning: Bool = false //no timers, initially
-    
-    @Published var timerActivelyExists: Bool = false //tracks if there is any timer that currently exists
+    var timerActivelyRunning: Bool = false //no timers, initially
+
+    var timerActivelyExists: Bool = false //tracks if there is any timer that currently exists
     
     /// Computed progress value (0.0 to 1.0) for the gradient animation
     var timerProgress: CGFloat { //need this to track for background
