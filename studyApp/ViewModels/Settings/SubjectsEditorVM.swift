@@ -3,9 +3,8 @@ import SwiftData
 @Observable
 final class SubjectsEditorVM {
 
-    //state not neded in classes; only structs
-    // @State is only needed for Views, as it's an individually observerd component; not for ViewModels
-    var newSubjectName: String = ""
+    // State is not needed in classes; only in structs.
+    // @State is only needed for Views (value types) — not for ViewModels.
     var newSubjectCode: String = ""
 
     var canAddSubject: Bool {
