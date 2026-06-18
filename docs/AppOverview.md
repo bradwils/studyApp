@@ -50,11 +50,9 @@ studyApp/
 - **Profile**: User profile details and statistics
 
 ## Data Models
-- `Subject`: Represents study subjects with persistence
-- `SubjectStore`: Manages subject data with local storage
-- `CompleteStudySession`: Tracks completed study sessions
-- `StartStudyTimer`: Manages active study timers
-- `ListItem`: Social feed item model
+See [Models/README.md](Models/README.md) for full documentation, including relationship diagrams. In short:
+- `Subject`, `StudySession`, `StudyBreak`, `SessionLocation`, `AppTheme` — SwiftData models
+- `UserProfile` — legacy JSON-persisted struct, still mid-migration to SwiftData
 
 ## Navigation
 - Tab-based navigation between main features
