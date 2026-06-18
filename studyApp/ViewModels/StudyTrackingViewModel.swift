@@ -5,38 +5,52 @@
 
 import Foundation
 import Combine
+import SwiftData
 
-final class StudyTrackingViewModel: ObservableObject {
-    @Published private(set) var activeSession: StudySession?
-    @Published private(set) var completedSessions: [StudySession] = []
-    @Published var selectedSubject: Subject?
+@Observable
+final class StudyTrackingViewModel {
+    var activeSession: StudySession?
+    var completedSessions: [StudySession] = []
+    var selectedSubject: Subject
+    
+    var sessionIsRunning: Bool
 
-    /// Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
+    // Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
     private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
+    
+    var sessionStopwatch: Stopwatch?
 
-    /// Start a fresh session (count-up) for an optional subject; discards any in-progress session.
-    func startSession(subject: Subject? = nil, subjectName: String? = nil) {
-        let now = Date()
-        activeSession = StudySession(
-            subject: subject,
-            subjectName: subjectName,
-            startedAt: now,
-            lastResumedAt: now
-        )
+
+    //MARK: VM Functions
+
+    // Start a fresh session (count-up) for an optional subject; discards any in-progress session.
+    func startSession() {
+        guard activeSession == activeSession else { return } //if we have an activeSession, abort
+            
+        //assert a new stopwatch
+        sessionStopwatch = Stopwatch()
+            //start stopwatch variables --> stopwatchIsRunning, startDate
+        
+        sessionStopwatch?.stopwatchIsRunning = true
+        sessionStopwatch?.startedAt = Date.now
+        
+        activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject.name, startedAt: Date.now) //barebones for now
+        sessionIsRunning = false //start timer
     }
+    
 
     /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
     func togglePause() {
         guard let session = activeSession else { return }
-        session.isPaused ? resumeSession() : pauseSession()
+        sessionIsRunning ? pauseSession() : resumeSession()
     }
 
     /// Pause timing and accumulate active duration; call when the user taps Stop/Pause.
     func pauseSession() {
-        guard var session = activeSession, !session.isPaused else { return }
+        guard var session = activeSession, !session.isRunning else { return }
         let now = Date()
         session.totalActiveDuration += now.timeIntervalSince(session.lastResumedAt)
-        session.isPaused = true
+        session.sessionIsRunning = false
         session.lastPausedAt = now
         activeSession = session
     }
