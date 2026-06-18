@@ -7,6 +7,31 @@ import Foundation
 import Combine
 import SwiftData
 
+// MARK: - State Overview
+// Three layers of state are touched during a session lifecycle:
+//
+// VM (self)
+//   activeSession       — the live StudySession being built; nil when idle
+//   completedSessions   — archive of finished sessions
+//   selectedSubject     — subject for the next/current session
+//   sessionIsRunning    — mirrors stopwatch + session state for UI binding
+//   sessionStopwatch    — optional Stopwatch tracking elapsed time
+//
+// Stopwatch (sessionStopwatch)
+//   startedAt           — wall-clock anchor; re-anchored on resume
+//   stopwatchIsRunning  — true while actively counting
+//   lastPausedAt        — set on pause; used to compute break length on resume
+//   previousBreaksLength— accumulated break time subtracted from wall time
+//   totalStudyingTime   — computed: wall elapsed − previousBreaksLength
+//
+// StudySession (activeSession)
+//   startedAt / endedAt — session boundaries
+//   lastPausedAt        — persisted pause timestamp (mirrors stopwatch.lastPausedAt)
+//   totalBreakDuration  — accumulated break time written on end
+//   breaks              — [StudyBreak] appended when pause > breakThreshold
+//   interruptionCount   — incremented by addInterruption()
+//   studyScore / notes / friends / location — written at endSession()
+
 @Observable
 final class StudyTrackingViewModel {
     var activeSession: StudySession?

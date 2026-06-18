@@ -94,9 +94,9 @@ final class StudySession: Identifiable {
         startedAt: Date = Date(),
         endedAt: Date? = nil,
         lastPausedAt: Date? = nil,
-        totalBreakDuration: TimeInterval? = nil,
+        totalBreakDuration: TimeInterval? = 0,
         breaks: [StudyBreak] = [],
-        friends: [String] = [],
+        friends: [String]? = [],
         location: SessionLocation? = nil,
         studyScore: Int? = nil,
         notes: String? = nil,
@@ -123,13 +123,20 @@ final class StudySession: Identifiable {
         subjectName: String?,
         startedAt: Date,
         breaks: [StudyBreak] = [],
-        friends: [String] = [],
+        friends: [String] = []
     ) {
         self.id = id
         self.subject = subject
         self.subjectName = subjectName
         self.startedAt = startedAt
+        self.endedAt = nil
+        self.lastPausedAt = nil
+        self.totalBreakDuration = 0
+        self.breaks = breaks
+        self.location = nil
+        self.friends = friends
+        self.studyScore = nil
+        self.notes = nil
+        self.interruptionCount = 0
     }
-    
-    
 }
