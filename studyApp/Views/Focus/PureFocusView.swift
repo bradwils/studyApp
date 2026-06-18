@@ -8,7 +8,7 @@ import SwiftUI
 //need to use white UI elements exclusively.
 struct PureFocusView: View {
     
-    @Environment(\.dismiss) var dismiss //native dismiss function
+    @Environment(\.dismiss) var dismiss //get the environment dismiss value
     
     @State var timerTimeInterval: TimeInterval = 0 //0.0 gets binded to our durationpicker, so this gets changed as the picker changes value.
     
@@ -19,11 +19,7 @@ struct PureFocusView: View {
     //Lock (focus feature)
     @State private var focusLockEnabled: Bool = false;
 
-    // Duration picker bounds (moved out of DurationPicker)
-    @State private var minHours: Int = 0
-    @State private var maxHours: Int = 8
-    @State private var minMinutes: Int = 0
-    @State private var maxMinutes: Int = 59
+
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -151,11 +147,8 @@ struct PureFocusView: View {
     }
     
     private var durationPicker: some View {
-        
-        
         VStack(spacing: 8) {
-
-            DurationPicker(duration: $vm.currentTimerTotalDuration, minHours: $minHours, maxHours: $maxHours, minMinutes: $minMinutes, maxMinutes: $maxMinutes) //
+            DurationPicker(duration: $vm.currentTimerTotalDuration, minHours: $vm.minHours, maxHours: $vm.maxHours, minMinutes: $vm.minMinutes, maxMinutes: $vm.maxMinutes)
         }
     }
     

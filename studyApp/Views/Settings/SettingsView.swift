@@ -20,6 +20,8 @@ struct SettingsView: View {
     @State private var preferredTheme: Theme = .system
     @State private var studyReminderTime = Date()
     @State private var isShowingSubjectsEditor = false // drives the custom bottom drawer
+    
+    @State var settingsSheetDetent: PresentationDetent //MOVE TO VM
 
     var body: some View {
         NavigationStack {
@@ -34,7 +36,7 @@ struct SettingsView: View {
                             Label("Edit Subjects", systemImage: "list.bullet")
                         }
                         .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
-                            SubjectsEditor(isPresented: $isShowingSubjectsEditor)
+                            SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
                                 .padding(10)
                                 .presentationDetents([.fraction(0.6)])
                                 .presentationDragIndicator(.visible)
@@ -60,5 +62,7 @@ struct SettingsView: View {
 }
 
 #Preview {
-    SettingsView()
+    
+    SettingsView(settingsSheetDetent: .fraction(0.5))
+    
 }
