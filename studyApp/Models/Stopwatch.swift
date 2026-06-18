@@ -36,4 +36,8 @@ struct Stopwatch {
         self.previousBreaksLength = previousBreaksLength + (lastPausedAt?.timeIntervalSinceNow ?? 0)
         self.stopwatchIsRunning = true
     }
+    
+    mutating func startBreak() {
+        
+    }
 }
