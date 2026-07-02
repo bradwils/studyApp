@@ -337,7 +337,7 @@ struct StudyTrackingView: View {
         //UITWEAK
         // Replace the semi-transparent white fill with a glass effect background so the
         // slider tray adapts to the gradient behind it and feels part of the OS chrome.
-        FocusIntensitySlider(pureFocusViewActive: $pureFocusViewState ,value: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
+        FocusIntensitySlider(sliderProgress: $focusSliderValue, range: 0...100, sliderDraggableElementWidth: $sliderDraggableElementWidth, sliderDraggableElementHeight: $sliderDraggableElementHeight)
             .frame(height: 40)
             .accessibilityLabel("Focus intensity")
             .padding(.vertical, 14)

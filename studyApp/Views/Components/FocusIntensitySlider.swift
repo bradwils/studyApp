@@ -26,7 +26,7 @@ struct FocusIntensitySlider: View {
 
     @State private var navigateToPureFocus = false
     
-    @Binding var value: Double
+    @Binding var sliderProgress: Double
     var range: ClosedRange<Double>
     
     @Binding var sliderDraggableElementWidth: CGFloat
@@ -44,7 +44,7 @@ struct FocusIntensitySlider: View {
 
     private var normalizedProgress: Double {
         guard range.upperBound != range.lowerBound else { return 0 }
-        return (value - range.lowerBound) / (range.upperBound - range.lowerBound)
+        return (sliderProgress - range.lowerBound) / (range.upperBound - range.lowerBound)
     }
 
     var body: some View {
@@ -77,17 +77,17 @@ struct FocusIntensitySlider: View {
                         // Convert the thumb position into normalized progress along the track.
                         let progress = currentTrackWidth > 0 ? xPosition / currentTrackWidth : 0
                         let newValue = range.lowerBound + Double(progress) * (range.upperBound - range.lowerBound)
-                        value = min(max(newValue, range.lowerBound), range.upperBound)
+                        sliderProgress = min(max(newValue, range.lowerBound), range.upperBound)
                     }
                     .onEnded { _ in
                         dragStartTouchOffset = nil
-                        if value > 90 {
+                        if sliderProgress > 90 {
                             navigateToPureFocus = true
                             
                             
                         } else {
                             withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.6, blendDuration: 0)) {
-                                value = 0
+                                sliderProgress = 0
                             }
                         }
                     }
@@ -152,7 +152,7 @@ struct FocusIntensitySlider: View {
                 .onAppear {
                     // Reset slider tow 0 as soon as PureFocusView appears
                     // (i.e., while StudyTrackingView is being hidden from view).
-                    value = 0
+                    sliderProgress = 0
                 }
         }
         //MARK: Slider background shaoe
@@ -168,7 +168,7 @@ struct FocusIntensitySlider: View {
 
 #Preview {
     FocusIntensitySlider(
-        value: .constant(50),
+        sliderProgress: .constant(50),
         range: 0...100,
         sliderDraggableElementWidth: .constant(90),
         sliderDraggableElementHeight: .constant(60)

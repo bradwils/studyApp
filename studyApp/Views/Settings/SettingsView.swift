@@ -21,7 +21,7 @@ struct SettingsView: View {
     @State private var studyReminderTime = Date()
     @State private var isShowingSubjectsEditor = false // drives the custom bottom drawer
     
-    @State var settingsSheetDetent: PresentationDetent //MOVE TO VM
+    @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
 
     var body: some View {
         NavigationStack {

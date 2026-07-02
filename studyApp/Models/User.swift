@@ -36,7 +36,7 @@ class UserProfile { //holds all local data, as well as an optional link to an ex
 
 }
 
-enum AuthProvider {
+enum AuthProvider:String, Codable {
     case apple
     case google
     case emailPassword
@@ -44,6 +44,6 @@ enum AuthProvider {
     case anon //for no sign in
 }
 
-enum ActiveStatus {
+enum ActiveStatus: String, Codable {
     case offline, paused, online, studying
 }

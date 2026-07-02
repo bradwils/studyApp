@@ -65,7 +65,7 @@ final class StudySession: Identifiable {
     @Relationship(deleteRule: .cascade) //delete break --> delete connected StudyBreaks
     var breaks: [StudyBreak]
 
-    @Relationship(deleteRule: .cascade) //delete break --> delete connected SessionLocations
+    @Relationship(deleteRule: .cascade) //delete sessionLocation --> delete connected SessionLocation
     var location: SessionLocation?
 
     var friends: [String]?           // placeholder for other users in the session
