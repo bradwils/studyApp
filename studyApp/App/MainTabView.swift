@@ -29,9 +29,9 @@ struct MainTabView: View {
                 }
             }
             
-            Tab("Modes", systemImage: "ellipsis.circle") {
+            Tab("Sessions", systemImage: "clock.arrow.circlepath") {
                 NavigationStack {
-                    ModesView()
+                    SessionsView()
                 }
             }
         }
