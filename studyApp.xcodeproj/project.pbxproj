@@ -72,22 +72,11 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		9858E5442F65612800BF49CC /* Exceptions for "studyApp" folder in "Compile Sources" phase from "studyApp" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = 984C5A4C2EAF2CD20048EB4D /* Sources */;
-			membershipExceptions = (
-				App/docs/AppSettings.md,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		984C5A522EAF2CD20048EB4D /* studyApp */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				9858E5432F65612800BF49CC /* Exceptions for "studyApp" folder in "studyApp" target */,
-				9858E5442F65612800BF49CC /* Exceptions for "studyApp" folder in "Compile Sources" phase from "studyApp" target */,
 			);
 			path = studyApp;
 			sourceTree = "<group>";

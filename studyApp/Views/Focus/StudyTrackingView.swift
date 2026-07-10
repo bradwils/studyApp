@@ -64,17 +64,10 @@ struct StudyTrackingView: View {
             VStack(spacing: 24) {
                 headerRow
                 timeSummaryRow
-                MainTimerElement
+                timerAndControlsSection
                 
+                Spacer()
                     
-                
-                Spacer()
-                    .frame(height: .infinity)
-                
-                pauseStopRow
-                
-                Spacer()
-                    .frame(height: .infinity)
 
                 
                 focusSliderSection //complex and fucked
@@ -85,15 +78,6 @@ struct StudyTrackingView: View {
                 horizontalContentScrollRow
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
                     //.check if above modifier is needed or not
-
-
-
-
-
-
-
-
-
 
 
 
@@ -167,27 +151,8 @@ struct StudyTrackingView: View {
             }
         }
     }
-
-    private var MainTimerElement: some View {
-        
-            bigTotalElapsedTimeText
-            .padding(.top, 8)
-    }
-
-    private var bigTotalElapsedTimeText: some View {
-        
-        VStack(spacing: -20) {
-
-            Text("11:22")
-                .font(.system(size: 100).monospacedDigit())
-                .fontWeight(.semibold)
-            Text("(total time spent studying this session)")
-                .font(.caption)
-                
-
-        }
-    }
-
+    
+    
     private var connectionRow: some View {
         //UITWEAK
         // Wrapping the online-friends indicator in a glass capsule gives it depth and
@@ -195,7 +160,7 @@ struct StudyTrackingView: View {
         HStack(spacing: 6) {
             Text("\(onlineFriendCount) online friends")
                 .font(.caption)
-            
+
             Image(systemName: "dot.radiowaves.up.forward")
                 .font(.subheadline)
                 .symbolEffect(.variableColor.iterative.dimInactiveLayers.nonReversing, options: .repeat(.periodic(delay: 4.0)))
@@ -206,117 +171,160 @@ struct StudyTrackingView: View {
         .glassEffect()
         //UIEND
     }
-    
-    
 
-    private var pauseStopRow: some View { //last paused / last resumed & start/resume and stop button
-        ZStack {
-            HStack {
-                HStack { //child hstack1, aligned to be right-most within the available space
-                    // "Pause at" text: fades in and slides from left when paused
-                    VStack(spacing: 4) {
-                        if (timerInProgress) { //if we're currently tracking (not paused)
 
-                            Text(formattedHMS(from: timeSinceLastBreakEnded)) //parse through a helper; format the timeinterval as hour/minute/second
-                                .font(.headline.monospacedDigit())
-                                .frame(alignment: .center)
-                            
-                            Text("since last break")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .frame(alignment: .center)
 
-                        } else { //if we're paused
-
-                            
-                            Text(formattedHMS(from: timeSinceLastBreakStarted)) //parse through a helper; format the timeinterval as hour/minute/second
-                                .font(.headline.monospacedDigit())
-                                .frame(alignment: .center)
-                            
-                            Text("Break Length")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .frame(alignment: .center)
-
-                        }
-
-                    } //                        t : f
-                    //                    hidden : showing
-                    .offset(x: timerInProgress ? 0 : 0)
-                    .animation(.easeInOut(duration: 0.3), value: timerInProgress)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-                }
-                .padding(.horizontal, 20)
-                         
+    private var timerAndControlsSection: some View {
+        
+        
+        //if there is an active session, skip the 'empty/daily' section
+        VStack(spacing: 24) {
+            VStack() {
                 
-                HStack { //child hstack2, aligned to be left-most within the available space
-                    Button {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
-                            timerInProgress.toggle()
-                        }
-                    } label: {
-                        ZStack {
-                            if timerInProgress {
-                                HStack {
-                                    
-                                    //resume button
-                                    Button {
-                                        timerInProgress.toggle()
-                                    } label: {
-                                        Text("Pause")
-                                    }
-                                    .buttonStyle(.glass)
-                                    .frame(maxWidth: .infinity)
-
-                                    
-
-                                    
-                                    //end button
-                                    Button {
-                                        
-                                    } label: {
-                                        Text("end")
-                                    }
-                                    .buttonStyle(.glass)
-                                    .buttonSizing(.fitted)
-
-
-                                }
-                            } else {
+                //if true, we'll add the static text data.
+                if vm.activeSession == nil {
+                    if !vm.hasAlreadyStudiedToday() {
+                        Text("12:34")
+                            .font(.system(size: 90, weight: .semibold, design: .monospaced))
+                    } else {
+                        Text("00:00")
+                            .font(.system(size: 90, weight: .semibold, design: .monospaced))
+                    }
+                    
+                    
+                    
+                    
+                    
+                } else { //we have a session actively in progress.
+                    if vm.sessionIsRunning { //our timer is running, so anchor the text
+                        Text("Session in progress")
+                        Text(formattedHMS(from: vm.ssw?.totalRunningTime ?? 0))
+                    } else {
+                        Text("No session in progress")
+                    }
+                
+                
                             
-                                Button {
-                                    timerInProgress.toggle()
-                                    
-                                } label: {
-                                    Text("Start")
-                                }
-                                .buttonStyle(.glass)
-                                .buttonSizing(.automatic)
+                    
+            }
+                
+            
+            
 
+
+
+        }
+            .padding(.top, 8)
+
+            Spacer()
+
+            ZStack {
+                HStack {
+                    HStack { //child hstack1, aligned to be right-most within the available space
+                        // "Pause at" text: fades in and slides from left when paused
+                        VStack(spacing: 4) {
+                            if (timerInProgress) { //if we're currently tracking (not paused)
+
+                                Text(formattedHMS(from: timeSinceLastBreakEnded)) //parse through a helper; format the timeinterval as hour/minute/second
+                                    .font(.headline.monospacedDigit())
+                                    .frame(alignment: .center)
+
+                                Text("since last break")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(alignment: .center)
+
+                            } else { //if we're paused
+
+
+                                Text(formattedHMS(from: timeSinceLastBreakStarted)) //parse through a helper; format the timeinterval as hour/minute/second
+                                    .font(.headline.monospacedDigit())
+                                    .frame(alignment: .center)
+
+                                Text("Break Length")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .frame(alignment: .center)
 
                             }
+
+                        } //                        t : f
+                        //                    hidden : showing
+                        .offset(x: timerInProgress ? 0 : 0)
+                        .animation(.easeInOut(duration: 0.3), value: timerInProgress)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                    .padding(.horizontal, 20)
+
+
+                    HStack { //child hstack2, aligned to be left-most within the available space
+                        Button {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
+                                timerInProgress.toggle()
+                            }
+                        } label: {
+                            ZStack {
+                                if timerInProgress {
+                                    HStack {
+
+                                        //resume button
+                                        Button {
+                                            timerInProgress.toggle()
+                                        } label: {
+                                            Text("Pause")
+                                        }
+                                        .buttonStyle(.glass)
+                                        .frame(maxWidth: .infinity)
+
+
+
+
+                                        //end button
+                                        Button {
+
+                                        } label: {
+                                            Text("end")
+                                        }
+                                        .buttonStyle(.glass)
+                                        .buttonSizing(.fitted)
+
+
+                                    }
+                                } else {
+
+                                    Button {
+                                        timerInProgress.toggle()
+
+                                    } label: {
+                                        Text("Start")
+                                    }
+                                    .buttonStyle(.glass)
+                                    .buttonSizing(.automatic)
+
+
+                                }
+                            }
+                            .frame(height: 20) // keeps layout from jumping during the transition
+                            .font(.headline)
+                            .padding(.horizontal, 10) //padding for start button, makes button wider than text
+                            .padding(.vertical, 12)
+                            .frame(maxWidth: .infinity)
+
                         }
-                        .frame(height: 20) // keeps layout from jumping during the transition
-                        .font(.headline)
-                        .padding(.horizontal, 10) //padding for start button, makes button wider than text
-                        .padding(.vertical, 12)
-                        .frame(maxWidth: .infinity)
+                        .animation(.easeInOut(duration: 0.3), value: timerInProgress)
+                        .frame(alignment: .leading)
+                        .padding(.leading, 0)
 
                     }
-                    .animation(.easeInOut(duration: 0.3), value: timerInProgress)
-                    .frame(alignment: .leading)
-                    .padding(.leading, 0)
-                    
+                    .frame(maxWidth: .infinity, alignment: .leading) //align to left
+
+
+
                 }
-                .frame(maxWidth: .infinity, alignment: .leading) //align to left
-
-                
-                
-            }
 //            .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .padding(.top, 4)
         }
-        .padding(.top, 4)
-
     }
 
     private var focusSliderSection: some View {
@@ -355,8 +363,6 @@ struct StudyTrackingView: View {
 // MARK: - Preview
 
 #Preview {
-    NavigationStack {
-        StudyTrackingView()
-    }
+    StudyTrackingView()
 }
 

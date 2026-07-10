@@ -5,39 +5,58 @@
 
 import Foundation
 
+//our stopwatch works by having a single point of truth, our adjustedStartTimeForAnchor, which is updated whenever breaks are changed by shifting that timestamp forward by however long our breaks are. This means that we continue to push this time forward
+
 struct Stopwatch {
     var lastPausedAt: Date?
-    var stopwatchIsRunning: Bool = false
-    var startedAt: Date
-    var lastBreakStartTime: Date?
-    var previousBreaksLength: TimeInterval = 0
+    var stopwatchIsRunning: Bool = true
+    var startedAt: Date = Date.now //check that this is valid!
 
-    init(startedAt: Date = .now) {
-        self.startedAt = startedAt
+
+    var adjustedStartTimeForAnchor: Date = Date.now
+
+    var totalRunningTime: TimeInterval {
+        if stopwatchIsRunning {
+            return Date.now.timeIntervalSince(adjustedStartTimeForAnchor)
+        } else {
+            return lastPausedAt!.timeIntervalSince(adjustedStartTimeForAnchor) //safe to unwrap as we can only pause if we've started
+        }
     }
 
-    var totalStudyingTime: TimeInterval {
-        let wallEnd = lastPausedAt ?? .now
-        return wallEnd.timeIntervalSince(startedAt) - previousBreaksLength
+
+    //MARK: Functions
+
+
+    init(startNow: Bool) {
+        if startNow {
+            initialise()
+        }
+        self.adjustedStartTimeForAnchor = self.startedAt
     }
 
-    mutating func initiate() {
-        self.startedAt = .now
+    //start the stopwatch
+    mutating func initialise() {
         self.stopwatchIsRunning = true
+        self.startedAt = Date.now
+        self.adjustedStartTimeForAnchor = self.startedAt
     }
 
-    // Pausing starts tracking the break time so resume() can re-anchor correctly.
-    mutating func pause() {
-        self.lastPausedAt = .now
+
+    mutating func resume() {
+        let breakLength = Date.now.timeIntervalSince(lastPausedAt!) //safe to unwrap as we cna only resume after we've paused
+        self.stopwatchIsRunning = true
+        self.adjustedStartTimeForAnchor = adjustedStartTimeForAnchor.addingTimeInterval(breakLength)
+    }
+
+    mutating func startBreak() {
+        self.lastPausedAt = Date.now
         self.stopwatchIsRunning = false
     }
 
-    mutating func resume() {
-        self.previousBreaksLength = previousBreaksLength + (lastPausedAt?.timeIntervalSinceNow ?? 0)
-        self.stopwatchIsRunning = true
-    }
-    
-    mutating func startBreak() {
-        
+
+
+    //end stopwatch
+    mutating func end() {
+        self.stopwatchIsRunning = false
     }
 }

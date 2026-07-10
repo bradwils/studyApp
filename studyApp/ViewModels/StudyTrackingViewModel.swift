@@ -6,6 +6,7 @@
 import Foundation
 import Combine
 import SwiftData
+import os
 
 // MARK: - State Overview
 // Three layers of state are touched during a session lifecycle:
@@ -15,9 +16,9 @@ import SwiftData
 //   completedSessions   — archive of finished sessions
 //   selectedSubject     — subject for the next/current session
 //   sessionIsRunning    — mirrors stopwatch + session state for UI binding
-//   sessionStopwatch    — optional Stopwatch tracking elapsed time
+//   ssw    — optional Stopwatch tracking elapsed time
 //
-// Stopwatch (sessionStopwatch)
+// Stopwatch (ssw)
 //   startedAt           — wall-clock anchor; re-anchored on resume
 //   stopwatchIsRunning  — true while actively counting
 //   lastPausedAt        — set on pause; used to compute break length on resume
@@ -34,110 +35,112 @@ import SwiftData
 
 @Observable
 final class StudyTrackingViewModel {
+    let logger = Logger(subsystem: "com.studyApp", category: "StudyTrackingViewModel")
+
+    var ssw: Stopwatch?
+    var studyBreaks: [StudyBreak]
+    var studySections: [StudySection]
     var activeSession: StudySession?
-    var completedSessions: [StudySession] = []
-    var selectedSubject: Subject
-    
+    var selectedSubject: Subject?
     var sessionIsRunning: Bool
+
+    init() {
+        ssw = Stopwatch(startNow: false)
+        studyBreaks = []
+        studySections = []
+        sessionIsRunning = false
+    }
+
+    var totalStudyingTime: TimeInterval {
+        studySections.reduce(0) { $0 + $1.duration }
+    }
+
+    var totalBreakTime: TimeInterval {
+        studyBreaks.reduce(0) { $0 + $1.duration }
+    }
 
     // Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
     private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
-    
-    var sessionStopwatch: Stopwatch?
 
 
-    //MARK: VM Functions
+
+    //MARK: VM-Stopwatch Functions
+
 
     // Start a fresh session (count-up) for an optional subject; discards any in-progress session.
     func startSession() {
-        guard activeSession == activeSession else { return } //if we have an activeSession, abort
-            
-        //assert a new stopwatch
-        sessionStopwatch = Stopwatch()
-            //start stopwatch variables --> stopwatchIsRunning, startDate
-        
-        sessionStopwatch?.stopwatchIsRunning = true
-        sessionStopwatch?.startedAt = Date.now
-        
-        activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject.name, startedAt: Date.now) //barebones for now
-        sessionIsRunning = false //start timer
+        guard activeSession == nil else {
+            logger.warning("Failed to start session; there is already an active session.")
+            return
+        }
+
+        ssw = Stopwatch(startNow: true)
+        studyBreaks = []
+        studySections = []
+
+        activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: Date.now)
+        sessionIsRunning = true
     }
-    
 
     /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
     func togglePause() {
-        guard let session = activeSession else { return }
+        guard activeSession != nil else { return }
         sessionIsRunning ? pauseSession() : resumeSession()
     }
 
-    /// Pause timing and accumulate active duration; call when the user taps Stop/Pause.
+    /// Pause timing; call when the user taps Pause.
     func pauseSession() {
-        guard var session = activeSession, !session.isRunning else { return }
-        let now = Date()
-        session.totalActiveDuration += now.timeIntervalSince(session.lastResumedAt)
-        session.sessionIsRunning = false
-        session.lastPausedAt = now
-        activeSession = session
+        guard activeSession != nil, sessionIsRunning else { return }
+        ssw!.startBreak()
+        activeSession?.lastPausedAt = ssw!.lastPausedAt
+        sessionIsRunning = false
     }
 
-    /// Resume timing and log a break if the pause exceeded the break threshold; call when the user resumes.
+    /// Resume timing and log a break if the pause exceeded the break threshold.
     func resumeSession() {
-        guard var session = activeSession, session.isPaused, let pausedAt = session.lastPausedAt else { return }
+        guard let pausedAt = ssw!.lastPausedAt, !sessionIsRunning else { return }
         let now = Date()
         let pausedDuration = now.timeIntervalSince(pausedAt)
-        session.totalBreakDuration += pausedDuration
-
         if pausedDuration >= breakThreshold {
-            session.breaks.append(StudyBreak(startedAt: pausedAt, endedAt: now))
+            studyBreaks.append(StudyBreak(startedAt: pausedAt, endedAt: now))
         }
-
-        session.isPaused = false
-        session.lastResumedAt = now
-        session.lastPausedAt = nil
-        activeSession = session
+        ssw!.resume()
+        activeSession?.lastPausedAt = nil
+        sessionIsRunning = true
     }
 
-    /// Finalize the session, attach optional metadata (score, companions, location placeholder), and archive it.
+    /// Finalize the session and attach optional metadata.
     func endSession(score: Int? = nil, companions: [String] = [], locationDescription: String? = nil) {
-        guard var session = activeSession else { return }
-        let now = Date()
-
-        if !session.isPaused {
-            session.totalActiveDuration += now.timeIntervalSince(session.lastResumedAt)
-        }
-
-        session.isPaused = false
-        session.lastPausedAt = nil
+        guard let session = activeSession else { return }
+        let now = Date.now
         session.endedAt = now
         session.studyScore = score
-
-        if !companions.isEmpty {
-            session.companions = companions
-        }
-
-        if var existingLocation = session.location {
-            if existingLocation.description == nil {
-                existingLocation.description = locationDescription
+        session.breaks = studyBreaks
+        session.totalBreakDuration = totalBreakTime
+        if !companions.isEmpty { session.friends = companions }
+        if let locationDescription {
+            if session.location != nil {
+                if session.location?.locationDescription == nil {
+                    session.location?.locationDescription = locationDescription
+                }
+            } else {
+                session.location = SessionLocation(locationDescription: locationDescription, locationLabel: "")
             }
-            session.location = existingLocation
-        } else if locationDescription != nil {
-            session.location = SessionLocation(description: locationDescription, latitude: nil, longitude: nil)
         }
-
-        completedSessions.append(session)
+        ssw!.end()
+        sessionIsRunning = false
         activeSession = nil
     }
 
     /// Abort an active session without persisting; use for user-initiated cancels.
     func cancelActiveSession() {
         activeSession = nil
+        ssw = nil
     }
 
     /// Increment an interruption counter (e.g., notifications/away events); can be wired to external signals later.
     func addInterruption() {
-        guard var session = activeSession else { return }
-        session.interruptionCount += 1
-        activeSession = session
+        activeSession?.interruptionCount += 1
     }
 
     /// Update the subject selection for the next session (only allowed when no session is active).
@@ -145,7 +148,7 @@ final class StudyTrackingViewModel {
         guard activeSession == nil else { return }
         selectedSubject = subject
     }
-    
+
     public func hasAlreadyStudiedToday() -> Bool {
         //todo
         return false; //stub placeholder

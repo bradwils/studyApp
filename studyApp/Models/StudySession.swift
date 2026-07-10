@@ -32,17 +32,48 @@ final class SessionLocation {
 @Model
 final class StudyBreak {
     var startedAt: Date
-    var endedAt: Date?
+    var endedAt: Date
 
-    // Returns 0 while break is still in progress (no endedAt yet)
     var duration: TimeInterval {
-        guard let endedAt else { return 0 }
         return endedAt.timeIntervalSince(startedAt)
     }
 
-    init(startedAt: Date = Date(), endedAt: Date? = nil) {
+    init(startedAt: Date, endedAt: Date) {
         self.startedAt = startedAt
         self.endedAt = endedAt
+    }
+
+    //quick write, start at set time and finished at time of call.
+    init(startedAt: Date) {
+        self.startedAt = startedAt
+        self.endedAt = Date.now
+    }
+}
+
+//MARK: StudySection
+
+//a study section is the inverse of a study break; each component within a studySession where the user is studying.
+final class StudySection {
+    //start time
+    //end time
+    //focused: double (% focused, for future)
+
+    var startedAt: Date
+    var endedAt: Date
+
+    var duration: TimeInterval {
+        return endedAt.timeIntervalSince(startedAt)
+    }
+
+    init(startedAt: Date, endedAt: Date) {
+        self.startedAt = startedAt
+        self.endedAt = endedAt
+    }
+
+    //quick write, start at set time and finished at time of call.
+    init(startedAt: Date) {
+        self.startedAt = startedAt
+        self.endedAt = Date.now
     }
 }
 
@@ -63,9 +94,9 @@ final class StudySession: Identifiable {
 
     // Session owns its breaks and location — cascade deletes them when session is removed
     @Relationship(deleteRule: .cascade) //delete break --> delete connected StudyBreaks
-    var breaks: [StudyBreak]
+    var breaks: [StudyBreak]?
 
-    @Relationship(deleteRule: .cascade) //delete sessionLocation --> delete connected SessionLocation
+    @Relationship(deleteRule: .cascade) //delete break --> delete connected SessionLocations
     var location: SessionLocation?
 
     var friends: [String]?           // placeholder for other users in the session
@@ -83,6 +114,9 @@ final class StudySession: Identifiable {
 
     var totalActiveDuration: TimeInterval {
         guard endedAt != nil else { return totalDuration }
+        guard let breaks else { //no breaks = just time
+            return totalDuration
+        }
         let breaksTotal = breaks.reduce(0) { $0 + $1.duration }
         return totalDuration - breaksTotal
     }
@@ -116,7 +150,7 @@ final class StudySession: Identifiable {
         self.notes = notes
         self.interruptionCount = interruptionCount
     }
-    
+
     init(
         id: UUID = UUID(),
         subject: Subject,
