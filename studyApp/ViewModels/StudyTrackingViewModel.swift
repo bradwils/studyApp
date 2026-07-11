@@ -42,13 +42,16 @@ final class StudyTrackingViewModel {
     var studySections: [StudySection]
     var activeSession: StudySession?
     var selectedSubject: Subject?
-    var sessionIsRunning: Bool
+
+    // Derived from the stopwatch rather than tracked separately, so the two can't drift out of sync.
+    var sessionIsRunning: Bool {
+        ssw?.stopwatchIsRunning ?? false
+    }
 
     init() {
         ssw = Stopwatch(startNow: false)
         studyBreaks = []
         studySections = []
-        sessionIsRunning = false
     }
 
     var totalStudyingTime: TimeInterval {
@@ -79,7 +82,6 @@ final class StudyTrackingViewModel {
         studySections = []
 
         activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: Date.now)
-        sessionIsRunning = true
     }
 
     /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
@@ -93,7 +95,6 @@ final class StudyTrackingViewModel {
         guard activeSession != nil, sessionIsRunning else { return }
         ssw!.startBreak()
         activeSession?.lastPausedAt = ssw!.lastPausedAt
-        sessionIsRunning = false
     }
 
     /// Resume timing and log a break if the pause exceeded the break threshold.
@@ -106,7 +107,6 @@ final class StudyTrackingViewModel {
         }
         ssw!.resume()
         activeSession?.lastPausedAt = nil
-        sessionIsRunning = true
     }
 
     /// Finalize the session and attach optional metadata.
@@ -116,6 +116,7 @@ final class StudyTrackingViewModel {
         session.endedAt = now
         session.studyScore = score
         session.breaks = studyBreaks
+        session.sections = studySections
         session.totalBreakDuration = totalBreakTime
         if !companions.isEmpty { session.friends = companions }
         if let locationDescription {
@@ -128,7 +129,6 @@ final class StudyTrackingViewModel {
             }
         }
         ssw!.end()
-        sessionIsRunning = false
         activeSession = nil
     }
 

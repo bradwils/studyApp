@@ -53,6 +53,7 @@ final class StudyBreak {
 //MARK: StudySection
 
 //a study section is the inverse of a study break; each component within a studySession where the user is studying.
+@Model
 final class StudySection {
     //start time
     //end time
@@ -92,9 +93,12 @@ final class StudySession: Identifiable {
     var endedAt: Date?
     var lastPausedAt: Date?
 
-    // Session owns its breaks and location — cascade deletes them when session is removed
+    // Session owns its breaks, sections, and location — cascade deletes them when session is removed
     @Relationship(deleteRule: .cascade) //delete break --> delete connected StudyBreaks
     var breaks: [StudyBreak]?
+
+    @Relationship(deleteRule: .cascade) //delete section --> delete connected StudySections
+    var sections: [StudySection]?
 
     @Relationship(deleteRule: .cascade) //delete break --> delete connected SessionLocations
     var location: SessionLocation?
@@ -130,6 +134,7 @@ final class StudySession: Identifiable {
         lastPausedAt: Date? = nil,
         totalBreakDuration: TimeInterval? = 0,
         breaks: [StudyBreak] = [],
+        sections: [StudySection] = [],
         friends: [String]? = [],
         location: SessionLocation? = nil,
         studyScore: Int? = nil,
@@ -144,6 +149,7 @@ final class StudySession: Identifiable {
         self.lastPausedAt = lastPausedAt
         self.totalBreakDuration = totalBreakDuration
         self.breaks = breaks
+        self.sections = sections
         self.friends = friends
         self.location = location
         self.studyScore = studyScore
@@ -157,6 +163,7 @@ final class StudySession: Identifiable {
         subjectName: String?,
         startedAt: Date,
         breaks: [StudyBreak] = [],
+        sections: [StudySection] = [],
         friends: [String] = []
     ) {
         self.id = id
@@ -167,6 +174,7 @@ final class StudySession: Identifiable {
         self.lastPausedAt = nil
         self.totalBreakDuration = 0
         self.breaks = breaks
+        self.sections = sections
         self.location = nil
         self.friends = friends
         self.studyScore = nil

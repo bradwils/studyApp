@@ -198,9 +198,10 @@ struct StudyTrackingView: View {
                 } else { //we have a session actively in progress.
                     if vm.sessionIsRunning { //our timer is running, so anchor the text
                         Text("Session in progress")
-                        Text(formattedHMS(from: vm.ssw?.totalRunningTime ?? 0))
-                    } else {
-                        Text("No session in progress")
+                        Text(vm.ssw!.adjustedStartTimeForAnchor, style: .timer)
+                    } else { //timer is not running, must be on a break
+                        Text("Session is not in progress")
+                        Text((vm.ssw!.lastPausedAt!).timeIntervalSinceNow, style: .timer)
                     }
                 
                 
