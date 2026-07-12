@@ -9,17 +9,18 @@ import Foundation
 
 struct Stopwatch {
     var lastPausedAt: Date?
-    var stopwatchIsRunning: Bool = true
-    var startedAt: Date = Date.now //check that this is valid!
+    var stopwatchIsRunning: Bool = false
+    var startedAt: Date? //check that this is valid!
 
 
-    var adjustedStartTimeForAnchor: Date = Date.now
+    var adjustedStartTimeForAnchor: Date?
 
     var totalRunningTime: TimeInterval {
+        guard let anchor = adjustedStartTimeForAnchor else { return 0 }
         if stopwatchIsRunning {
-            return Date.now.timeIntervalSince(adjustedStartTimeForAnchor)
+            return Date.now.timeIntervalSince(anchor)
         } else {
-            return lastPausedAt!.timeIntervalSince(adjustedStartTimeForAnchor) //safe to unwrap as we can only pause if we've started
+            return lastPausedAt!.timeIntervalSince(anchor) //safe to unwrap as we can only pause if we've started
         }
     }
 
@@ -27,25 +28,23 @@ struct Stopwatch {
     //MARK: Functions
 
 
-    init(startNow: Bool) {
-        if startNow {
-            initialise()
-        }
-        self.adjustedStartTimeForAnchor = self.startedAt
+    init() {
+        initialise();
     }
 
     //start the stopwatch
     mutating func initialise() {
         self.stopwatchIsRunning = true
         self.startedAt = Date.now
-        self.adjustedStartTimeForAnchor = self.startedAt
+        self.adjustedStartTimeForAnchor = self.startedAt!
     }
+    
 
 
-    mutating func resume() {
+    mutating func endBreak() {
         let breakLength = Date.now.timeIntervalSince(lastPausedAt!) //safe to unwrap as we cna only resume after we've paused
         self.stopwatchIsRunning = true
-        self.adjustedStartTimeForAnchor = adjustedStartTimeForAnchor.addingTimeInterval(breakLength)
+        self.adjustedStartTimeForAnchor = adjustedStartTimeForAnchor!.addingTimeInterval(breakLength)
     }
 
     mutating func startBreak() {
@@ -58,5 +57,6 @@ struct Stopwatch {
     //end stopwatch
     mutating func end() {
         self.stopwatchIsRunning = false
+        self.lastPausedAt = Date.now
     }
 }

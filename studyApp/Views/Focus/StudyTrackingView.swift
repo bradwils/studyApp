@@ -7,18 +7,13 @@ struct StudyTrackingView: View {
     
     // MARK: - State Properties
     @State private var pureFocusViewState = false;
-    
+
     @State private var focusSliderValue: Double = 0
-    @State private var timerInProgress: Bool = false
     @State var sliderDraggableElementWidth: CGFloat = 90
     @State var sliderDraggableElementHeight: CGFloat = 60
     @State var onlineFriendCount: Int = 0 //to be dynamic later
     @State private var isLeaderboardPresented: Bool = true
     @State private var currentStudySessionInProgress: Bool = false
-    
-    @State var timeSinceLastBreakEnded: TimeInterval = 179 //time since last breal has ended
-    
-    @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
     
     // MARK: - ViewModels
 
@@ -180,6 +175,7 @@ struct StudyTrackingView: View {
         //if there is an active session, skip the 'empty/daily' section
         VStack(spacing: 24) {
             VStack() {
+
                 
                 //if true, we'll add the static text data.
                 if vm.activeSession == nil {
@@ -198,10 +194,10 @@ struct StudyTrackingView: View {
                 } else { //we have a session actively in progress.
                     if vm.sessionIsRunning { //our timer is running, so anchor the text
                         Text("Session in progress")
-                        Text(vm.ssw!.adjustedStartTimeForAnchor, style: .timer)
+                        Text(vm.ssw!.adjustedStartTimeForAnchor!, style: .timer)
                     } else { //timer is not running, must be on a break
                         Text("Session is not in progress")
-                        Text((vm.ssw!.lastPausedAt!).timeIntervalSinceNow, style: .timer)
+                        Text(vm.ssw!.lastPausedAt!, style: .timer)
                     }
                 
                 
@@ -224,9 +220,9 @@ struct StudyTrackingView: View {
                     HStack { //child hstack1, aligned to be right-most within the available space
                         // "Pause at" text: fades in and slides from left when paused
                         VStack(spacing: 4) {
-                            if (timerInProgress) { //if we're currently tracking (not paused)
+                            if (vm.sessionIsRunning) { //if we're currently tracking (not paused)
 
-                                Text(formattedHMS(from: timeSinceLastBreakEnded)) //parse through a helper; format the timeinterval as hour/minute/second
+                                Text("temp") //parse through a helper; format the timeinterval as hour/minute/second
                                     .font(.headline.monospacedDigit())
                                     .frame(alignment: .center)
 
@@ -238,7 +234,7 @@ struct StudyTrackingView: View {
                             } else { //if we're paused
 
 
-                                Text(formattedHMS(from: timeSinceLastBreakStarted)) //parse through a helper; format the timeinterval as hour/minute/second
+                                Text("temp") //parse through a helper; format the timeinterval as hour/minute/second
                                     .font(.headline.monospacedDigit())
                                     .frame(alignment: .center)
 
@@ -249,10 +245,7 @@ struct StudyTrackingView: View {
 
                             }
 
-                        } //                        t : f
-                        //                    hidden : showing
-                        .offset(x: timerInProgress ? 0 : 0)
-                        .animation(.easeInOut(duration: 0.3), value: timerInProgress)
+                        }
                         .frame(maxWidth: .infinity, alignment: .trailing)
                     }
                     .padding(.horizontal, 20)
@@ -260,62 +253,35 @@ struct StudyTrackingView: View {
 
                     HStack { //child hstack2, aligned to be left-most within the available space
                         Button {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.4)) {
-                                timerInProgress.toggle()
-                            }
-                        } label: {
-                            ZStack {
-                                if timerInProgress {
-                                    HStack {
-
-                                        //resume button
-                                        Button {
-                                            timerInProgress.toggle()
-                                        } label: {
-                                            Text("Pause")
-                                        }
-                                        .buttonStyle(.glass)
-                                        .frame(maxWidth: .infinity)
-
-
-
-
-                                        //end button
-                                        Button {
-
-                                        } label: {
-                                            Text("end")
-                                        }
-                                        .buttonStyle(.glass)
-                                        .buttonSizing(.fitted)
-
-
-                                    }
-                                } else {
-
-                                    Button {
-                                        timerInProgress.toggle()
-
-                                    } label: {
-                                        Text("Start")
-                                    }
-                                    .buttonStyle(.glass)
-                                    .buttonSizing(.automatic)
-
-
+                            if (vm.activeSession == nil) {
+                                print("launching session")
+                                vm.startSession() //start session, and then
+                            } else { //we have an active session, so this button should either be 'pause', or split into two sub-buttons.
+                                if (vm.sessionIsRunning) { //pause
+                                    vm.pauseSession()
+                                    print("initiate button split")
+                                } else { //not running
+                                    vm.logAllVars()
+                                    print("buttons should be SHOWING")
                                 }
                             }
-                            .frame(height: 20) // keeps layout from jumping during the transition
-                            .font(.headline)
-                            .padding(.horizontal, 10) //padding for start button, makes button wider than text
-                            .padding(.vertical, 12)
-                            .frame(maxWidth: .infinity)
-
+                        } label: {
+                            Text(vm.activeSession == nil ? "Start" : "Pause")
+                                .id(vm.sessionIsRunning)
+                                .transition(
+                                    .push(from: .bottom)
+                                        .combined(with: .blurReplace)
+                                )
+                                .animation(.smooth(duration: 1), value: vm.sessionIsRunning)
+                                .frame(height: 22)
+                                .clipped()
                         }
-                        .animation(.easeInOut(duration: 0.3), value: timerInProgress)
-                        .frame(alignment: .leading)
-                        .padding(.leading, 0)
-
+                        .buttonStyle(.glass)
+                        .frame(height: 20) // keeps layout from jumping during the transition
+                        .font(.headline)
+                        .padding(.horizontal, 10) //padding for start button, makes button wider than text
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading) //align to left
 
