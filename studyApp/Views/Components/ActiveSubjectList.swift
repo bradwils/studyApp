@@ -5,11 +5,13 @@
 
 import SwiftUI
 import SwiftData
+import OSLog
 
 
 
 struct ActiveSubjectList: View {
-    @State private var studyTrackingModel = StudyTrackingViewModel()
+    var logger = Logger(subsystem: "com.studyApp", category: "ActiveSubjectList")
+    
 
     @Environment(\.modelContext) private var modelContext
 
@@ -17,7 +19,7 @@ struct ActiveSubjectList: View {
 
     var isEnabled: Bool
 
-    @State private var subjectSelection: Subject?
+    @Binding var selectedSubject: Subject? // the selected subject
 
     var body: some View {
         Group {
@@ -27,44 +29,26 @@ struct ActiveSubjectList: View {
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
-                Picker("Subject", selection: selectionBinding) {
+                Picker("Subject", selection: $selectedSubject) {
                     ForEach(subjects) { subject in
                         Text(subject.name)
-                            .tag(subject)
+                            .tag(subject as Subject?)
                     }
                 }
                 .pickerStyle(.menu)
                 .disabled(!isEnabled)
                 .onAppear { //update the view before it appears
-                    if subjectSelection == nil {
-                        subjectSelection = studyTrackingModel.selectedSubject ?? subjects.first
-                    }
-                    if studyTrackingModel.selectedSubject == nil, let fallback = subjectSelection {
-                        studyTrackingModel.updateSubjectSelection(fallback)
+                    if selectedSubject == nil {
+                        selectedSubject = subjects.first
+                        logger.log("Overrode nil subject selection, is now \(selectedSubject?.name ?? "nil")")
                     }
                 }
                 .onChange(of: subjects) { old, new in
-                    if subjectSelection == nil, let fallback = new.first {
-                        subjectSelection = fallback
-                        studyTrackingModel.updateSubjectSelection(fallback)
-                    }
-                }
-                .onChange(of: subjectSelection) { old, new in //if selected subject changes,
-                    studyTrackingModel.updateSubjectSelection(new)
-                }
-                .onChange(of: studyTrackingModel.selectedSubject) { old, new in //if subject changes elsewhere, update
-                    if new != subjectSelection {
-                        subjectSelection = new
+                    if selectedSubject == nil, let fallback = new.first {
+                        selectedSubject = fallback
                     }
                 }
             }
         }
-    }
-
-    private var selectionBinding: Binding<Subject> {
-        Binding(
-            get: { subjectSelection ?? subjects.first! },
-            set: { subjectSelection = $0 }
-        )
     }
 }

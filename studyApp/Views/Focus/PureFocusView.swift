@@ -10,6 +10,8 @@ struct PureFocusView: View {
     
     @Environment(\.dismiss) var dismiss //get the environment dismiss value
     
+    @Binding var isPresented: Bool //to be able to dismiss
+    
     @State var timerTimeInterval: TimeInterval = 0 //0.0 gets binded to our durationpicker, so this gets changed as the picker changes value.
     
     // MARK: - State Properties
@@ -47,7 +49,7 @@ struct PureFocusView: View {
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("Cancel") {
+                Button("Leave") {
                     dismiss() // Programmatic dismissal
                 }
             }
@@ -177,7 +179,7 @@ struct PureFocusView: View {
     
                 
 #Preview {
-    PureFocusView()
+    PureFocusView(isPresented: .constant(true))
 }
     
 

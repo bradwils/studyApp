@@ -5,6 +5,131 @@
 
 import SwiftUI
 
+private let commitThreshold: Double = 0.9 // fraction of `range` the knob must pass to commit
+
+struct FocusIntensitySlider: View {
+
+    @Binding var sliderProgress: Double // current knob value, in `range`
+    var range: ClosedRange<Double> // allowed span of sliderProgress
+    @Binding var complete: Bool // set true on release once past commitThreshold
+
+    @Binding var sliderDraggableElementWidth: CGFloat // knob (and end-cap) width
+    @Binding var sliderDraggableElementHeight: CGFloat // knob (and end-cap) height
+
+    // Latches the knob's leading edge at the start of a drag so motion is
+    // relative to where the knob already was, not where the finger landed.
+    @GestureState private var knobLeftEdgeAtDragStart: CGFloat?
+
+    private var knobRadius: CGFloat { sliderDraggableElementWidth / 2 }
+
+    // sliderProgress mapped from `range` to 0...1
+    private var normalizedProgress: Double {
+        guard range.upperBound != range.lowerBound else { return 0 }
+        return (sliderProgress - range.lowerBound) / (range.upperBound - range.lowerBound)
+    }
+
+    var body: some View {
+        ZStack(alignment: .leading) {
+            dottedLineFiller
+
+            GeometryReader { geo in
+                let trackWidth = trackWidth(forTotalWidth: geo.size.width)
+                let knobLeftEdge = knobLeftEdge(trackWidth: trackWidth)
+
+                ZStack(alignment: .leading) {
+                    endCapsule(trackWidth: trackWidth)
+                    fillTrailCapsule(knobLeftEdge: knobLeftEdge)
+                    knobCapsule(trackWidth: trackWidth, knobLeftEdge: knobLeftEdge)
+                }
+                .frame(height: sliderDraggableElementHeight)
+            }
+        }
+        .frame(height: sliderDraggableElementHeight)
+        .background(
+            Capsule()
+                .fill(Color.gray.opacity(0.2))
+        )
+    }
+
+
+    // MARK: - Layers
+
+    private func endCapsule(trackWidth: CGFloat) -> some View {
+        // Dashed-outline end-cap marking the commit point.
+        Capsule()
+            .glassEffect()
+            .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+            .overlay {
+                Capsule()
+                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 10]))
+            }
+            .offset(x: trackWidth)
+            .opacity(0.4)
+            .foregroundColor(.secondary)
+    }
+
+    private func fillTrailCapsule(knobLeftEdge: CGFloat) -> some View {
+        // Gradient trail that fills in behind the knob as it moves.
+        Capsule()
+            .fill(
+                LinearGradient(
+                    colors: [Color.white.opacity(0), Color.white.opacity(1)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .frame(width: knobLeftEdge + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+    }
+
+    private func knobCapsule(trackWidth: CGFloat, knobLeftEdge: CGFloat) -> some View {
+        Capsule()
+            .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+            .glassEffect(.regular.interactive())
+            .offset(x: knobLeftEdge)
+            .gesture(dragGesture(trackWidth: trackWidth, knobLeftEdge: knobLeftEdge))
+    }
+
+    // MARK: - Geometry & drag math
+
+    private func trackWidth(forTotalWidth totalWidth: CGFloat) -> CGFloat {
+        // Track excludes the knob's own width so the thumb stays fully inside the slider bounds.
+        max(totalWidth - sliderDraggableElementWidth, 0)
+    }
+
+    private func knobLeftEdge(trackWidth: CGFloat) -> CGFloat {
+        let clampedProgress = min(max(normalizedProgress, 0), 1)
+        return clampedProgress * trackWidth
+    }
+
+    private func progress(forKnobLeftEdge leftEdge: CGFloat, trackWidth: CGFloat) -> Double {
+        let clampedEdge = min(max(leftEdge, 0), trackWidth)
+        let fraction = trackWidth > 0 ? clampedEdge / trackWidth : 0
+        return range.lowerBound + Double(fraction) * (range.upperBound - range.lowerBound)
+    }
+
+    private func dragGesture(trackWidth: CGFloat, knobLeftEdge: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: 0)
+            .updating($knobLeftEdgeAtDragStart) { _, state, _ in
+                state = state ?? knobLeftEdge
+            }
+            .onChanged { value in
+                let startEdge = knobLeftEdgeAtDragStart ?? knobLeftEdge
+                let desiredLeftEdge = startEdge + value.translation.width
+                let newProgress = progress(forKnobLeftEdge: desiredLeftEdge, trackWidth: trackWidth)
+                sliderProgress = min(max(newProgress, range.lowerBound), range.upperBound)
+            }
+            .onEnded { _ in
+                if normalizedProgress > commitThreshold {
+                    complete = true
+                } else {
+                    withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.6, blendDuration: 0)) {
+                        sliderProgress = 0
+                    }
+                }
+            }
+    }
+}
+
 private var dottedLineFiller: some View {
     GeometryReader { geometry in
         Path { path in
@@ -20,156 +145,11 @@ private var dottedLineFiller: some View {
     .frame(height: 1)
 }
 
-struct FocusIntensitySlider: View {
-    
-    @Namespace private var namespace
-
-    @State private var navigateToPureFocus = false
-    
-    @Binding var sliderProgress: Double
-    var range: ClosedRange<Double>
-    
-    @Binding var sliderDraggableElementWidth: CGFloat
-    @Binding var sliderDraggableElementHeight: CGFloat
-    
-    var sliderDraggableElementRadius: CGFloat { sliderDraggableElementWidth / 2 }
-    @State private var dragStartTouchOffset: CGFloat?
-    let focusSliderFontSize: CGFloat = 20
-    @State var trackWidth: CGFloat = 0 // Keep track width available for other logic that depends on the slider bounds
-
-    // Track whether the knob is pressed so the capsule can animate a pop (scale/shadow) while dragging.
-    @GestureState private var isSliderElementPressed = false
-    // Capture the live translation for a subtle offset that makes the knob feel draggable.
-    @GestureState private var knobDragTranslation = CGSize.zero
-
-    private var normalizedProgress: Double {
-        guard range.upperBound != range.lowerBound else { return 0 }
-        return (sliderProgress - range.lowerBound) / (range.upperBound - range.lowerBound)
-    }
-
-    var body: some View {
-        ZStack(alignment: .leading) {
-            dottedLineFiller
-            
-            GeometryReader { geo in
-                // Track width excludes the knob width so the thumb stays inside the slider bounds.
-                let currentTrackWidth = max(geo.size.width - sliderDraggableElementWidth, 0)
-                let clampedProgress = min(max(normalizedProgress, 0), 1)
-                // Knob offset matches the normalized progress along the available track width.
-                let knobOffset = clampedProgress * currentTrackWidth
-                let knobTotalOffset = CGFloat(min(max(knobOffset, 0), currentTrackWidth))
-                let dragGesture = DragGesture(minimumDistance: 0)
-                    .updating($isSliderElementPressed) { _, state, _ in
-                        state = true
-                    }
-                    .updating($knobDragTranslation) { value, state, _ in
-                        state = value.translation
-                    }
-                    .onChanged { gesture in
-                        let knobCenter = knobOffset + sliderDraggableElementRadius
-                        let startOffset: CGFloat = dragStartTouchOffset ?? (gesture.startLocation.x - knobCenter)
-                        if dragStartTouchOffset == nil {
-                            dragStartTouchOffset = startOffset
-                        }
-                        let desiredCenter = gesture.location.x - startOffset
-                        let leftEdge = desiredCenter - sliderDraggableElementRadius
-                        let xPosition = min(max(0, leftEdge), currentTrackWidth)
-                        // Convert the thumb position into normalized progress along the track.
-                        let progress = currentTrackWidth > 0 ? xPosition / currentTrackWidth : 0
-                        let newValue = range.lowerBound + Double(progress) * (range.upperBound - range.lowerBound)
-                        sliderProgress = min(max(newValue, range.lowerBound), range.upperBound)
-                    }
-                    .onEnded { _ in
-                        dragStartTouchOffset = nil
-                        if sliderProgress > 90 {
-                            navigateToPureFocus = true
-                            
-                            
-                        } else {
-                            withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.6, blendDuration: 0)) {
-                                sliderProgress = 0
-                            }
-                        }
-                    }
-                
-                ZStack(alignment: .leading) {
-                    //MARK: ending capsule
-                    Capsule() //ending capsule outline
-                        .glassEffect()
-                        .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-                        .overlay {
-                            ZStack {
-                                Capsule()
-                                    .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 10]))
-                                Button(action: {}) {
-                                
-                                }
-                                .buttonStyle(.plain)
-                                .allowsHitTesting(false)
-                            }
-                        }
-                        .offset(x: currentTrackWidth)
-                        .opacity(0.4)
-                        .foregroundColor(.secondary)
-                    
-                    
-                    //MARK: trailing capsule for bg effect
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0), Color.white.opacity(1)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: knobTotalOffset + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-                    
-                        
-
-                    
-                    Capsule()
-                        .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
-                        .glassEffect(.regular.interactive())    
-                        .offset(x: knobTotalOffset)
-                        .gesture(dragGesture)
-
-                }
-                .frame(height: sliderDraggableElementHeight)
-                .onAppear {
-                    trackWidth = currentTrackWidth
-                }
-                .onChange(of: currentTrackWidth) { oldValue, newValue in
-                    trackWidth = newValue
-                }
-            }
-        }
-            
-        //MIGHT BE MISSING THIS HERE:
-        .frame(height: sliderDraggableElementHeight)
-
-        .navigationDestination(isPresented: $navigateToPureFocus) {
-            PureFocusView()
-                .onAppear {
-                    // Reset slider tow 0 as soon as PureFocusView appears
-                    // (i.e., while StudyTrackingView is being hidden from view).
-                    sliderProgress = 0
-                }
-        }
-        //MARK: Slider background shaoe
-        .background(
-            Capsule()
-                .fill(Color.gray.opacity(0.2))
-        )
-    }
-
-        
-}
-
-
 #Preview {
     FocusIntensitySlider(
         sliderProgress: .constant(50),
         range: 0...100,
+        complete: .constant(false),
         sliderDraggableElementWidth: .constant(90),
         sliderDraggableElementHeight: .constant(60)
     )
