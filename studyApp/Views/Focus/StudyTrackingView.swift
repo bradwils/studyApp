@@ -215,7 +215,7 @@ struct StudyTrackingView: View {
                     }
 
                 } else {  //we have a session actively in progress.
-                    if vm.sessionIsRunning {  //our timer is running, so anchor the text
+                    if vm.ssw?.stopwatchIsRunning ?? false {  //our timer is running, so anchor the text
                         TimelineView(.periodic(from: .now, by: 1)) { _ in
                             let elapsed = vm.ssw!.totalRunningTime
                             Text(formattedElapsed(elapsed))
@@ -250,7 +250,7 @@ struct StudyTrackingView: View {
                         // "Pause at" text: fades in and slides from left when paused
                         VStack(spacing: 4) {
                             if vm.activeSession != nil {
-                                if vm.sessionIsRunning {  //
+                                if vm.ssw?.stopwatchIsRunning ?? false {  //
 
                                     Text(
                                         "temp"
@@ -291,7 +291,7 @@ struct StudyTrackingView: View {
                                 vm.startSession()  //start session, and then
                             } else {  //we have an active session, so this button should either be 'pause', or split into two sub-buttons.
                                 //We currently have a session underway
-                                if vm.sessionIsRunning {  //pause
+                                if vm.ssw?.stopwatchIsRunning ?? false {  //pause
                                     //The session is current in progress, so we pause
                                     vm.pauseSession()
                                     print("pausing session")
@@ -307,7 +307,7 @@ struct StudyTrackingView: View {
                                 Text("Start ")  //start session, and then
                             } else {
                                 //We currently have a session underway
-                                if vm.sessionIsRunning {  //session in progress
+                                if vm.ssw?.stopwatchIsRunning ?? false {  //session in progress
                                     //The session is current and in progress, so we pause
                                     Text("inprog: pause?")
                                 } else {  //not running
@@ -347,7 +347,7 @@ struct StudyTrackingView: View {
                     Button {
                         print("end session button")
                     } label: {
-                        if !vm.sessionIsRunning && vm.activeSession != nil {
+                        if vm.activeSession != nil && !(vm.ssw?.stopwatchIsRunning ?? false) {
                             Text("end")
                         }
                     }

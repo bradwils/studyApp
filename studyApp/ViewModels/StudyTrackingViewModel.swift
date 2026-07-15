@@ -15,7 +15,7 @@ import os
 //   activeSession       — the live StudySession being built; nil when idle
 //   completedSessions   — archive of finished sessions
 //   selectedSubject     — subject for the next/current session
-//   sessionIsRunning    — mirrors stopwatch + session state for UI binding
+//   sessionIsRunning    — true if there's an active stopwatch (running or paused)
 //   ssw    — optional Stopwatch tracking elapsed time
 //
 // Stopwatch (ssw)
@@ -44,10 +44,9 @@ final class StudyTrackingViewModel {
     var activeSession: StudySession?
     var selectedSubject: Subject?
 
-    // Derived from the stopwatch rather than tracked separately, so the two can't drift out of sync.
+    // True if there's an active stopwatch (running or paused); false when idle.
     var sessionIsRunning: Bool {
-        guard let ssw = ssw else { return false }
-        return ssw.stopwatchIsRunning
+        ssw != nil
     }
 
     init() {
@@ -65,8 +64,34 @@ final class StudyTrackingViewModel {
 
     // Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
     private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
+    
+    
+    //MARK: View-Functions
+    
+    enum SessionState {
+        
+        case noSession
+        case sessionRunning
+        case sessionPaused
+        
+    }
+    
+    var currentSessionState: SessionState {
+        guard sessionIsRunning else { return .noSession }
+        if ssw?.stopwatchIsRunning ?? false { return .sessionRunning }
+        return .sessionPaused
+    }
+    
+        
+    
+    
 
-
+    // TODO(human): Define an enum representing which text/caption pair the big timer
+    // display should show, and a computed var (e.g. `mainTimerDisplayState`) that derives
+    // it from `activeSession`, `ssw?.stopwatchIsRunning`, and `hasAlreadyStudiedToday()`.
+    // It should cover the same four branches StudyTrackingView.swift currently
+    // hardcodes in timerAndControlsSection: no session + not studied today (weekly total),
+    // no session + studied today (daily total), running, and paused.
 
     //MARK: VM-Stopwatch Functions
 
@@ -91,24 +116,24 @@ final class StudyTrackingViewModel {
     func togglePause() {
         logger.log("togglePause() called")
         guard activeSession != nil else { return }
-        sessionIsRunning ? pauseSession() : resumeSession()
+        (ssw?.stopwatchIsRunning ?? false) ? pauseSession() : resumeSession()
     }
 
     /// Pause timing; call when the user taps Pause.
     func pauseSession() {
         logAllVars()
 //        logger.log("pauseSession() called")
-        guard activeSession != nil, sessionIsRunning else { return }
+        guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
         ssw!.startBreak()
         activeSession?.lastPausedAt = ssw!.lastPausedAt
-        
-        
+
+
     }
 
     /// Resume timing and log a break if the pause exceeded the break threshold.
     func resumeSession() {
         logger.log("resumeSession() called")
-        guard let pausedAt = ssw!.lastPausedAt, !sessionIsRunning else { return }
+        guard let pausedAt = ssw!.lastPausedAt, !(ssw?.stopwatchIsRunning ?? false) else { return }
         let now = Date()
         let pausedDuration = now.timeIntervalSince(pausedAt)
         if pausedDuration >= breakThreshold {
