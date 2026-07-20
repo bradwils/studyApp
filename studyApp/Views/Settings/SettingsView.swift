@@ -1,6 +1,11 @@
 import SwiftUI
+import SwiftData
+import OSLog
 
 struct SettingsView: View {
+    
+    var logger = Logger(subsystem: "com.studyApp", category: "SettingsView")
+    
     private enum Theme: String, CaseIterable, Identifiable {
         case system
         case light
@@ -22,6 +27,7 @@ struct SettingsView: View {
     @State private var isShowingSubjectsEditor = false // drives the custom bottom drawer
     
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         NavigationStack {
@@ -44,6 +50,14 @@ struct SettingsView: View {
                         }
                     }
                     
+                    Section(header: Text("Debug")) {
+                        Button {
+                            insertFakeSession()
+                        } label: {
+                            Label("Generate Fake Study Session", systemImage: "wand.and.stars")
+                        }
+                    }
+
                     Section(footer: Text("Version 1.0.0")) {
                         Button(role: .destructive) {
                         } label: {
@@ -57,7 +71,24 @@ struct SettingsView: View {
     }
     
     func dismissedSubjectsEditor() {
-        
+
+    }
+
+    func insertFakeSession() {
+        let startedAt = Date().addingTimeInterval(-3600)
+        let session = StudySession(
+            subjectName: "Test Subject",
+            startedAt: startedAt,
+            endedAt: Date(),
+            notes: "Fake session for testing delete"
+        )
+        modelContext.insert(session)
+        do {
+            try modelContext.save()
+            logger.log("worked!")
+        } catch {
+            logger.log("Failed to insert: \(error)")
+        }
     }
 }
 
