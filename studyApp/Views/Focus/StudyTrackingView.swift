@@ -183,61 +183,27 @@ struct StudyTrackingView: View {
     }
 
     private var timerAndControlsSection: some View {
-
+    
         //if there is an active session, skip the 'empty/daily' section
         VStack(spacing: 24) {
             VStack {
-                //MARK: Main Timer Display/Subtext
-                if vm.activeSession == nil {
-                    //if we are not studing
-                    if vm.hasAlreadyStudiedToday() {
-                        //time total weekly time
-                        Text("12:34")
-                            .font(
-                                .system(
-                                    size: 90,
-                                    weight: .semibold,
-                                    design: .monospaced
-                                )
-                            )
-                        Text("today")
-                    } else {
-                        Text("00:00")
-                            .font(
-                                .system(
-                                    size: 90,
-                                    weight: .semibold,
-                                    design: .monospaced
-                                )
-                            )
-                        Text("this week")
-
+                Group {
+                    switch vm.currentSessionState {
+                    case .noSession:
+                        Text("--:--")
+                    case .sessionPaused(let timestamp): //parses lastPausedAt
+                        ElapsedTimerText(anchor: timestamp)
+                    case .sessionRunning(let timestamp): //parses start anchor
+                        ElapsedTimerText(anchor: timestamp) //needs to be a timeInterval
                     }
-
-                } else {  //we have a session actively in progress.
-                    if vm.ssw?.stopwatchIsRunning ?? false {  //our timer is running, so anchor the text
-                        TimelineView(.periodic(from: .now, by: 1)) { _ in
-                            let elapsed = vm.ssw!.totalRunningTime
-                            Text(formattedElapsed(elapsed))
-                                .font(
-                                    .system(
-                                        size: 90,
-                                        weight: .semibold,
-                                        design: .monospaced
-                                    )
-                                )
-                                .contentTransition(.numericText())
-                                .animation(.linear, value: Int(elapsed))
-                        }
-                        Text("Session in progress")
-
-                    } else {  //timer is not running, must be on a break
-                        Text("Session is not in progress")
-                        Text(vm.ssw!.lastPausedAt!, style: .timer)
-                    }
-
                 }
-
+                .font(
+                    .system(
+                        size: 90,
+                        weight: .semibold,
+                        design: .monospaced
+                    )
+                )
             }
             .padding(.top, 8)
 

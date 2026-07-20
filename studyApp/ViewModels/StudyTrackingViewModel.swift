@@ -71,27 +71,37 @@ final class StudyTrackingViewModel {
     enum SessionState {
         
         case noSession
-        case sessionRunning
-        case sessionPaused
+        case sessionRunning(Date) //Date contains the adjustedStartTimeForAnchor
+        case sessionPaused(Date)  //Date contains lastPausedAt
         
     }
     
     var currentSessionState: SessionState {
-        guard sessionIsRunning else { return .noSession }
-        if ssw?.stopwatchIsRunning ?? false { return .sessionRunning }
-        return .sessionPaused
+        guard let isRunning = ssw?.stopwatchIsRunning else {
+            logger.log("logging noSession")
+            return .noSession
+        }
+        if isRunning == true { //give the anchor Date
+            logger.log("isRunning == true")
+            return .sessionRunning(ssw!.adjustedStartTimeForAnchor!)
+        }
+        logger.log("all else")
+        return .sessionPaused(ssw!.lastPausedAt!) //give the Date paused at.
     }
     
         
     
     
 
-    // TODO(human): Define an enum representing which text/caption pair the big timer
-    // display should show, and a computed var (e.g. `mainTimerDisplayState`) that derives
-    // it from `activeSession`, `ssw?.stopwatchIsRunning`, and `hasAlreadyStudiedToday()`.
-    // It should cover the same four branches StudyTrackingView.swift currently
-    // hardcodes in timerAndControlsSection: no session + not studied today (weekly total),
-    // no session + studied today (daily total), running, and paused.
+    // TODO(human): Add a single computed var (e.g. `currentTimerAnchor`) that resolves
+    // to whichever timer is currently authoritative: nothing running, the break timer
+    // (ssw?.lastPausedAt), or the study timer (ssw?.adjustedStartTimeForAnchor). Derive it
+    // from `ssw?.stopwatchIsRunning` and whether `ssw` exists at all. StudyTrackingView's
+    // timerAndControlsSection should then switch on this single value instead of branching
+    // on ssw state directly.
+    //
+    // Note: the daily-total-vs-weekly-total display (driven by hasAlreadyStudiedToday())
+    // is a separate, not-yet-addressed concern — out of scope for this var.
 
     //MARK: VM-Stopwatch Functions
 
