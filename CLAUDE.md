@@ -27,7 +27,6 @@ SwiftUI iOS app — social study tracking, focus timer, and group collaboration.
 - `Models/` — SwiftData `@Model final class` definitions; pure data only
 - `ViewModels/` — `@Observable final class`; business logic and form state
 - `Views/` — SwiftUI views organized by feature (Social, Focus, Groups, Settings, Profile)
-- `ViewModels/SubjectStore.swift`, `UserProfileStore.swift` — legacy JSON persistence, being phased out
 
 See [AppOverview.md](docs/AppOverview.md) for full folder structure.
 
@@ -176,10 +175,8 @@ Filter at the database level — don't fetch everything and filter in Swift.
 ## Current Maintenance Notes
 
 - `StudyTrackingViewModel` references properties not yet on `StudySession` (`isPaused`, `lastResumedAt`, `companions`) — these need to be added or the VM updated
-- `UserProfileStore`, `SubjectStore` are legacy — avoid new dependencies on them
-- `AppSettings.swift` (deleted on current branch) — settings view in flux
 
-See [TODO.txt](TODO.txt) for deferred UI decisions.
+See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decisions and [todos/ui-design-ideas.md](todos/ui-design-ideas.md) for UX/design ideas.
 
 ---
 
