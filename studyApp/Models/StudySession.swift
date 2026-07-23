@@ -161,18 +161,18 @@ final class StudySession: Identifiable {
 
     convenience init() {
         self.init(
-            subject: Subject(name: "Temporary Subject", code: "xyz"),
+            subject: nil,
             subjectName: nil,
             startedAt: Date(),
             endedAt: nil,
             lastPausedAt: nil,
             activeDuration: 0,
-            totalBreakDuration: 0,
+            totalBreakDuration: nil,
             breaks: [],
             location: nil,
             studyScore: nil,
             notes: nil,
-            interruptionCount: nil
+            interruptionCount: 0
         )
     }
 }

@@ -6,11 +6,8 @@
 import SwiftUI
 import SwiftData
 
-
-
 struct ActiveSubjectList: View {
-    @State private var studyTrackingModel = StudyTrackingViewModel()
-
+    var studyTrackingModel: StudyTrackingViewModel
     @Environment(\.modelContext) private var modelContext
 
     @Query private var subjects: [Subject]
@@ -35,7 +32,7 @@ struct ActiveSubjectList: View {
                 }
                 .pickerStyle(.menu)
                 .disabled(!isEnabled)
-                .onAppear { //update the view before it appears
+                .onAppear {
                     if subjectSelection == nil {
                         subjectSelection = studyTrackingModel.selectedSubject ?? subjects.first
                     }
@@ -49,10 +46,14 @@ struct ActiveSubjectList: View {
                         studyTrackingModel.updateSubjectSelection(fallback)
                     }
                 }
-                .onChange(of: subjectSelection) { old, new in //if selected subject changes,
-                    studyTrackingModel.updateSubjectSelection(new)
+                .onChange(of: subjectSelection) { old, new in
+                    if studyTrackingModel.activeSession != nil {
+                        studyTrackingModel.updateActiveSessionSubject(new, context: modelContext)
+                    } else {
+                        studyTrackingModel.updateSubjectSelection(new)
+                    }
                 }
-                .onChange(of: studyTrackingModel.selectedSubject) { old, new in //if subject changes elsewhere, update
+                .onChange(of: studyTrackingModel.selectedSubject) { old, new in
                     if new != subjectSelection {
                         subjectSelection = new
                     }

@@ -1,13 +1,13 @@
 import SwiftUI
-import Combine
+import SwiftData
 
 /// Represents the display state of the lightweight study timer.
 ///
 struct StudyTrackingView: View {
-    
+
     // MARK: - State Properties
     @State private var pureFocusViewState = false;
-    
+
     @State private var focusSliderValue: Double = 0
     @State private var timerInProgress: Bool = false
     @State var sliderDraggableElementWidth: CGFloat = 90
@@ -15,14 +15,14 @@ struct StudyTrackingView: View {
     @State var onlineFriendCount: Int = 0 //to be dynamic later
     @State private var isLeaderboardPresented: Bool = true
     @State private var currentStudySessionInProgress: Bool = false
-    
-    @State var timeSinceLastBreakEnded: TimeInterval = 179 //time since last breal has ended
-    
-    @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
-    
-    // MARK: - ViewModels
 
+    @State var timeSinceLastBreakEnded: TimeInterval = 179 //time since last breal has ended
+
+    @State var timeSinceLastBreakStarted: TimeInterval = 61 //time since last break started
+
+    // MARK: - ViewModels
     @State private var vm = StudyTrackingViewModel()
+    @Environment(\.modelContext) var modelContext
     
     
     
@@ -130,6 +130,7 @@ struct StudyTrackingView: View {
                     .foregroundColor(.secondary)
 
                 ActiveSubjectList(
+                    studyTrackingModel: vm,
                     isEnabled: !currentStudySessionInProgress
                 )
             }
