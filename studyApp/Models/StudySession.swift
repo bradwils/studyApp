@@ -32,9 +32,10 @@ final class SessionLocation {
 @Model
 final class StudyBreak {
     var startedAt: Date
-    var endedAt: Date
+    var endedAt: Date?
 
     var duration: TimeInterval {
+        guard let endedAt = endedAt else { return Date.now.timeIntervalSince(startedAt) }
         return endedAt.timeIntervalSince(startedAt)
     }
 
@@ -60,9 +61,10 @@ final class StudySection {
     //focused: double (% focused, for future)
 
     var startedAt: Date
-    var endedAt: Date
+    var endedAt: Date?
 
     var duration: TimeInterval {
+        guard let endedAt = endedAt else { return Date.now.timeIntervalSince(startedAt)}
         return endedAt.timeIntervalSince(startedAt)
     }
 
@@ -74,7 +76,6 @@ final class StudySection {
     //quick write, start at set time and finished at time of call.
     init(startedAt: Date) {
         self.startedAt = startedAt
-        self.endedAt = Date.now
     }
 }
 

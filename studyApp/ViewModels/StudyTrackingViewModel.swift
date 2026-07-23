@@ -108,6 +108,7 @@ final class StudyTrackingViewModel {
 
     // Start a fresh session (count-up) for an optional subject; discards any in-progress session.
     func startSession() {
+        let now = Date()
         logger.log("startSession() called")
         guard activeSession == nil else {
             logger.warning("Failed to start session; there is already an active session.")
@@ -118,7 +119,7 @@ final class StudyTrackingViewModel {
         studyBreaks = []
         studySections = []
 
-        activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: Date.now)
+        activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: now)
         logger.log("Session Started")
     }
 
@@ -130,9 +131,13 @@ final class StudyTrackingViewModel {
     }
 
     /// Pause timing; call when the user taps Pause.
+    // - We need to:
+    //      - End the study Break
+    //      - Resume stopwatch & update resume timing
     func pauseSession() {
-        logAllVars()
-//        logger.log("pauseSession() called")
+        let now = Date()
+        logger.log("pauseSession() called")
+        studyBreaks.append(StudyBreak(startedAt: now)) //append a new StudyBreak
         guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
         ssw!.startBreak()
         activeSession?.lastPausedAt = ssw!.lastPausedAt
@@ -146,34 +151,36 @@ final class StudyTrackingViewModel {
         guard let pausedAt = ssw!.lastPausedAt, !(ssw?.stopwatchIsRunning ?? false) else { return }
         let now = Date()
         let pausedDuration = now.timeIntervalSince(pausedAt)
-        if pausedDuration >= breakThreshold {
+//        if pausedDuration >= breakThreshold {
+        if pausedDuration >= 0 {
+
             studyBreaks.append(StudyBreak(startedAt: pausedAt, endedAt: now))
+        } else {
+            //update normal time to disregard break
         }
         ssw!.endBreak()
         activeSession?.lastPausedAt = nil
+        
+        studyBreaks.last?.endedAt = now
+        
     }
 
-    /// Finalize the session and attach optional metadata.
-    func endSession(score: Int? = nil, companions: [String] = [], locationDescription: String? = nil) {
-        logger.log("endSession() called with score: \(String(describing: score)), companions: \(companions), locationDescription: \(String(describing: locationDescription))")
+    //Finalize section and assign all values over to the study session to 'finish' it
+    func endSession(context: ModelContext, score: Int? = nil) {
+        logger.log("endSession() called")
         guard let session = activeSession else { return }
-        let now = Date.now
+        let now = Date()
         session.endedAt = now
         session.studyScore = score
         session.breaks = studyBreaks
         session.sections = studySections
         session.totalBreakDuration = totalBreakTime
-        if !companions.isEmpty { session.friends = companions }
-        if let locationDescription {
-            if session.location != nil {
-                if session.location?.locationDescription == nil {
-                    session.location?.locationDescription = locationDescription
-                }
-            } else {
-                session.location = SessionLocation(locationDescription: locationDescription, locationLabel: "")
-            }
-        }
-        ssw!.end()
+
+        context.insert(session)
+        try? context.save()
+
+        ssw?.end()
+        ssw = nil
         activeSession = nil
     }
 
