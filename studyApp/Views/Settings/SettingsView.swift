@@ -67,6 +67,16 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .toolbar {
+                // DEV ONLY — see CLAUDE.md "Developer-Only Views"
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        DebugDataView()
+                    } label: {
+                        Image(systemName: "ladybug")
+                    }
+                }
+            }
         }
     }
     

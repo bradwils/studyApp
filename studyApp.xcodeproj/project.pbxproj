@@ -31,31 +31,12 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		989E5FB52F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyApp" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				studyAppUITests.swift,
-				studyAppUITestsLaunchTests.swift,
-			);
-			target = 984C5A4F2EAF2CD20048EB4D /* studyApp */;
-		};
-		989E5FB62F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppTests" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				.gitattributes,
-				.gitignore,
-				Assets.xcassets,
-			);
-			target = 984C5A5C2EAF2CD40048EB4D /* studyAppTests */;
-		};
 		989E5FB72F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppUITests" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				.gitattributes,
 				.gitignore,
 				Assets.xcassets,
-				studyAppUITests.swift,
-				studyAppUITestsLaunchTests.swift,
 			);
 			target = 984C5A662EAF2CD40048EB4D /* studyAppUITests */;
 		};
@@ -75,8 +56,6 @@
 		989E5FA32F4BA3450025B96B /* studyAppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				989E5FB52F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyApp" target */,
-				989E5FB62F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppTests" target */,
 				989E5FB72F4BA3450025B96B /* Exceptions for "studyAppUITests" folder in "studyAppUITests" target */,
 			);
 			path = studyAppUITests;
@@ -147,7 +126,6 @@
 			);
 			fileSystemSynchronizedGroups = (
 				984C5A522EAF2CD20048EB4D /* studyApp */,
-				989E5FA32F4BA3450025B96B /* studyAppUITests */,
 			);
 			name = studyApp;
 			packageProductDependencies = (
@@ -191,6 +169,9 @@
 			);
 			dependencies = (
 				984C5A692EAF2CD40048EB4D /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				989E5FA32F4BA3450025B96B /* studyAppUITests */,
 			);
 			name = studyAppUITests;
 			packageProductDependencies = (

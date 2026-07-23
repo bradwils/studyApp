@@ -122,6 +122,11 @@ var sessions: [StudySession]
 - Previews use `.modelContainer(for: Model.self, inMemory: true)`
 - Decompose long `body` with `private var` computed properties for layout; extract to `private struct` when the component animates independently or is reused
 
+**Developer-Only Views:**
+- Views that exist purely for debugging/inspecting app state (not part of any real user flow) live under `Views/Dev/`
+- If a dev-only affordance is added inline to a real screen instead (e.g. a button on `SettingsView`), mark it clearly with a `// DEV ONLY` comment at the point it's wired in
+- Example: `Views/Dev/DebugDataView.swift` / `DebugModelListView.swift` — lists every registered SwiftData model with live counts, and lets you inspect or delete individual/all records. Linked from a toolbar button on `SettingsView`.
+
 ---
 
 ## Common Tasks
