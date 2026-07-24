@@ -130,7 +130,7 @@ final class StudySession: Identifiable {
     //Default initialiser, parsing all required parameters, & optional for optionals.
     init(
         id: UUID = UUID(),
-        subject: Subject,
+        subject: Subject?,
         subjectName: String?,
         startedAt: Date,
         endedAt: Date?,
@@ -138,7 +138,7 @@ final class StudySession: Identifiable {
         activeDuration: TimeInterval,
         totalBreakDuration: TimeInterval?,
         breaks: [StudyBreak]?,
-        friends: [String] = [], //empty for now
+        friends: [String]? = nil,
         location: SessionLocation?,
         studyScore: Int?,
         notes: String?,
@@ -161,13 +161,13 @@ final class StudySession: Identifiable {
 
     convenience init() {
         self.init(
-            subject: Subject(name: "Temporary Subject", code: "xyz"),
+            subject: nil,
             subjectName: nil,
             startedAt: Date(),
             endedAt: nil,
             lastPausedAt: nil,
             activeDuration: 0,
-            totalBreakDuration: 0,
+            totalBreakDuration: nil,
             breaks: [],
             location: nil,
             studyScore: nil,
