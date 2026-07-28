@@ -10,29 +10,44 @@ struct SessionsView: View {
     @Query(sort: \StudySession.startedAt, order: .reverse) private var sessions: [StudySession]
 
     var body: some View {
-        
-        Button(action: {
-            vm.removeAllSessions(context: context)
-        })
-        {
-            Text("Remove Sessions")
-        }
-        .buttonStyle(.glass)
-        
-        Spacer()
         Group {
             if sessions.isEmpty {
                 Text("No sessions yet")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(sessions) { session in
-                    Text(session.subjectName ?? "Backup")
+                List {
+                    ForEach(sessions) { session in
+                        NavigationLink {
+                            SessionDetailView(session: session)
+                        } label: {
+                            sessionRow(session)
+                        }
+                    }
+                    .onDelete { offsets in
+                        vm.deleteSessions(offsets.map { sessions[$0] }, context: context)
+                    }
                 }
             }
         }
         .navigationTitle("Sessions")
-        Spacer()
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("Remove Sessions", role: .destructive) {
+                    vm.removeAllSessions(context: context)
+                }
+            }
+        }
+    }
+
+    private func sessionRow(_ session: StudySession) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(session.subjectName ?? "Backup")
+                .font(.headline)
+            Text("\(session.startedAt.formatted(date: .abbreviated, time: .shortened)) · \(formattedDuration(session.totalDuration))")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     private func formattedDuration(_ interval: TimeInterval) -> String {

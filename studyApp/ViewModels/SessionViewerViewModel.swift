@@ -14,6 +14,13 @@ final class SessionViewerViewModel {
     func removeAllSessions(context: ModelContext) {
         try? context.delete(model: StudySession.self)
     }
+
+    func deleteSessions(_ sessions: [StudySession], context: ModelContext) {
+        for session in sessions {
+            context.delete(session)
+        }
+        try? context.save()
+    }
     
     
     init() {

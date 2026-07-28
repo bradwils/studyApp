@@ -42,18 +42,33 @@ final class StudyTrackingViewModel {
     var studyBreaks: [StudyBreak]
     var studySections: [StudySection]
     var activeSession: StudySession?
-    var selectedSubject: Subject?
-
-    // True if there's an active stopwatch (running or paused); false when idle.
-    var sessionIsRunning: Bool {
-        ssw != nil
+    var activeSession: StudySession? {
+        didSet {
+            logger.log("activeSession set to \(String(describing: self.activeSession))")
+        }
     }
+	
+    var selectedSubject: Subject?
+	private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
+
+	//MARK: Enums
+	
+	enum SessionState: Equatable {
+		
+		case noSession
+		case sessionRunning(Date) //Date contains the adjustedStartTimeForAnchor
+		
+	}
+	
+	//MARK: Initialisers
 
     init() {
         studyBreaks = []
         studySections = []
     }
 
+	//MARK: Computed Vars
+	
     var totalStudyingTime: TimeInterval {
         studySections.reduce(0) { $0 + $1.duration }
     }
@@ -65,17 +80,14 @@ final class StudyTrackingViewModel {
     // Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
     private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
     
+	var sessionIsRunning: Bool {
+		ssw != nil
+	}
     
-    //MARK: View-Functions
-    
-    enum SessionState {
-        
         case noSession
         case sessionRunning(Date) //Date contains the adjustedStartTimeForAnchor
         case sessionPaused(Date)  //Date contains lastPausedAt
-        
-    }
-    
+
     var currentSessionState: SessionState {
         guard let isRunning = ssw?.stopwatchIsRunning else {
             logger.log("logging noSession")
@@ -88,6 +100,16 @@ final class StudyTrackingViewModel {
         logger.log("all else")
         return .sessionPaused(ssw!.lastPausedAt!) //give the Date paused at.
     }
+	//This is exclusivley used for the frame modifier on HStack - search for it, this is only used in one spot.
+	var shouldBreakTextBeLeading: Bool {
+		switch currentSessionState {
+		case .sessionPaused:
+			return true
+		default:
+			return false
+		}
+		
+	}
     
         
     
@@ -102,12 +124,11 @@ final class StudyTrackingViewModel {
     //
     // Note: the daily-total-vs-weekly-total display (driven by hasAlreadyStudiedToday())
     // is a separate, not-yet-addressed concern — out of scope for this var.
-
-    //MARK: VM-Stopwatch Functions
+	//MARK: View-Functions
 
 
     // Start a fresh session (count-up) for an optional subject; discards any in-progress session.
-    func startSession() {
+    func startSession(ctx: ModelContext) {
         let now = Date()
         logger.log("startSession() called")
         guard activeSession == nil else {
@@ -121,6 +142,9 @@ final class StudyTrackingViewModel {
 
         activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: now)
         logger.log("Session Started")
+        
+        ctx.insert(activeSession!)
+        try? ctx.save()
     }
 
     /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
@@ -166,18 +190,14 @@ final class StudyTrackingViewModel {
     }
 
     //Finalize section and assign all values over to the study session to 'finish' it
-    func endSession(context: ModelContext, score: Int? = nil) {
+    func endSession(context: ModelContext) {
         logger.log("endSession() called")
         guard let session = activeSession else { return }
         let now = Date()
         session.endedAt = now
-        session.studyScore = score
         session.breaks = studyBreaks
         session.sections = studySections
         session.totalBreakDuration = totalBreakTime
-
-        context.insert(session)
-        try? context.save()
 
         ssw?.end()
         ssw = nil
@@ -185,8 +205,10 @@ final class StudyTrackingViewModel {
     }
 
     /// Abort an active session without persisting; use for user-initiated cancels.
-    func cancelActiveSession() {
-        logger.log("cancelActiveSession() called")
+    func cancelActiveSession(ctx: ModelContext) {
+        logger.log("current session cancelled")
+        ctx.delete(activeSession!)
+        try? ctx.save()
         activeSession = nil
         ssw = nil
     }

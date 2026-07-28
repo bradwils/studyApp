@@ -83,8 +83,14 @@ final class StudySection {
 // MARK: - StudySession
 @Model
 final class StudySession: Identifiable {
+    
+    
     var id: UUID
 
+    //each StudySession must be identifiabe by having a unique id.
+    #Unique<StudySession>([\.id])
+
+    
     // References a subject but doesn't own it — nullify so deleting a subject doesn't delete sessions
     @Relationship(deleteRule: .nullify) //
     var subject: Subject?
