@@ -110,7 +110,7 @@ struct StudyTrackingView: View {
 		// independently of the push/pop transition.
 		.fullScreenCover(isPresented: $pureFocusViewState) {
 			NavigationStack {
-				PureFocusView(isPresented: $pureFocusViewState)
+				PureFocusView(isPresented: $pureFocusViewState, subject: vm.selectedSubject)
 			}
 		}
 		
@@ -184,7 +184,7 @@ struct StudyTrackingView: View {
 		.padding(.horizontal, 14)
 		.padding(.vertical, 8)
 		.glassEffect()
-		//UIEND
+
 	}
 	
 	private var mainButtonLabel: String {
@@ -233,45 +233,45 @@ struct StudyTrackingView: View {
 						VStack(spacing: 4) {
 							if vm.activeSession != nil {
 								if vm.ssw?.stopwatchIsRunning ?? false {  //
-									
+
 									Text(
 										"temp"
 									)  //parse through a helper; format the timeinterval as hour/minute/second
 									.font(.headline.monospacedDigit())
 									.frame(alignment: .center)
-									
+
 									Text("since last break")
 										.font(.caption)
 										.foregroundColor(.secondary)
 										.frame(alignment: .center)
-									
+
 								} else {
-									
+
 									Text(
 										"temp"
 									)  //parse through a helper; format the timeinterval as hour/minute/second
 									.font(.headline.monospacedDigit())
 									.frame(alignment: .center)
-									
+
 									Text("Break Length")
 										.font(.caption)
 										.foregroundColor(.secondary)
 										.frame(alignment: .center)
-									
+
 								}
 							}
 						}
-						.frame(maxWidth: .infinity, alignment: .trailing)
+						.frame(maxWidth: .infinity, alignment: .leading)
 					}
 					.padding(.horizontal, 20)
-					
+
 					HStack {  //child hstack2, aligned to be left-most within the available space
 						GlassEffectContainer(spacing: 16) {
 							// Both buttons sit directly next to each other (no stretching
 							// spacer between them) so the container's fluid glass blend can
 							// actually reach across the gap while the end button inserts/removes —
 							// that adjacency is what sells the morph, not a manual transition.
-							HStack(spacing: 16) { //shouldBreakTextBeLeading user
+							HStack(spacing: 16) {
 								Button {
 									withAnimation(.smooth(duration: 0.4)) {
 										switch vm.currentSessionState {
@@ -298,7 +298,7 @@ struct StudyTrackingView: View {
 										.font(.headline)
 										.padding(.horizontal, 10)  //padding for start button, makes button wider than text
 										.padding(.vertical, 12)
-										.frame(minWidth: 30, minHeight: 15)  // keeps layout from jumping during the transition
+										.frame(height: 20)  // keeps layout from jumping during the transition
 								}
 								.buttonStyle(.glass)
 								.glassEffectID("startPauseButton", in: glassNamespace)
@@ -312,7 +312,7 @@ struct StudyTrackingView: View {
 											.font(.headline)
 											.padding(.horizontal, 10)  //padding for start button, makes button wider than text
 											.padding(.vertical, 12)
-											.frame(minWidth: 30, minHeight: 15)  // keeps layout from jumping during the transition
+											.frame(height: 20)  // keeps layout from jumping during the transition
 									}
 									.buttonStyle(.glass)
 									.glassEffectID("endSessionButton", in: glassNamespace)
@@ -328,8 +328,7 @@ struct StudyTrackingView: View {
 						}
 					}
 				}
-				.frame(maxWidth: .infinity, alignment: vm.shouldBreakTextBeLeading ? .leading : .trailing
-)
+				//            .frame(maxWidth: .infinity, alignment: .center)
 			}
 			.padding(.top, 4)
 		}

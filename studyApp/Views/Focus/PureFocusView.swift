@@ -4,22 +4,37 @@
 //  Created by brad wils on 15/12/25.
 
 import SwiftUI
+import UIKit
 
 //need to use white UI elements exclusively.
 struct PureFocusView: View {
-    
+
     @Environment(\.dismiss) var dismiss //get the environment dismiss value
-    
+
     @Binding var isPresented: Bool //to be able to dismiss
-    
+
+    /// Subject the current session is allocated to — its `code` drives the top-of-screen label.
+    let subject: Subject?
+
     @State var timerTimeInterval: TimeInterval = 0 //0.0 gets binded to our durationpicker, so this gets changed as the picker changes value.
-    
+
     // MARK: - State Properties
-    
+
     @State private var vm = PureFocusViewModel()
 
     //Lock (focus feature)
     @State private var focusLockEnabled: Bool = false;
+
+    // MARK: - Leave Confirmation (shake-to-confirm)
+
+    /// Taps required on "Leave" once a timer has started, before it's allowed to dismiss.
+    private let leaveTapsRequiredToExit = 10
+    /// Minimum gap between taps that count — filters out accidental double-taps/mashing.
+    private let leaveTapMinInterval: TimeInterval = 0.15
+
+    @State private var leaveTapCount = 0
+    @State private var lastLeaveTapAt: Date = .distantPast
+    @State private var leaveShakeTrigger: CGFloat = 0
 
 
 
@@ -50,12 +65,45 @@ struct PureFocusView: View {
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button("Leave") {
-                    dismiss() // Programmatic dismissal
+                    handleLeaveTap()
                 }
+                .modifier(ShakeEffect(animatableData: leaveShakeTrigger))
             }
         }
         .foregroundColor(dynamicForegroundColor)
         .navigationBarBackButtonHidden(false)
+        .onChange(of: vm.timerActivelyExists) { _, timerExists in
+            // A fresh timer gets a fresh set of confirmation taps.
+            if !timerExists {
+                leaveTapCount = 0
+            }
+        }
+    }
+
+    // MARK: - Leave Confirmation
+
+    /// Once a timer has started, "Leave" requires `leaveTapsRequiredToExit` taps
+    /// (each acknowledged with a shake + haptic) before it actually dismisses.
+    private func handleLeaveTap() {
+        guard vm.timerActivelyExists else {
+            dismiss()
+            return
+        }
+
+        let now = Date()
+        guard now.timeIntervalSince(lastLeaveTapAt) >= leaveTapMinInterval else { return }
+        lastLeaveTapAt = now
+
+        leaveTapCount += 1
+        guard leaveTapCount < leaveTapsRequiredToExit else {
+            dismiss()
+            return
+        }
+
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        withAnimation(.linear(duration: 0.25)) {
+            leaveShakeTrigger += 1
+        }
     }
     
     // MARK: - Subviews
@@ -155,7 +203,7 @@ struct PureFocusView: View {
     }
     
     private var topScreenCode: some View {
-        Text("LLLL")
+        Text(subject?.code ?? "—")
             .font(.system(size: 35))
             .lineLimit(1)
     }
@@ -179,7 +227,7 @@ struct PureFocusView: View {
     
                 
 #Preview {
-    PureFocusView(isPresented: .constant(true))
+    PureFocusView(isPresented: .constant(true), subject: Subject(name: "Mathematics", code: "MATH101"))
 }
     
 

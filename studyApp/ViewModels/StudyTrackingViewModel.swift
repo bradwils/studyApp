@@ -41,7 +41,6 @@ final class StudyTrackingViewModel {
     var ssw: Stopwatch?
     var studyBreaks: [StudyBreak]
     var studySections: [StudySection]
-    var activeSession: StudySession?
     var activeSession: StudySession? {
         didSet {
             logger.log("activeSession set to \(String(describing: self.activeSession))")
@@ -49,6 +48,7 @@ final class StudyTrackingViewModel {
     }
 	
     var selectedSubject: Subject?
+	
 	private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
 
 	//MARK: Enums
@@ -57,6 +57,7 @@ final class StudyTrackingViewModel {
 		
 		case noSession
 		case sessionRunning(Date) //Date contains the adjustedStartTimeForAnchor
+		case sessionPaused(Date)  //Date contains lastPausedAt
 		
 	}
 	
@@ -78,15 +79,11 @@ final class StudyTrackingViewModel {
     }
 
     // Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
-    private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
     
 	var sessionIsRunning: Bool {
 		ssw != nil
 	}
     
-        case noSession
-        case sessionRunning(Date) //Date contains the adjustedStartTimeForAnchor
-        case sessionPaused(Date)  //Date contains lastPausedAt
 
     var currentSessionState: SessionState {
         guard let isRunning = ssw?.stopwatchIsRunning else {
@@ -100,18 +97,8 @@ final class StudyTrackingViewModel {
         logger.log("all else")
         return .sessionPaused(ssw!.lastPausedAt!) //give the Date paused at.
     }
-	//This is exclusivley used for the frame modifier on HStack - search for it, this is only used in one spot.
-	var shouldBreakTextBeLeading: Bool {
-		switch currentSessionState {
-		case .sessionPaused:
-			return true
-		default:
-			return false
-		}
-		
-	}
-    
-        
+
+
     
     
 
