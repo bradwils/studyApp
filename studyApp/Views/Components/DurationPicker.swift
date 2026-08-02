@@ -31,14 +31,14 @@ struct DurationPicker: View {
     var title: String? = "Set Duration"
     
     var body: some View {
-        VStack(spacing: 8) {
+        VStack {
             if let title = title {
                 Text(title)
                     .font(.caption)
                     .foregroundColor(.white.opacity(0.7))
             }
-            
-            HStack(spacing: 0) {
+
+            HStack {
                 // Hours picker
                 Picker("Hours", selection: Binding(
                     get: { Int(duration) / 3600 },
@@ -54,13 +54,10 @@ struct DurationPicker: View {
                     }
                 }
                 .pickerStyle(.wheel)
-                .frame(width: 60)
-                .clipped()
-                
+
                 Text("h")
                     .foregroundColor(.white.opacity(0.6))
-                    .padding(.horizontal, 4)
-                
+
                 // Minutes picker
                 Picker("Minutes", selection: Binding(
                     get: { (Int(duration) % 3600) / 60 },
@@ -76,14 +73,10 @@ struct DurationPicker: View {
                     }
                 }
                 .pickerStyle(.wheel)
-                .frame(width: 60)
-                .clipped()
-                
+
                 Text("m")
                     .foregroundColor(.white.opacity(0.6))
-                    .padding(.horizontal, 4)
             }
-            .frame(height: 100)
         }
     }
 }

@@ -20,6 +20,9 @@ struct FocusIntensitySlider: View {
     // relative to where the knob already was, not where the finger landed.
     @GestureState private var knobLeftEdgeAtDragStart: CGFloat?
 
+    // Measured rather than assumed, so the drag maps onto whatever width the parent hands us.
+    @State private var totalWidth: CGFloat = 0
+
     private var knobRadius: CGFloat { sliderDraggableElementWidth / 2 }
 
     // sliderProgress mapped from `range` to 0...1
@@ -29,22 +32,18 @@ struct FocusIntensitySlider: View {
     }
 
     var body: some View {
+        let trackWidth = trackWidth(forTotalWidth: totalWidth)
+        let knobLeftEdge = knobLeftEdge(trackWidth: trackWidth)
+
         ZStack(alignment: .leading) {
-            dottedLineFiller
+            DottedLineFiller()
 
-            GeometryReader { geo in
-                let trackWidth = trackWidth(forTotalWidth: geo.size.width)
-                let knobLeftEdge = knobLeftEdge(trackWidth: trackWidth)
-
-                ZStack(alignment: .leading) {
-                    endCapsule(trackWidth: trackWidth)
-                    fillTrailCapsule(knobLeftEdge: knobLeftEdge)
-                    knobCapsule(trackWidth: trackWidth, knobLeftEdge: knobLeftEdge)
-                }
-                .frame(height: sliderDraggableElementHeight)
-            }
+            endCapsule(trackWidth: trackWidth)
+            fillTrailCapsule(knobLeftEdge: knobLeftEdge)
+            knobCapsule(trackWidth: trackWidth, knobLeftEdge: knobLeftEdge)
         }
-        .frame(height: sliderDraggableElementHeight)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { totalWidth = $0 }
         .background(
             Capsule()
                 .fill(Color.gray.opacity(0.2))
@@ -130,19 +129,26 @@ struct FocusIntensitySlider: View {
     }
 }
 
-private var dottedLineFiller: some View {
-    GeometryReader { geometry in
-        Path { path in
-            let width = geometry.size.width
-            path.move(to: .zero)
-            path.addLine(to: CGPoint(x: width, y: 0))
-        }
-        .stroke(
-            Color.black.opacity(0.35),
-            style: StrokeStyle(lineWidth: 1, lineCap: .round, dash: [4, 10])
-        )
+private struct DottedLineFiller: View {
+    @ScaledMetric(relativeTo: .caption) private var lineWidth: CGFloat = 1
+
+    var body: some View {
+        HairlineShape()
+            .stroke(
+                Color.black.opacity(0.35),
+                style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, dash: [4, 10])
+            )
+            .frame(height: lineWidth)
     }
-    .frame(height: 1)
+}
+
+private struct HairlineShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        return path
+    }
 }
 
 #Preview {
