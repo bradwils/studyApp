@@ -19,12 +19,19 @@ struct StudyTrackingView: View {
 	// Bound to FocusIntensitySlider's knob position (0...100); reset to 0 on appear and
 	// again once the slider commits, so the tray is always empty when this view is shown.
 	@State private var focusSliderValue: Double = 0
-	@State var sliderDraggableElementWidth: CGFloat = 90
-	@State var sliderDraggableElementHeight: CGFloat = 60
 	@State var onlineFriendCount: Int = 0  //to be dynamic later
 	@State private var isLeaderboardPresented: Bool = true
 	@State private var currentStudySessionInProgress: Bool = false
-	
+
+	// MARK: - Scaled Metrics
+
+	// The slider knob and the hero timer are proportioned by design rather than by
+	// content, so they scale with Dynamic Type instead of sitting at fixed points.
+	@ScaledMetric(relativeTo: .body) private var sliderKnobWidth: CGFloat = 90
+	@ScaledMetric(relativeTo: .body) private var sliderKnobHeight: CGFloat = 60
+	@ScaledMetric(relativeTo: .largeTitle) private var timerFontSize: CGFloat = 90
+	@ScaledMetric(relativeTo: .caption) private var connectionChipVerticalPadding: CGFloat = 8
+
 	// MARK: - ViewModels
 	
 	@State private var vm = StudyTrackingViewModel()
@@ -62,15 +69,14 @@ struct StudyTrackingView: View {
 			)
 			.ignoresSafeArea()
 			
-			// “radial” highlight on the right side
-			RadialGradient(
+			// “radial” highlight on the right side — elliptical so the falloff scales
+			// with the screen instead of a fixed point radius
+			EllipticalGradient(
 				gradient: Gradient(colors: [
 					Color.white.opacity(0.35),
 					Color.clear,
 				]),
-				center: .topTrailing,
-				startRadius: 0,
-				endRadius: 260
+				center: .topTrailing
 			)
 			.blendMode(.softLight)
 			.ignoresSafeArea()
@@ -87,18 +93,9 @@ struct StudyTrackingView: View {
 				connectionRow
 				
 				horizontalContentScrollRow
-					.frame(
-						maxWidth: .infinity,
-						maxHeight: .infinity,
-						alignment: .bottom
-					)
-				//.check if above modifier is needed or not
-				
 			}
 			.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-			.padding(.horizontal, 24)
-			.padding(.top, 32)
-			.padding(.bottom, 24)
+			.padding()
 		}
 		.onAppear {
 			focusSliderValue = 0
@@ -120,7 +117,7 @@ struct StudyTrackingView: View {
 	
 	private var headerRow: some View {
 		HStack {
-			VStack(alignment: .leading, spacing: 6) {
+			VStack(alignment: .leading) {
 				Text("Current Subject")
 					.font(.caption)
 					.foregroundColor(.secondary)
@@ -133,7 +130,7 @@ struct StudyTrackingView: View {
 			
 			Spacer()
 			
-			VStack(alignment: .trailing, spacing: 6) {
+			VStack(alignment: .trailing) {
 				Text("Total")
 					.font(.caption)
 					.foregroundColor(.secondary)
@@ -169,7 +166,7 @@ struct StudyTrackingView: View {
 		//UITWEAK
 		// Wrapping the online-friends indicator in a glass capsule gives it depth and
 		// makes it look like a live status chip — similar to AirPods/Dynamic Island pills.
-		HStack(spacing: 6) {
+		HStack {
 			Text("\(onlineFriendCount) online friends")
 				.font(.caption)
 			
@@ -181,8 +178,8 @@ struct StudyTrackingView: View {
 				)
 				.foregroundColor(.green)
 		}
-		.padding(.horizontal, 14)
-		.padding(.vertical, 8)
+		.padding(.horizontal)
+		.padding(.vertical, connectionChipVerticalPadding)
 		.glassEffect()
 
 	}
@@ -215,14 +212,13 @@ struct StudyTrackingView: View {
 				}
 				.font(
 					.system(
-						size: 90,
+						size: timerFontSize,
 						weight: .semibold,
 						design: .monospaced
 					)
 				)
 			}
-			.padding(.top, 8)
-			
+
 			Spacer()
 			
 			//MARK: Section Length / Buttons
@@ -230,7 +226,7 @@ struct StudyTrackingView: View {
 				HStack {
 					HStack {  //child hstack1, aligned to be right-most within the available space
 						// "Pause at" text: fades in and slides from left when paused
-						VStack(spacing: 4) {
+						VStack {
 							if vm.activeSession != nil {
 								if vm.ssw?.stopwatchIsRunning ?? false {  //
 
@@ -238,12 +234,10 @@ struct StudyTrackingView: View {
 										"temp"
 									)  //parse through a helper; format the timeinterval as hour/minute/second
 									.font(.headline.monospacedDigit())
-									.frame(alignment: .center)
 
 									Text("since last break")
 										.font(.caption)
 										.foregroundColor(.secondary)
-										.frame(alignment: .center)
 
 								} else {
 
@@ -251,19 +245,17 @@ struct StudyTrackingView: View {
 										"temp"
 									)  //parse through a helper; format the timeinterval as hour/minute/second
 									.font(.headline.monospacedDigit())
-									.frame(alignment: .center)
 
 									Text("Break Length")
 										.font(.caption)
 										.foregroundColor(.secondary)
-										.frame(alignment: .center)
 
 								}
 							}
 						}
 						.frame(maxWidth: .infinity, alignment: .leading)
 					}
-					.padding(.horizontal, 20)
+					.padding(.horizontal)
 
 					HStack {  //child hstack2, aligned to be left-most within the available space
 						GlassEffectContainer(spacing: 16) {
@@ -296,9 +288,7 @@ struct StudyTrackingView: View {
 										.id(mainButtonLabel)
 										.transition(.blurReplace)
 										.font(.headline)
-										.padding(.horizontal, 10)  //padding for start button, makes button wider than text
-										.padding(.vertical, 12)
-										.frame(height: 20)  // keeps layout from jumping during the transition
+										.padding(.horizontal)  //padding for start button, makes button wider than text
 								}
 								.buttonStyle(.glass)
 								.glassEffectID("startPauseButton", in: glassNamespace)
@@ -310,9 +300,7 @@ struct StudyTrackingView: View {
 									} label: {
 										Text("Endbutton")
 											.font(.headline)
-											.padding(.horizontal, 10)  //padding for start button, makes button wider than text
-											.padding(.vertical, 12)
-											.frame(height: 20)  // keeps layout from jumping during the transition
+											.padding(.horizontal)  //padding for start button, makes button wider than text
 									}
 									.buttonStyle(.glass)
 									.glassEffectID("endSessionButton", in: glassNamespace)
@@ -330,7 +318,6 @@ struct StudyTrackingView: View {
 				}
 				//            .frame(maxWidth: .infinity, alignment: .center)
 			}
-			.padding(.top, 4)
 		}
 	}
 	
@@ -341,13 +328,11 @@ struct StudyTrackingView: View {
 			sliderProgress: $focusSliderValue,
 			range: 0...100,
 			complete: $pureFocusViewState,
-			sliderDraggableElementWidth: $sliderDraggableElementWidth,
-			sliderDraggableElementHeight: $sliderDraggableElementHeight
+			sliderDraggableElementWidth: .constant(sliderKnobWidth),
+			sliderDraggableElementHeight: .constant(sliderKnobHeight)
 		)
-		.frame(height: 40)
 		.accessibilityLabel("Focus intensity")
-		.padding(.vertical, 14)
-		.padding(.horizontal, 5)
+		.padding(.vertical)
 		.onChange(of: pureFocusViewState) { old, new in  // this is a t/f
 			if old && !new {
 				focusSliderValue = 0
