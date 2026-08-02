@@ -16,6 +16,8 @@ struct DebugDataView: View {
     @Query private var sections: [StudySection]
     @Query private var locations: [SessionLocation]
 
+    @ScaledMetric(relativeTo: .caption) private var swatchSize: CGFloat = 14
+
     var body: some View {
         List {
             Section {
@@ -96,22 +98,16 @@ struct DebugDataView: View {
         NavigationLink {
             destination()
         } label: {
-            Label {
-                HStack {
-                    Text(title)
-                    Spacer()
-                    Text("\(count)")
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
-            } icon: {
-                Image(systemName: systemImage)
+            LabeledContent {
+                Text("\(count)").monospacedDigit()
+            } label: {
+                Label(title, systemImage: systemImage)
             }
         }
     }
 
     private func swatch(_ color: Color) -> some View {
-        Circle().fill(color).frame(width: 14, height: 14)
+        Circle().fill(color).frame(width: swatchSize, height: swatchSize)
     }
 }
 

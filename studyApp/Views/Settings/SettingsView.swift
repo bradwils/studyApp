@@ -31,38 +31,35 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Form {
-                    Section(header: Text("List")) {
-                        Button() {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                isShowingSubjectsEditor.toggle()
-                            }
-                        } label: {
-                            Label("Edit Subjects", systemImage: "list.bullet")
+            Form {
+                Section("List") {
+                    Button() {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                            isShowingSubjectsEditor.toggle()
                         }
-                        .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
-                            SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
-                                .padding(10)
-                                .presentationDetents([.fraction(0.6)])
-                                .presentationDragIndicator(.visible)
-                                .presentationBackgroundInteraction(.enabled)
-                        }
+                    } label: {
+                        Label("Edit Subjects", systemImage: "list.bullet")
                     }
-                    
-                    Section(header: Text("Debug")) {
-                        Button {
-                            insertFakeSession()
-                        } label: {
-                            Label("Generate Fake Study Session", systemImage: "wand.and.stars")
-                        }
+                    .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
+                        SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
+                            .presentationDetents([.fraction(0.6)])
+                            .presentationDragIndicator(.visible)
+                            .presentationBackgroundInteraction(.enabled)
                     }
+                }
 
-                    Section(footer: Text("Version 1.0.0")) {
-                        Button(role: .destructive) {
-                        } label: {
-                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
+                Section("Debug") {
+                    Button {
+                        insertFakeSession()
+                    } label: {
+                        Label("Generate Fake Study Session", systemImage: "wand.and.stars")
+                    }
+                }
+
+                Section(footer: Text("Version 1.0.0")) {
+                    Button(role: .destructive) {
+                    } label: {
+                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             }

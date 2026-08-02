@@ -12,9 +12,7 @@ struct SessionsView: View {
     var body: some View {
         Group {
             if sessions.isEmpty {
-                Text("No sessions yet")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+                ContentUnavailableView("No sessions yet", systemImage: "clock.arrow.circlepath")
             } else {
                 List {
                     ForEach(sessions) { session in
