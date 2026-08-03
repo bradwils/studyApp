@@ -30,51 +30,49 @@ struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Form {
-                    Section(header: Text("List")) {
-                        Button() {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                isShowingSubjectsEditor.toggle()
-                            }
-                        } label: {
-                            Label("Edit Subjects", systemImage: "list.bullet")
+        ZStack {
+            Form {
+                Section(header: Text("List")) {
+                    Button() {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                            isShowingSubjectsEditor.toggle()
                         }
-                        .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
-                            SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
-                                .padding(10)
-                                .presentationDetents([.fraction(0.6)])
-                                .presentationDragIndicator(.visible)
-                                .presentationBackgroundInteraction(.enabled)
-                        }
+                    } label: {
+                        Label("Edit Subjects", systemImage: "list.bullet")
                     }
-                    
-                    Section(header: Text("Debug")) {
-                        Button {
-                            insertFakeSession()
-                        } label: {
-                            Label("Generate Fake Study Session", systemImage: "wand.and.stars")
-                        }
+                    .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
+                        SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
+                            .padding(10)
+                            .presentationDetents([.fraction(0.6)])
+                            .presentationDragIndicator(.visible)
+                            .presentationBackgroundInteraction(.enabled)
                     }
+                }
 
-                    Section(footer: Text("Version 1.0.0")) {
-                        Button(role: .destructive) {
-                        } label: {
-                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
+                Section(header: Text("Debug")) {
+                    Button {
+                        insertFakeSession()
+                    } label: {
+                        Label("Generate Fake Study Session", systemImage: "wand.and.stars")
+                    }
+                }
+
+                Section(footer: Text("Version 1.0.0")) {
+                    Button(role: .destructive) {
+                    } label: {
+                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             }
-            .navigationTitle("Settings")
-            .toolbar {
-                // DEV ONLY — see CLAUDE.md "Developer-Only Views"
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        DebugDataView()
-                    } label: {
-                        Image(systemName: "ladybug")
-                    }
+        }
+        .navigationTitle("Settings")
+        .toolbar {
+            // DEV ONLY — see CLAUDE.md "Developer-Only Views"
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    DebugDataView()
+                } label: {
+                    Image(systemName: "ladybug")
                 }
             }
         }
@@ -103,7 +101,7 @@ struct SettingsView: View {
 }
 
 #Preview {
-    
-    SettingsView(settingsSheetDetent: .fraction(0.5))
-    
+    NavigationStack {
+        SettingsView(settingsSheetDetent: .fraction(0.5))
+    }
 }
