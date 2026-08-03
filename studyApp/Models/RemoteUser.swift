@@ -23,27 +23,14 @@ final class RemoteUser {
     var isFriend: Bool
 
     // What the server last told us, and when it told us. Both are needed — a status with no
-    // timestamp can't be aged out, and a stale "studying" is worse than showing nothing.
-    var userStatus: ActiveStatus?
-	var displayStatus: String
+	
+    var userStatus: ActiveStatus? //offline / paused / online / studying
+	//we can update this to prevent stale data on server side.
     var lastSeenAt: Date?
+	var timeSinceLastSeen: TimeInterval { Date.now.timeIntervalSince(lastSeenAt ?? .distantPast) }
+	
 
-
-    // Denormalized from the remote session so the feed renders without a second fetch.
-    // Storing the start instant rather than a formatted string lets any view compute elapsed
-    // time live, and keeps it correct across backgrounding.
-    var currentSubjectName: String?
     var currentSessionStartedAt: Date?
-
-    var currentSessionDuration: TimeInterval? {
-        guard let currentSessionStartedAt else { return nil }
-        return Date.now.timeIntervalSince(currentSessionStartedAt)
-    }
-
-    var timeSinceLastSeen: TimeInterval { Date.now.timeIntervalSince(lastSeenAt ?? .distantPast) }
-
-    // Confidence in a cached status only ever decays — showing a friend as studying when they
-    // closed the app an hour ago is the failure users actually notice.
 
 	
 	var syncedAt: Date
@@ -55,7 +42,6 @@ final class RemoteUser {
         handle: String,
 		isFriend: Bool = false,
         userStatus: ActiveStatus = .offline,
-		displayStatus: String,
         lastSeenAt: Date = .now,
         currentSubjectName: String? = nil,
         currentSessionStartedAt: Date? = nil,
@@ -66,7 +52,6 @@ final class RemoteUser {
         self.handle = handle
 		self.isFriend = isFriend
         self.userStatus = userStatus
-		self.displayStatus = displayStatus
         self.lastSeenAt = lastSeenAt
         self.currentSubjectName = currentSubjectName
         self.currentSessionStartedAt = currentSessionStartedAt
