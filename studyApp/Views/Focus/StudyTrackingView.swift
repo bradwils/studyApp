@@ -5,10 +5,15 @@ import SwiftData
 /// Represents the display state of the lightweight study timer.
 ///
 struct StudyTrackingView: View {
+	
+	//MARK: Environment Properties
+	
 	@Environment(\.modelContext) private var modelContext
 	
-	@Namespace private var glassNamespace
+	@Environment(\.horizontalSizeClass) var sizeClass //for later changes
 	
+	//MARK: Glass Namespaces
+	@Namespace private var glassNamespace
 	
 	// MARK: - State Properties
 	
@@ -27,8 +32,8 @@ struct StudyTrackingView: View {
 
 	// The slider knob and the hero timer are proportioned by design rather than by
 	// content, so they scale with Dynamic Type instead of sitting at fixed points.
-	@ScaledMetric(relativeTo: .body) private var sliderKnobWidth: CGFloat = 90
-	@ScaledMetric(relativeTo: .body) private var sliderKnobHeight: CGFloat = 60
+	@ScaledMetric private var sliderKnobWidth: CGFloat = 90
+	@ScaledMetric private var sliderKnobHeight: CGFloat = 60
 	@ScaledMetric(relativeTo: .largeTitle) private var timerFontSize: CGFloat = 90
 	@ScaledMetric(relativeTo: .caption) private var connectionChipVerticalPadding: CGFloat = 8
 
@@ -61,7 +66,6 @@ struct StudyTrackingView: View {
 			LinearGradient(
 				colors: [
 					Color.pink.opacity(0.35),
-					Color.blue.opacity(0.3),
 					Color.purple.opacity(0.35),
 				],
 				startPoint: .topLeading,
@@ -69,28 +73,28 @@ struct StudyTrackingView: View {
 			)
 			.ignoresSafeArea()
 			
-			// “radial” highlight on the right side — elliptical so the falloff scales
-			// with the screen instead of a fixed point radius
-			EllipticalGradient(
-				gradient: Gradient(colors: [
+			LinearGradient(
+				colors: [
 					Color.white.opacity(0.35),
-					Color.clear,
-				]),
-				center: .topTrailing
+					Color.blue.opacity(0.35),
+				],
+				startPoint: .topTrailing,
+				endPoint: .bottomLeading
 			)
-			.blendMode(.softLight)
 			.ignoresSafeArea()
 			
-			VStack(spacing: 24) {
+			VStack {
 				headerRow
 				timeSummaryRow
+					.padding()
+
 				timerAndControlsSection
-				
-				Spacer()
 				
 				focusSliderSection  //complex and fucked
 				
 				connectionRow
+				
+				Spacer()
 				
 				horizontalContentScrollRow
 			}
@@ -195,10 +199,15 @@ struct StudyTrackingView: View {
 		}
 	}
 
+	private var isSessionPaused: Bool {
+		if case .sessionPaused = vm.currentSessionState { return true }
+		return false
+	}
+
 	private var timerAndControlsSection: some View {
 
 		//if there is an active session, skip the 'empty/daily' section
-		VStack(spacing: 24) {
+		VStack {
 			VStack {
 				Group {
 					switch vm.currentSessionState {
@@ -253,7 +262,7 @@ struct StudyTrackingView: View {
 								}
 							}
 						}
-						.frame(maxWidth: .infinity, alignment: .leading)
+						.frame(maxWidth: .infinity, alignment: isSessionPaused ? .trailing : .center) //align to left when paused, right when running
 					}
 					.padding(.horizontal)
 
@@ -293,8 +302,7 @@ struct StudyTrackingView: View {
 								.buttonStyle(.glass)
 								.glassEffectID("startPauseButton", in: glassNamespace)
 
-								//atm, it's weird as we use = instead of ==. This is because this matches a switch statement we're equal to use case pattern = value, which we normally express as it is in a traditional switch value.
-								if case .sessionPaused = vm.currentSessionState {
+								if isSessionPaused {
 									Button {
 										vm.endSession(context: modelContext)
 									} label: {
@@ -316,7 +324,6 @@ struct StudyTrackingView: View {
 						}
 					}
 				}
-				//            .frame(maxWidth: .infinity, alignment: .center)
 			}
 		}
 	}
@@ -332,7 +339,7 @@ struct StudyTrackingView: View {
 			sliderDraggableElementHeight: .constant(sliderKnobHeight)
 		)
 		.accessibilityLabel("Focus intensity")
-		.padding(.vertical)
+		.padding()
 		.onChange(of: pureFocusViewState) { old, new in  // this is a t/f
 			if old && !new {
 				focusSliderValue = 0
