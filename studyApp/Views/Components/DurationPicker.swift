@@ -28,35 +28,34 @@ struct DurationPicker: View {
     /// Maximum hours allowed (default: 8)
     
     /// Optional title text
-    var title: String? = "Set Duration"
     
     var body: some View {
         VStack {
-            if let title = title {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
-            }
+			Text("Set Duration")
+				.font(.headline)
+				.foregroundColor(.white.opacity(0.7))
 
             HStack {
                 // Hours picker
-                Picker("Hours", selection: Binding(
-                    get: { Int(duration) / 3600 },
-                    set: { hours in //sets hours
-                        let minutes = (Int(duration) % 3600) / 60
-                        duration = TimeInterval(hours * 3600 + minutes * 60)
-                    }
-                )) {
-                    ForEach(minHours...maxHours, id: \.self) { hour in
-                        Text("\(hour)").tag(hour)
-                            .foregroundColor(.white.opacity(0.8))
+					Picker("Hours", selection: Binding(
+						get: { Int(duration) / 3600 },
+						set: { hours in //sets hours
+							let minutes = (Int(duration) % 3600) / 60
+							duration = TimeInterval(hours * 3600 + minutes * 60)
+						}
+					)) {
+						ForEach(minHours...maxHours, id: \.self) { hour in
+							Text("\(hour)").tag(hour)
+								.foregroundColor(.white.opacity(0.8))
+							
+						}
+					}
+					.pickerStyle(.wheel)
+					.frame(maxWidth: 50)
 
-                    }
-                }
-                .pickerStyle(.wheel)
 
-                Text("h")
-                    .foregroundColor(.white.opacity(0.6))
+					Text("h")
+						.foregroundColor(.white.opacity(0.6))
 
                 // Minutes picker
                 Picker("Minutes", selection: Binding(
@@ -73,7 +72,7 @@ struct DurationPicker: View {
                     }
                 }
                 .pickerStyle(.wheel)
-
+				.frame(maxWidth: 50)
                 Text("m")
                     .foregroundColor(.white.opacity(0.6))
             }
@@ -92,7 +91,7 @@ struct DurationPicker: View {
                 Color.black.ignoresSafeArea()
                 
                 VStack(spacing: 20) {
-                    DurationPicker(duration: $duration, minHours: .constant(0), maxHours: .constant(8), minMinutes: .constant(0), maxMinutes: .constant(30))
+                    DurationPicker(duration: $duration, minHours: .constant(0), maxHours: .constant(8), minMinutes: .constant(0), maxMinutes: .constant(60))
                     
                     Text("Selected: \(Int(duration / 60)) minutes")
                         .foregroundColor(.white)
