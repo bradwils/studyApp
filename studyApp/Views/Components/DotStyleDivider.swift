@@ -12,7 +12,7 @@ struct DotStyleDivider: View {
         case vertical
     }
 
-    var orientation: Orientation = .vertical
+    var orientation: Orientation
 
     @ScaledMetric(relativeTo: .caption) private var lineThickness: CGFloat = 1
     @ScaledMetric(relativeTo: .caption) private var dotSize: CGFloat = 2
@@ -62,15 +62,18 @@ private struct DividerLine: Shape {
 }
 
 #Preview {
+	
     HStack {
+		Spacer()
         DotStyleDivider(orientation: .vertical)
 
         VStack {
-            Text("Leading")
+            
             DotStyleDivider(orientation: .horizontal)
-            Text("Trailing")
+            
         }
     }
+	.frame(alignment: .center)
     .padding()
     .background(Color.black)
 }

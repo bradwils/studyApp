@@ -80,6 +80,7 @@ struct FocusIntensitySlider: View {
             .frame(width: knobLeftEdge + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
     }
 
+	//yep
     private func knobCapsule(trackWidth: CGFloat, knobLeftEdge: CGFloat) -> some View {
         Capsule()
             .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
@@ -90,11 +91,12 @@ struct FocusIntensitySlider: View {
 
     // MARK: - Geometry & drag math
 
+	//yep
     private func trackWidth(forTotalWidth totalWidth: CGFloat) -> CGFloat {
         // Track excludes the knob's own width so the thumb stays fully inside the slider bounds.
         max(totalWidth - sliderDraggableElementWidth, 0)
     }
-
+	//
     private func knobLeftEdge(trackWidth: CGFloat) -> CGFloat {
         let clampedProgress = min(max(normalizedProgress, 0), 1)
         return clampedProgress * trackWidth
@@ -129,6 +131,7 @@ struct FocusIntensitySlider: View {
     }
 }
 
+//MARK: Helpers to Slider
 private struct DottedLineFiller: View {
     @ScaledMetric(relativeTo: .caption) private var lineWidth: CGFloat = 1
 
