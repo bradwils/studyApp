@@ -1,0 +1,16 @@
+//
+//  CLARA IDEA.txt
+//  studyApp
+//
+//  Created by brad wils on 12/8/26.
+//
+
+
+- When you sign in, have it ask like what are you (onboarding)
+	- Thing like a focus tracker
+
+- Pivot between designated designs
+	- Have sub-designs for IB, HSC in the onboarding
+
+
+- have specific pathways, trap them into using it
