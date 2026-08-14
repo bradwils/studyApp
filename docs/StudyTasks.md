@@ -102,7 +102,8 @@ final class StudyTask {
     var subjectName: String?
 
     // Custom column values. Cascade — a cell has no meaning without its task.
-    @Relationship(deleteRule: .cascade)
+    // Declares the inverse; §3.5's `task` property must NOT also declare one.
+    @Relationship(deleteRule: .cascade, inverse: \TaskFieldValue.task)
     var fieldValues: [TaskFieldValue]?
 }
 ```
@@ -476,10 +477,18 @@ Build the six models, `TaskSchema`, the `makeDefault()` layout factory, and the 
 Register in the container. Add rows to `DebugDataView`. Seed the default layout on first
 launch using the existing `.task { ensureDefaultsExist(...) }` pattern.
 
-The default layout seeds as: **Title** (core, text) · **Due date** (core, date) ·
-**Status** (select: Not started / In progress / Done / Blocked) · **Work type** (select:
-Physical / Canvas / Code / Worksheet / Reading) · **Work on** (date) · **Effort** (scale 1–5) ·
-**Notes** (text).
+The default layout seeds as: **Title** (core, text) · **Done** (core, checkbox) ·
+**Due date** (core, date) · **Status** (select: Not started / In progress / Blocked) ·
+**Work type** (select: Physical / Canvas / Code / Worksheet / Reading) · **Work on** (date) ·
+**Effort** (scale 1–5) · **Notes** (text).
+
+> **Completion has exactly one source of truth.** An earlier draft of this document seeded
+> `Status` with a "Done" option and no checkbox column. That was a bug: `Status` is an
+> ordinary select storing an option row, so picking "Done" would never touch `isDone` or
+> `completedAt`, and every stat and the future session link — all of which read `isDone` —
+> would silently see an empty result. Completion is therefore a `.checkbox` column bound to
+> `coreKey: .isDone`, and `Status` carries only the non-binary states. Any new layout must
+> keep that split.
 
 > **Verify:** unit tests over the accessor — write then read each of the seven kinds, confirm
 > round-trip equality; confirm a core column writes to the typed property and a custom column
@@ -505,8 +514,9 @@ At the end of this phase the feature is genuinely usable, with one fixed column 
 
 `BoardLayoutEditorView`: add/remove/reorder columns, configure select options and their
 colours, set scale bounds and number units. Duplicate a layout. `SubjectTaskBoard` binding UI
-so a subject can be pointed at a different layout. Sweep orphaned `TaskFieldValue` rows whose
-definition was nullified.
+so a subject can be pointed at a different layout. Sweep orphaned `TaskFieldValue` rows —
+detecting them by collecting every live `TaskFieldDefinition.id` and finding values whose
+`definition` is nil **or** points outside that set. Do not just check for nil; see §10.
 
 > **Verify:** two subjects on the shared default layout — edit the layout, confirm both update.
 > Duplicate it, repoint one subject, edit the copy, confirm the other subject is unaffected.
@@ -594,6 +604,23 @@ collapse it when you're ready.
 **Orphaned values are a real edge case.** Deleting a column nullifies its cells rather than
 cascading, so a mis-click in the layout editor is recoverable. The cost is dead rows until
 Phase 2's sweep runs. Worth the trade — the alternative silently destroys data.
+
+**Unverified: whether nullify actually fires on the one-way references.** A `deleteRule`
+governs what happens to the objects a relationship *points at* when the *declaring* object is
+deleted — not the reverse. Five relationships here deliberately have no inverse
+(`StudyTask.subject`, `SubjectTaskBoard.subject`, `SubjectTaskBoard.layout`,
+`TaskFieldValue.definition`, `TaskFieldValue.selectedOptions`), and for each of them the
+behaviour we actually want is in the *other* direction: deleting a `TaskFieldDefinition`
+should leave `value.definition == nil`. SwiftData is documented to synthesise implicit
+inverses, which would make that work — but with no inverse property declared there is no
+path we control, and this could not be verified without a build environment.
+
+Treat it as unknown until checked on device: insert a definition and a value, delete the
+definition, read `value.definition` back. Two things already hedge against the bad outcome —
+`StudyTask.subjectName` means a dangling subject reference costs no data, and the id-based
+sweep above catches stale definitions whether they nullify or dangle. If it turns out
+references dangle rather than nullify, the fix is to declare the inverses and accept the
+coupling, which is the §3.7 endgame anyway.
 
 **No cross-subject uniqueness on task titles.** Two tasks can share a name. That's correct
 (you really do have "read chapter 4" in three subjects) but it means the title alone is never
