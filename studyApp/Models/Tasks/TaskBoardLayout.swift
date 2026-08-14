@@ -40,6 +40,13 @@ final class TaskBoardLayout {
             TaskFieldOption(label: "Blocked", colorHex: "#FF3B30", sortIndex: 2)
         ]
 
+        let tagOptions = [
+            TaskFieldOption(label: "Assessed", colorHex: "#FF2D55", sortIndex: 0),
+            TaskFieldOption(label: "Group work", colorHex: "#5856D6", sortIndex: 1),
+            TaskFieldOption(label: "Exam prep", colorHex: "#FF9500", sortIndex: 2),
+            TaskFieldOption(label: "Revision", colorHex: "#34C759", sortIndex: 3)
+        ]
+
         let workTypeOptions = [
             TaskFieldOption(label: "Physical", colorHex: "#FF9500", sortIndex: 0),
             TaskFieldOption(label: "Canvas", colorHex: "#AF52DE", sortIndex: 1),
@@ -56,7 +63,9 @@ final class TaskBoardLayout {
             TaskFieldDefinition(name: "Work type", kind: .select, sortIndex: 4, showInRow: false, options: workTypeOptions),
             TaskFieldDefinition(name: "Work on", kind: .date, sortIndex: 5, showInRow: false),
             TaskFieldDefinition(name: "Effort", kind: .scale, sortIndex: 6, showInRow: false, scaleMin: 1, scaleMax: 5, scaleStep: 1),
-            TaskFieldDefinition(name: "Notes", kind: .text, sortIndex: 7, showInRow: false)
+            TaskFieldDefinition(name: "Pages", kind: .number, sortIndex: 7, showInRow: false, unitLabel: "pages"),
+            TaskFieldDefinition(name: "Tags", kind: .multiSelect, sortIndex: 8, showInRow: false, options: tagOptions),
+            TaskFieldDefinition(name: "Notes", kind: .text, sortIndex: 9, showInRow: false)
         ]
 
         for column in columns {

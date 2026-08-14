@@ -480,7 +480,13 @@ launch using the existing `.task { ensureDefaultsExist(...) }` pattern.
 The default layout seeds as: **Title** (core, text) · **Done** (core, checkbox) ·
 **Due date** (core, date) · **Status** (select: Not started / In progress / Blocked) ·
 **Work type** (select: Physical / Canvas / Code / Worksheet / Reading) · **Work on** (date) ·
-**Effort** (scale 1–5) · **Notes** (text).
+**Effort** (scale 1–5) · **Pages** (number, unit "pages") · **Tags** (multiSelect: Assessed /
+Group work / Exam prep / Revision) · **Notes** (text).
+
+Ten columns rather than the seven originally specified, because the first seven covered only
+five of the seven kinds — nothing exercised `.number` or `.multiSelect`. A default layout that
+can't reach two of its own field types makes them untestable in the debug tools and unseen
+until someone hand-builds a layout, so Pages and Tags are seeded deliberately.
 
 > **Completion has exactly one source of truth.** An earlier draft of this document seeded
 > `Status` with a "Done" option and no checkbox column. That was a bug: `Status` is an

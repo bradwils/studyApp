@@ -16,6 +16,13 @@ struct DebugDataView: View {
     @Query private var sections: [StudySection]
     @Query private var locations: [SessionLocation]
 
+    @Query private var studyTasks: [StudyTask]
+    @Query private var taskFieldValues: [TaskFieldValue]
+    @Query private var taskFieldDefinitions: [TaskFieldDefinition]
+    @Query private var taskFieldOptions: [TaskFieldOption]
+    @Query private var taskBoardLayouts: [TaskBoardLayout]
+    @Query private var subjectTaskBoards: [SubjectTaskBoard]
+
     var body: some View {
         List {
             Section {
@@ -82,6 +89,70 @@ struct DebugDataView: View {
             } footer: {
                 Text("Tap a model to view, inspect, or delete individual records.")
             }
+
+            Section {
+                modelLink(title: "Task Inspector", systemImage: "checklist", count: studyTasks.count) {
+                    DebugTaskDataView()
+                }
+                modelLink(title: "Study Tasks", systemImage: "checkmark.circle", count: studyTasks.count) {
+                    DebugModelListView(title: "Study Tasks") { (task: StudyTask) in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(task.title.isEmpty ? "Untitled" : task.title).font(.headline)
+                            Text("\(task.subjectName ?? "No subject") · \(task.isDone ? "Done" : "Open")")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                modelLink(title: "Task Field Values", systemImage: "square.text.square", count: taskFieldValues.count) {
+                    DebugModelListView(title: "Task Field Values") { (value: TaskFieldValue) in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(value.definition?.name ?? "No definition (orphaned)").font(.headline)
+                            Text(value.task?.title ?? "No task").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                modelLink(title: "Task Field Definitions", systemImage: "list.bullet.rectangle", count: taskFieldDefinitions.count) {
+                    DebugModelListView(title: "Task Field Definitions") { (definition: TaskFieldDefinition) in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(definition.name.isEmpty ? "Untitled" : definition.name).font(.headline)
+                            Text("\(definition.kind.rawValue)\(definition.coreKey != nil ? " · core" : "")")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                modelLink(title: "Task Field Options", systemImage: "tag", count: taskFieldOptions.count) {
+                    DebugModelListView(title: "Task Field Options") { (option: TaskFieldOption) in
+                        HStack(spacing: 8) {
+                            Circle().fill(Color(hex: option.colorHex) ?? .gray).frame(width: 14, height: 14)
+                            Text(option.label.isEmpty ? "Untitled" : option.label).font(.headline)
+                        }
+                    }
+                }
+                modelLink(title: "Task Board Layouts", systemImage: "square.grid.2x2", count: taskBoardLayouts.count) {
+                    DebugModelListView(title: "Task Board Layouts") { (layout: TaskBoardLayout) in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(layout.name.isEmpty ? "Untitled" : layout.name).font(.headline)
+                            Text("\((layout.columns ?? []).count) column(s)\(layout.isDefault ? " · default" : "")")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                modelLink(title: "Subject Task Boards", systemImage: "link", count: subjectTaskBoards.count) {
+                    DebugModelListView(title: "Subject Task Boards") { (board: SubjectTaskBoard) in
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(board.subject?.name ?? "No subject").font(.headline)
+                            Text(board.layout?.name ?? "No layout").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Task Board (Dev)")
+            } footer: {
+                Text("Task Inspector cross-references every model below against the storage seam in StudyTask+Fields.swift; the rows below it are the raw per-model lists.")
+            }
         }
         .navigationTitle("Debug Data")
     }
@@ -120,7 +191,7 @@ struct DebugDataView: View {
         DebugDataView()
     }
     .modelContainer(
-        for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self],
+        for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self] + TaskSchema.models,
         inMemory: true
     )
 }

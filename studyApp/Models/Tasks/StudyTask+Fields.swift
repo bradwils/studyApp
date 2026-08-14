@@ -75,11 +75,18 @@ extension StudyTask {
         if let existing {
             value = existing
         } else {
-            value = TaskFieldValue(definition: column, task: self)
+            // Set one side of the relationship only. `task` is deliberately left unset here:
+            // StudyTask.fieldValues declares the inverse, so appending is what wires both
+            // ends. Passing `task: self` as well risks SwiftData syncing the inverse on
+            // assignment and the append then adding a second reference to the same row.
+            value = TaskFieldValue(definition: column)
             context.insert(value)
+
             if fieldValues == nil {
                 fieldValues = [value]
-            } else {
+            } else if !(fieldValues?.contains { $0.id == value.id } ?? false) {
+                // Membership check because whether the insert above already populated the
+                // array via the inverse is version-dependent and unverified here.
                 fieldValues?.append(value)
             }
         }
