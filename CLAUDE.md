@@ -351,3 +351,5 @@ For multi-step tasks, state a brief plan:
 ```
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+Always update build: String (in StudyAppApp.swift) with the name of the branch, if you create a new one.
