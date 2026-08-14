@@ -48,7 +48,6 @@ struct SubjectsEditor: View {
                                 .font(.caption2)
                                 .foregroundStyle(.tertiary)
                         }
-                        .padding(.vertical, 4)
                         .listRowBackground(Color.clear)
                     }
                     .onDelete { indexSet in
@@ -63,51 +62,43 @@ struct SubjectsEditor: View {
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
 
-            ZStack {
-                VStack(spacing: 12) {
-                    TextField("Subject name", text: $vm.newSubjectName)
-                        .textContentType(.givenName)
-                        .submitLabel(.next)
-                        .focused($isNameFocused)
-                    
-                    DotStyleDivider(orientation: .horizontal)
+            VStack(spacing: 12) {
+                TextField("Subject name", text: $vm.newSubjectName)
+                    .textContentType(.givenName)
+                    .submitLabel(.next)
+                    .focused($isNameFocused)
 
-                    ZStack(alignment: .trailing) {
-                        TextField("Subject code (e.g. MATH101)", text: $vm.newSubjectCode)
-                            .autocorrectionDisabled()
-                            .submitLabel(.done)
-                            .onSubmit { vm.addSubject(context: modelContext) }
-                            .padding(.trailing, 40)
+                DotStyleDivider(orientation: .horizontal)
 
-                        Text("\(vm.newSubjectCode.count)/4")
-                            .foregroundColor(vm.newSubjectCode.count > 4 ? .red : .gray)
-                            .font(.caption)
-                            .padding(.trailing, 8)
-                            .opacity(0.7)
-                    }
+                HStack {
+                    TextField("Subject code (e.g. MATH101)", text: $vm.newSubjectCode)
+                        .autocorrectionDisabled()
+                        .submitLabel(.done)
+                        .onSubmit { vm.addSubject(context: modelContext) }
+
+                    Text("\(vm.newSubjectCode.count)/4")
+                        .font(.caption)
+                        .monospacedDigit()
+                        .foregroundStyle(vm.newSubjectCode.count > 4 ? Color.red : Color.secondary)
                 }
-                .padding()
-                .background(.ultraThinMaterial)
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
             }
+            .padding()
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
             Button(action: { vm.addSubject(context: modelContext) }) {
                 Label("Add Subject", systemImage: "plus.circle.fill")
                     .font(.headline)
                     .frame(maxWidth: .infinity)
                     .foregroundColor(Color(.red))
-
-                    
             }
             .buttonStyle(.borderedProminent)
             .disabled(!vm.canAddSubject)
             .opacity(vm.canAddSubject ? 1 : 0.5)
             .background(.thinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-
-
         }
-        .padding([.top, .horizontal])
+        .padding()
     }
 
     private func formatCreatedDate(_ date: Date) -> String {

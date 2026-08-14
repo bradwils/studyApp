@@ -2,8 +2,11 @@ import SwiftUI
 
 struct MainTabView: View {
 
+	var buildNum: String
+	
     var body: some View {
         TabView {
+
             Tab("Focus", systemImage: "book.badge.plus", role: .search) {
                 NavigationStack {
                     StudyTrackingView()
@@ -33,15 +36,15 @@ struct MainTabView: View {
                     SessionsView()
                 }
             }
+			Tab(buildNum, systemImage: "number") {
+				NavigationStack {
+					Text(buildNum)
+				}
+			}
         }
-
     }
-    
-    
 }
 
-struct MainTabView_Previews: PreviewProvider {
-    static var previews: some View {
-        MainTabView()
-    }
+#Preview {
+	MainTabView(buildNum: "preview")
 }
