@@ -53,6 +53,8 @@ struct SocialView: View {
                     Spacer().frame(height: 24)
                 }
             }
+			.frame(maxWidth: 600)
+
             .scrollIndicators(.hidden)
         }
         .navigationTitle("Social")
