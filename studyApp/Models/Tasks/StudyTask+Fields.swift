@@ -53,6 +53,12 @@ extension StudyTask {
     }
 
     func setContent(_ content: TaskFieldContent, for column: TaskFieldDefinition, context: ModelContext) {
+        // An empty option list says the same thing as .empty, so collapse it here. Left
+        // distinct they diverge: .options([]) satisfies the kind check below and would
+        // allocate a TaskFieldValue row purely to hold nothing, breaking the invariant that
+        // an untouched column costs no storage.
+        let content = normalised(content)
+
         if let coreKey = column.coreKey {
             setCoreContent(content, for: coreKey)
             return
@@ -112,8 +118,14 @@ extension StudyTask {
     private func setCoreContent(_ content: TaskFieldContent, for coreKey: TaskCoreField) {
         switch coreKey {
         case .title:
-            guard case .text(let text) = content else { return }
-            title = text
+            // Accepts .empty as well as .text so clearing behaves the same here as on every
+            // other kind. Title has no nil to fall back to, so empty means the empty string.
+            // Rejecting .empty instead would no-op silently and leave a stale title on screen.
+            switch content {
+            case .empty: title = ""
+            case .text(let text): title = text
+            default: return
+            }
         case .dueDate:
             switch content {
             case .empty: dueDate = nil
@@ -128,6 +140,11 @@ extension StudyTask {
             isDone = flag
             completedAt = flag ? Date.now : nil
         }
+    }
+
+    private func normalised(_ content: TaskFieldContent) -> TaskFieldContent {
+        if case .options(let options) = content, options.isEmpty { return .empty }
+        return content
     }
 
     private func matches(_ content: TaskFieldContent, kind: TaskFieldKind) -> Bool {

@@ -146,6 +146,15 @@ menu of types the user picks from when configuring a subject's columns.
 `.select` is the dropdown-with-configurable-options you described — "single-select" and
 "dropdown" turned out to be the same feature, so they're one kind rather than two.
 
+**Every kind must render an empty state and offer a way back to it.** This is easy to miss
+from the table alone and it bites hardest on `.date`: a `DatePicker` cannot represent nil, so
+the naive implementation defaults an unset column to today and silently writes a date the
+user never chose. Unset dates render as a "set" button instead, and every non-core kind needs
+an explicit clear affordance that sends `.empty`. Two related traps live in the seam and are
+commented there — clearing a select must send `.empty` and never `.options([])`, which would
+allocate a row to hold nothing; and the core Title column accepts `.empty` as the empty
+string, since unlike every other core field it has no nil to fall back to.
+
 `.number` vs `.scale` are separate kinds even though both store a `Double`, because their
 *configuration* and *editor* differ completely: `.number` is an open-ended count with a
 header you name ("Pages", "Weighting"), `.scale` is bounded between two values on a slider.
@@ -627,6 +636,20 @@ definition, read `value.definition` back. Two things already hedge against the b
 sweep above catches stale definitions whether they nullify or dangle. If it turns out
 references dangle rather than nullify, the fix is to declare the inverses and accept the
 coupling, which is the §3.7 endgame anyway.
+
+**Never match an optional relationship's id in a `#Predicate`.** `#Predicate` handles
+`$0.subject?.id == someID` badly — it either fails to compile into a usable query or returns
+silently wrong results. Every place that needs it (`TaskSeeding.board(for:in:)`,
+`TaskBoardVM.visibleTasks(from:)` and `.addTask`, `DebugTaskDataView.board(for:)`) fetches and
+filters in memory instead, which is correct at this scale but easy for a future contributor to
+"optimise" back into a predicate. It is not abstracted into a shared helper because the call
+sites span two different model types and the duplication is four short lines; if a third type
+needs it, that calculus changes.
+
+**`isRequired` is authored but unread.** `TaskFieldDefinition.isRequired` is set on the seeded
+Title column and consumed by nothing — Phase 1 validation hardcodes "title is non-empty"
+rather than reading the flag generically. It stays because Phase 2's layout editor is what
+gives it a UI, but until then it is dead data and should not be trusted as enforcement.
 
 **No cross-subject uniqueness on task titles.** Two tasks can share a name. That's correct
 (you really do have "read chapter 4" in three subjects) but it means the title alone is never

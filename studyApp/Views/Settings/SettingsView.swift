@@ -56,6 +56,15 @@ struct SettingsView: View {
                         } label: {
                             Label("Generate Fake Study Session", systemImage: "wand.and.stars")
                         }
+
+                        // Temporary entry point — the whole of the tasks feature's footprint
+                        // outside its own folders is this link plus one line in StudyAppApp.
+                        // Moves to a subject screen later; see docs/StudyTasks.md §7.
+                        NavigationLink {
+                            TaskBoardView()
+                        } label: {
+                            Label("Task Board", systemImage: "checklist")
+                        }
                     }
 
                     Section(footer: Text("Version 1.0.0")) {
