@@ -251,13 +251,13 @@ struct DebugTaskDataView: View {
 
         return Section {
             LabeledContent("Definition is nil", value: "\(nilDefinition.count)")
-                .foregroundStyle(nilDefinition.isEmpty ? .primary : .red)
+                .foregroundStyle(nilDefinition.isEmpty ? Color.primary : .red)
             ForEach(nilDefinition, id: \.persistentModelID) { value in
                 orphanRow(value)
             }
 
             LabeledContent("Definition exists, in no layout", value: "\(dangling.count)")
-                .foregroundStyle(dangling.isEmpty ? .primary : .orange)
+                .foregroundStyle(dangling.isEmpty ? Color.primary : .orange)
             ForEach(dangling, id: \.persistentModelID) { value in
                 orphanRow(value)
             }

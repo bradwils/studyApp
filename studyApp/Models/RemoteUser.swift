@@ -30,6 +30,7 @@ final class RemoteUser {
 	var timeSinceLastSeen: TimeInterval { Date.now.timeIntervalSince(lastSeenAt ?? .distantPast) }
 	
 
+    var currentSubjectName: String?
     var currentSessionStartedAt: Date?
 
 	
