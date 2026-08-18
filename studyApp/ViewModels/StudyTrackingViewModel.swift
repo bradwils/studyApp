@@ -148,7 +148,6 @@ final class StudyTrackingViewModel {
     func pauseSession() {
         let now = Date()
         logger.log("pauseSession() called")
-        studyBreaks.append(StudyBreak(startedAt: now)) //append a new StudyBreak
         guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
         ssw!.startBreak()
         activeSession?.lastPausedAt = ssw!.lastPausedAt

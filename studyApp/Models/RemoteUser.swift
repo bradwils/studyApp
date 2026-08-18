@@ -53,7 +53,6 @@ final class RemoteUser {
 		self.isFriend = isFriend
         self.userStatus = userStatus
         self.lastSeenAt = lastSeenAt
-        self.currentSubjectName = currentSubjectName
         self.currentSessionStartedAt = currentSessionStartedAt
 		self.syncedAt = syncedAt
     }
