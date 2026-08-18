@@ -6,33 +6,37 @@
 //
 
 import Foundation
-import SwiftUI
+import SwiftData
 
 
-struct UserProfile { //holds all local data, as well as an optional link to an external account
+@Model
+class UserProfile { //holds all local data, as well as an optional link to an external account
     var id: UUID
     var userHandle: String? //todo, register online later
     var userStatus: ActiveStatus
     var profileName: String
     var userProfilePicturePath: String?
-    var auth: AuthState
+    var authProvider: AuthProvider
     var createdAt: Date
-    var isPaused: Bool
-    var lastResumedAt: Date
-    var lastActiveAt: Date
-    var subjects: [Subject]
-    var studySessions: [StudySession] = []
+    var subjects: [Subject]?
+    var studySessions: [StudySession] = [] //empty for now
+    
+    init(id: UUID, userHandle: String? = nil, userStatus: ActiveStatus, profileName: String, userProfilePicturePath: String? = nil, authProvider: AuthProvider, createdAt: Date = Date.now, subjects: [Subject], studySessions: [StudySession]) {
+        self.id = id
+        self.userHandle = userHandle
+        self.userStatus = userStatus
+        self.profileName = profileName
+        self.userProfilePicturePath = userProfilePicturePath
+        self.authProvider = authProvider
+        self.createdAt = createdAt
+        self.subjects = subjects
+        self.studySessions = studySessions
+    }
 
 
 }
 
-
-struct AuthState: Codable {
-    var service: AuthProvider? //
-    var lastSignInAt: Date?
-}
-
-enum AuthProvider: String, Codable, CaseIterable {
+enum AuthProvider:String, Codable {
     case apple
     case google
     case emailPassword

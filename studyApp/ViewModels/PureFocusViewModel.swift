@@ -35,6 +35,13 @@ final class PureFocusViewModel {
         return CGFloat(min(elapsedTime / currentTimerTotalDuration, 1.0))
     }
     
+    
+    //Timer duration picker bounds 
+    var minHours: Int = 0
+    var maxHours: Int = 8
+    var minMinutes: Int = 0
+    var maxMinutes: Int = 59
+    
     /// Remaining time in seconds
     var remainingTime: TimeInterval {
         max(0, currentTimerTotalDuration - elapsedTime)

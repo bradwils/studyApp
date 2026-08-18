@@ -4,26 +4,39 @@
 //  Created by brad wils on 15/12/25.
 
 import SwiftUI
+import UIKit
 
 //need to use white UI elements exclusively.
 struct PureFocusView: View {
-    
-    @Environment(\.dismiss) var dismiss //native dismiss function
-    
+
+    @Environment(\.dismiss) var dismiss //get the environment dismiss value
+
+    @Binding var isPresented: Bool //to be able to dismiss
+
+    /// Subject the current session is allocated to — its `code` drives the top-of-screen label.
+    let subject: Subject?
+
     @State var timerTimeInterval: TimeInterval = 0 //0.0 gets binded to our durationpicker, so this gets changed as the picker changes value.
-    
+
     // MARK: - State Properties
-    
+
     @State private var vm = PureFocusViewModel()
 
     //Lock (focus feature)
     @State private var focusLockEnabled: Bool = false;
 
-    // Duration picker bounds (moved out of DurationPicker)
-    @State private var minHours: Int = 0
-    @State private var maxHours: Int = 8
-    @State private var minMinutes: Int = 0
-    @State private var maxMinutes: Int = 59
+    // MARK: - Leave Confirmation (shake-to-confirm)
+
+    /// Taps required on "Leave" once a timer has started, before it's allowed to dismiss.
+    private let leaveTapsRequiredToExit = 10
+    /// Minimum gap between taps that count — filters out accidental double-taps/mashing.
+    private let leaveTapMinInterval: TimeInterval = 0.15
+
+    @State private var leaveTapCount = 0
+    @State private var lastLeaveTapAt: Date = .distantPast
+    @State private var leaveShakeTrigger: CGFloat = 0
+
+
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -46,18 +59,52 @@ struct PureFocusView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 24)
 
+			//THIS WILL BE CHANGED SO WHEN WE HAVE A WIDER ORIENTATION, MOVE THIS TO BE ON THE SIDE AND ADJUST PUREFOCUSVIEW ALIGNMENT TO MATCH. so, (simple) we'll vstack it instead of hstack depending on horizontalSizeClass
             CustomBottomSheet()
         }
         .toolbar(.hidden, for: .tabBar)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
-                Button("Cancel") {
-                    dismiss() // Programmatic dismissal
+                Button("Leave") {
+                    handleLeaveTap()
                 }
+                .modifier(ShakeEffect(animatableData: leaveShakeTrigger))
             }
         }
         .foregroundColor(dynamicForegroundColor)
         .navigationBarBackButtonHidden(false)
+        .onChange(of: vm.timerActivelyExists) { _, timerExists in
+            // A fresh timer gets a fresh set of confirmation taps.
+            if !timerExists {
+                leaveTapCount = 0
+            }
+        }
+    }
+
+    // MARK: - Leave Confirmation
+
+    /// Once a timer has started, "Leave" requires `leaveTapsRequiredToExit` taps
+    /// (each acknowledged with a shake + haptic) before it actually dismisses.
+    private func handleLeaveTap() {
+        guard vm.timerActivelyExists else {
+            dismiss()
+            return
+        }
+
+        let now = Date()
+        guard now.timeIntervalSince(lastLeaveTapAt) >= leaveTapMinInterval else { return }
+        lastLeaveTapAt = now
+
+        leaveTapCount += 1
+        guard leaveTapCount < leaveTapsRequiredToExit else {
+            dismiss()
+            return
+        }
+
+        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        withAnimation(.linear(duration: 0.25)) {
+            leaveShakeTrigger += 1
+        }
     }
     
     // MARK: - Subviews
@@ -151,16 +198,13 @@ struct PureFocusView: View {
     }
     
     private var durationPicker: some View {
-        
-        
         VStack(spacing: 8) {
-
-            DurationPicker(duration: $vm.currentTimerTotalDuration, minHours: $minHours, maxHours: $maxHours, minMinutes: $minMinutes, maxMinutes: $maxMinutes) //
+            DurationPicker(duration: $vm.currentTimerTotalDuration, minHours: $vm.minHours, maxHours: $vm.maxHours, minMinutes: $vm.minMinutes, maxMinutes: $vm.maxMinutes)
         }
     }
     
     private var topScreenCode: some View {
-        Text("LLLL")
+        Text(subject?.code ?? "—")
             .font(.system(size: 35))
             .lineLimit(1)
     }
@@ -184,7 +228,7 @@ struct PureFocusView: View {
     
                 
 #Preview {
-    PureFocusView()
+    PureFocusView(isPresented: .constant(true), subject: Subject(name: "Mathematics", code: "MATH101"))
 }
     
 

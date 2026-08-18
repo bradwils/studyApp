@@ -1,9 +1,8 @@
 /studyApp.xcodeproj/project.xcworkspace
-studyAppUITests/
 *.backup
 .DS_Store
 *.xcuserstate
 build/
 xcuserdata/
 *.xcbkptlist
-studyApp.xcodeproj/project.pbxproj
+build/

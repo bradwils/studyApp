@@ -5,110 +5,236 @@
 
 import Foundation
 import Combine
+import SwiftData
+import os
 
-final class StudyTrackingViewModel: ObservableObject {
-    @Published private(set) var activeSession: StudySession?
-    @Published private(set) var completedSessions: [StudySession] = []
-    @Published var selectedSubject: Subject?
+// MARK: - State Overview
+// Three layers of state are touched during a session lifecycle:
+//
+// VM (self)
+//   activeSession       — the live StudySession being built; nil when idle
+//   completedSessions   — archive of finished sessions
+//   selectedSubject     — subject for the next/current session
+//   sessionIsRunning    — true if there's an active stopwatch (running or paused)
+//   ssw    — optional Stopwatch tracking elapsed time
+//
+// Stopwatch (ssw)
+//   startedAt           — wall-clock anchor; re-anchored on resume
+//   stopwatchIsRunning  — true while actively counting
+//   lastPausedAt        — set on pause; used to compute break length on resume
+//   previousBreaksLength— accumulated break time subtracted from wall time
+//   totalStudyingTime   — computed: wall elapsed − previousBreaksLength
+//
+// StudySession (activeSession)
+//   startedAt / endedAt — session boundaries
+//   lastPausedAt        — persisted pause timestamp (mirrors stopwatch.lastPausedAt)
+//   totalBreakDuration  — accumulated break time written on end
+//   breaks              — [StudyBreak] appended when pause > breakThreshold
+//   interruptionCount   — incremented by addInterruption()
+//   studyScore / notes / friends / location — written at endSession()
 
-    /// Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
-    private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
+@Observable
+final class StudyTrackingViewModel {
+    let logger = Logger(subsystem: "com.studyApp", category: "StudyTrackingViewModel")
+    
 
-    /// Start a fresh session (count-up) for an optional subject; discards any in-progress session.
-    func startSession(subject: Subject? = nil, subjectName: String? = nil) {
+    var ssw: Stopwatch?
+    var studyBreaks: [StudyBreak]
+    var studySections: [StudySection]
+    var activeSession: StudySession? {
+        didSet {
+            logger.log("activeSession set to \(String(describing: self.activeSession))")
+        }
+    }
+	
+    var selectedSubject: Subject?
+	
+	private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
+
+	//MARK: Enums
+	
+	enum SessionState: Equatable {
+		
+		case noSession
+		case sessionRunning(Date) //Date contains the adjustedStartTimeForAnchor
+		case sessionPaused(Date)  //Date contains lastPausedAt
+		
+	}
+	
+	//MARK: Initialisers
+
+    init() {
+        studyBreaks = []
+        studySections = []
+    }
+
+	//MARK: Computed Vars
+	
+    var totalStudyingTime: TimeInterval {
+        studySections.reduce(0) { $0 + $1.duration }
+    }
+
+    var totalBreakTime: TimeInterval {
+        studyBreaks.reduce(0) { $0 + $1.duration }
+    }
+
+    // Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
+    
+	var sessionIsRunning: Bool {
+		ssw != nil
+	}
+    
+
+    var currentSessionState: SessionState {
+        guard let isRunning = ssw?.stopwatchIsRunning else {
+            logger.log("logging noSession")
+            return .noSession
+        }
+        if isRunning == true { //give the anchor Date
+            logger.log("isRunning == true")
+            return .sessionRunning(ssw!.adjustedStartTimeForAnchor!)
+        }
+        logger.log("all else")
+        return .sessionPaused(ssw!.lastPausedAt!) //give the Date paused at.
+    }
+
+
+    
+    
+
+    // TODO(human): Add a single computed var (e.g. `currentTimerAnchor`) that resolves
+    // to whichever timer is currently authoritative: nothing running, the break timer
+    // (ssw?.lastPausedAt), or the study timer (ssw?.adjustedStartTimeForAnchor). Derive it
+    // from `ssw?.stopwatchIsRunning` and whether `ssw` exists at all. StudyTrackingView's
+    // timerAndControlsSection should then switch on this single value instead of branching
+    // on ssw state directly.
+    //
+    // Note: the daily-total-vs-weekly-total display (driven by hasAlreadyStudiedToday())
+    // is a separate, not-yet-addressed concern — out of scope for this var.
+	//MARK: View-Functions
+
+
+    // Start a fresh session (count-up) for an optional subject; discards any in-progress session.
+    func startSession(ctx: ModelContext) {
         let now = Date()
-        activeSession = StudySession(
-            subject: subject,
-            subjectName: subjectName,
-            startedAt: now,
-            lastResumedAt: now
-        )
+        logger.log("startSession() called")
+        guard activeSession == nil else {
+            logger.warning("Failed to start session; there is already an active session.")
+            return
+        }
+
+        ssw = Stopwatch()
+        studyBreaks = []
+        studySections = []
+
+        activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: now)
+        logger.log("Session Started")
+        
+        ctx.insert(activeSession!)
+        try? ctx.save()
     }
 
     /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
     func togglePause() {
-        guard let session = activeSession else { return }
-        session.isPaused ? resumeSession() : pauseSession()
+        logger.log("togglePause() called")
+        guard activeSession != nil else { return }
+        (ssw?.stopwatchIsRunning ?? false) ? pauseSession() : resumeSession()
     }
 
-    /// Pause timing and accumulate active duration; call when the user taps Stop/Pause.
+    /// Pause timing; call when the user taps Pause.
+    // - We need to:
+    //      - End the study Break
+    //      - Resume stopwatch & update resume timing
     func pauseSession() {
-        guard var session = activeSession, !session.isPaused else { return }
         let now = Date()
-        session.totalActiveDuration += now.timeIntervalSince(session.lastResumedAt)
-        session.isPaused = true
-        session.lastPausedAt = now
-        activeSession = session
+        logger.log("pauseSession() called")
+        guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
+        ssw!.startBreak()
+        activeSession?.lastPausedAt = ssw!.lastPausedAt
+
+
     }
 
-    /// Resume timing and log a break if the pause exceeded the break threshold; call when the user resumes.
+    /// Resume timing and log a break if the pause exceeded the break threshold.
     func resumeSession() {
-        guard var session = activeSession, session.isPaused, let pausedAt = session.lastPausedAt else { return }
+        logger.log("resumeSession() called")
+        guard let pausedAt = ssw!.lastPausedAt, !(ssw?.stopwatchIsRunning ?? false) else { return }
         let now = Date()
         let pausedDuration = now.timeIntervalSince(pausedAt)
-        session.totalBreakDuration += pausedDuration
+//        if pausedDuration >= breakThreshold {
+        if pausedDuration >= 0 {
 
-        if pausedDuration >= breakThreshold {
-            session.breaks.append(StudyBreak(startedAt: pausedAt, endedAt: now))
+            studyBreaks.append(StudyBreak(startedAt: pausedAt, endedAt: now))
+        } else {
+            //update normal time to disregard break
         }
-
-        session.isPaused = false
-        session.lastResumedAt = now
-        session.lastPausedAt = nil
-        activeSession = session
+        ssw!.endBreak()
+        activeSession?.lastPausedAt = nil
+        
+        studyBreaks.last?.endedAt = now
+        
     }
 
-    /// Finalize the session, attach optional metadata (score, companions, location placeholder), and archive it.
-    func endSession(score: Int? = nil, companions: [String] = [], locationDescription: String? = nil) {
-        guard var session = activeSession else { return }
+    //Finalize section and assign all values over to the study session to 'finish' it
+    func endSession(context: ModelContext) {
+        logger.log("endSession() called")
+        guard let session = activeSession else { return }
         let now = Date()
-
-        if !session.isPaused {
-            session.totalActiveDuration += now.timeIntervalSince(session.lastResumedAt)
-        }
-
-        session.isPaused = false
-        session.lastPausedAt = nil
         session.endedAt = now
-        session.studyScore = score
+        session.breaks = studyBreaks
+        session.sections = studySections
+        session.totalBreakDuration = totalBreakTime
 
-        if !companions.isEmpty {
-            session.companions = companions
-        }
-
-        if var existingLocation = session.location {
-            if existingLocation.description == nil {
-                existingLocation.description = locationDescription
-            }
-            session.location = existingLocation
-        } else if locationDescription != nil {
-            session.location = SessionLocation(description: locationDescription, latitude: nil, longitude: nil)
-        }
-
-        completedSessions.append(session)
+        ssw?.end()
+        ssw = nil
         activeSession = nil
     }
 
     /// Abort an active session without persisting; use for user-initiated cancels.
-    func cancelActiveSession() {
+    func cancelActiveSession(ctx: ModelContext) {
+        logger.log("current session cancelled")
+        ctx.delete(activeSession!)
+        try? ctx.save()
         activeSession = nil
+        ssw = nil
     }
 
     /// Increment an interruption counter (e.g., notifications/away events); can be wired to external signals later.
     func addInterruption() {
-        guard var session = activeSession else { return }
-        session.interruptionCount += 1
-        activeSession = session
+        logger.log("addInterruption() called")
+        activeSession?.interruptionCount += 1
     }
 
     /// Update the subject selection for the next session (only allowed when no session is active).
     func updateSubjectSelection(_ subject: Subject?) {
+        logger.log("updateSubjectSelection(_:) called with subject: \(String(describing: subject))")
         guard activeSession == nil else { return }
         selectedSubject = subject
     }
-    
+
     public func hasAlreadyStudiedToday() -> Bool {
+        logger.log("hasAlreadyStudiedToday() called")
         //todo
         return false; //stub placeholder
     }
+    
+    
+    public func logAllVars() {
+        logger.log("""
+        
+        --- StudyTrackingViewModel State ---
+        sessionIsRunning:  \(self.sessionIsRunning)
+        totalStudyingTime: \(self.totalStudyingTime)
+        totalBreakTime:    \(self.totalBreakTime)
+        activeSession:     \(String(describing: self.activeSession))
+        selectedSubject:   \(self.selectedSubject != nil ? String(describing: self.selectedSubject!.name) : "nil")
+        ssw (Stopwatch):   \(String(describing: self.ssw))
+        studyBreaks:       \(self.studyBreaks.count) break(s)
+        studySections:     \(self.studySections.count) section(s)
+        breakThreshold:    \(self.breakThreshold)
+        ------------------------------------
+        """)
+    }
+    
+    
 }

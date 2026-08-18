@@ -5,6 +5,7 @@ final class SubjectsEditorVM {
 
     // State is not needed in classes; only in structs.
     // @State is only needed for Views (value types) — not for ViewModels.
+    var newSubjectName: String = ""
     var newSubjectCode: String = ""
 
     var canAddSubject: Bool {

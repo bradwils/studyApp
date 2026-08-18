@@ -29,23 +29,31 @@ struct CustomBottomSheet: View {
     // MARK: - Layout Constants (Progress-Driven)
     
     /// Horizontal inset when sheet is collapsed (floating card appearance)
-    private let collapsedHorizontalInset: CGFloat = 16
-    
+    @ScaledMetric(relativeTo: .body) private var collapsedHorizontalInset: CGFloat = 16
+
     /// Horizontal inset when sheet is fully expanded (edge-to-edge)
     private let expandedHorizontalInset: CGFloat = 0
-    
-    
+
+
     /// Corner radius when sheet is collapsed
-    private let collapsedCornerRadius: CGFloat = 40
-    
+    @ScaledMetric(relativeTo: .body) private var collapsedCornerRadius: CGFloat = 40
+
     /// Corner radius when sheet is fully expanded
-    private let expandedCornerRadius: CGFloat = 20
-    
+    @ScaledMetric(relativeTo: .body) private var expandedCornerRadius: CGFloat = 20
+
     /// Bottom padding when collapsed (floating above safe area)
-    private let collapsedBottomPadding: CGFloat = 12
-    
+    @ScaledMetric(relativeTo: .body) private var collapsedBottomPadding: CGFloat = 12
+
     /// Bottom padding when expanded (extends into safe area)
     private let expandedBottomPadding: CGFloat = 0
+
+    @ScaledMetric(relativeTo: .caption) private var grabberWidth: CGFloat = 40
+    @ScaledMetric(relativeTo: .caption) private var grabberHeight: CGFloat = 6
+
+    @ScaledMetric(relativeTo: .body) private var itemCornerRadius: CGFloat = 12
+
+    private let sheetShadowRadius: CGFloat = 24
+    private let sheetShadowOffsetY: CGFloat = -6
 
     // MARK: - State Properties
     
@@ -125,7 +133,6 @@ struct CustomBottomSheet: View {
     var body: some View {
         GeometryReader { geometry in
             let containerHeight = geometry.size.height
-            let containerWidth = geometry.size.width
             let safeAreaBottom = geometry.safeAreaInsets.bottom
             
             // Calculate the single progress value driving all layout interpolations
@@ -143,9 +150,6 @@ struct CustomBottomSheet: View {
                 to: expandedBottomPadding,
                 progress: progress
             )
-            
-            // Width interpolates from inset width to full width
-            let sheetWidth = containerWidth - (horizontalInset * 2)
             
             // Corner radius interpolates from large (collapsed) to small (expanded)
             let cornerRadius = interpolate(
@@ -169,9 +173,7 @@ struct CustomBottomSheet: View {
             ZStack(alignment: .bottom) {
                 // Sheet container with progress-driven styling
                 sheetContent
-                    
-
-                    .frame(width: sheetWidth)
+                    .frame(maxWidth: .infinity)
                     .frame(height: visibleSheetHeight, alignment: .top)
                     .clipShape(
                         UnevenRoundedRectangle(
@@ -194,9 +196,9 @@ struct CustomBottomSheet: View {
                         // TODO: Manually figure out how to apply a true glassEffect to this
                         // custom-shaped background. .glassEffect() cannot currently be used
                         // inside a .background() modifier on UnevenRoundedRectangle.
-                        .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: -6)
+                        .shadow(color: .black.opacity(0.18), radius: sheetShadowRadius, y: sheetShadowOffsetY)
                     )
-                    
+                    .padding(.horizontal, horizontalInset)
                     .padding(.bottom, bottomPadding)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
@@ -225,13 +227,15 @@ struct CustomBottomSheet: View {
             
             
             ScrollView {
-                VStack(spacing: 16) {
+                VStack {
                     ForEach(0..<40) { index in
                         Text("Item \(index)")
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.black)
-                            .cornerRadius(12)
+                            .background(
+                                Color.black,
+                                in: .rect(cornerRadius: itemCornerRadius, style: .continuous)
+                            )
                     }
                 }
                 .padding()
@@ -257,9 +261,8 @@ struct CustomBottomSheet: View {
     private var dragIndicator: some View {
         Capsule()
             .fill(Color.secondary)
-            .frame(width: 40, height: 6)
-            .padding(.top, 8)
-            .padding(.bottom, 12)
+            .frame(width: grabberWidth, height: grabberHeight)
+            .padding(.vertical)
     }
     
     /// Background styling for the sheet with dynamic corner radius

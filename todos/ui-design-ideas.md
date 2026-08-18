@@ -53,3 +53,6 @@
 
 ## Notes
 These ideas were captured while on mobile. Prioritize implementing the pause functionality first, as it's a core feature that impacts the user experience during study sessions.
+
+## Snippets
+- `.contentTransition(.numericText())` — gives the animated text blue/scroll effect from Structured. Useful for numeric transitions (e.g. timer digits).

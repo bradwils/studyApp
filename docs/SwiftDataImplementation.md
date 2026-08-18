@@ -1,6 +1,8 @@
 # 20/5 SwiftData Implementation Guide
 
-This is the **project-specific migration playbook** for StudyApp — what to change, in which file, and why, in the order that makes sense. It assumes you've read [SwiftData.md](SwiftData.md) for the theory. This doc won't re-teach that — instead, it'll reaffirm just enough to make each step click while you're actively implementing.
+> **Historical planning doc.** Written during the initial SwiftData migration; several steps below (model registration, relationships) have since landed in the code, sometimes in a different shape than proposed here (e.g. `SessionLocation` stayed its own `@Model` instead of being flattened). Treat this as a log of the migration's reasoning, not a live checklist — check `Models/StudySession.swift` and `App/StudyAppApp.swift` for current state.
+
+This is the **project-specific migration playbook** for StudyApp — what to change, in which file, and why, in the order that makes sense.
 
 ---
 

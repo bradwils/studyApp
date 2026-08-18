@@ -6,57 +6,74 @@
 import SwiftUI
 
 struct DotStyleDivider: View {
-    //call as DotStyleDivider(orientation: .horizontal, length: 123)
+    //call as DotStyleDivider(orientation: .horizontal)
     enum Orientation {
         case horizontal
         case vertical
     }
 
-    var orientation: Orientation = .vertical
-    var length: CGFloat = 0; //default of 0 if there is nothing defined
-    var dotCount: Int { Int(length / 8) }
-    var dotSpacing: CGFloat = 6
+    var orientation: Orientation
+
+    @ScaledMetric(relativeTo: .caption) private var lineThickness: CGFloat = 1
+    @ScaledMetric(relativeTo: .caption) private var dotSize: CGFloat = 2
+    @ScaledMetric(relativeTo: .caption) private var dotSpacing: CGFloat = 6
 
     private var isHorizontal: Bool { orientation == .horizontal }
 
-
-    
-
     var body: some View {
-
         Rectangle()
             .fill(Color.white.opacity(0.25))
             .frame(
-                width: isHorizontal ? length : 1,
-                height: isHorizontal ? 1 : length
+                width: isHorizontal ? nil : lineThickness,
+                height: isHorizontal ? lineThickness : nil
             )
-            .overlay {
-                Group {
-                    if isHorizontal {
-                        HStack(spacing: dotSpacing) {
-                            dots
-                        }
-                    } else {
-                        VStack(spacing: dotSpacing) {
-                            dots
-                        }
-                    }
-                }
-            }
+            .overlay { dots }
     }
 
-    private var dots: some View { //dots view which overlays the line for the divider
-        ForEach(0..<dotCount, id: \.self) { _ in
-            Circle()
-                .fill(Color.white.opacity(0.25))
-                .frame(width: 2, height: 2)
+    // Near-zero dash segments under a round cap draw as dots, so the run repeats
+    // for however long the divider ends up being instead of a counted length.
+    private var dots: some View {
+        DividerLine(isHorizontal: isHorizontal)
+            .stroke(
+                Color.white.opacity(0.25),
+                style: StrokeStyle(
+                    lineWidth: dotSize,
+                    lineCap: .round,
+                    dash: [0.01, dotSize + dotSpacing]
+                )
+            )
+    }
+}
+
+private struct DividerLine: Shape {
+    var isHorizontal: Bool
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        if isHorizontal {
+            path.move(to: CGPoint(x: rect.minX, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.maxX, y: rect.midY))
+        } else {
+            path.move(to: CGPoint(x: rect.midX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
         }
+        return path
     }
 }
 
 #Preview {
-    VStack {
-        DotStyleDivider(orientation: .horizontal, length: 200)
-        DotStyleDivider(orientation: .vertical, length: 100)
+	
+    HStack {
+		Spacer()
+        DotStyleDivider(orientation: .vertical)
+
+        VStack {
+            
+            DotStyleDivider(orientation: .horizontal)
+            
+        }
     }
+	.frame(alignment: .center)
+    .padding()
+    .background(Color.black)
 }

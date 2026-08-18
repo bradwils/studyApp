@@ -1,6 +1,11 @@
 import SwiftUI
+import SwiftData
+import OSLog
 
 struct SettingsView: View {
+    
+    var logger = Logger(subsystem: "com.studyApp", category: "SettingsView")
+    
     private enum Theme: String, CaseIterable, Identifiable {
         case system
         case light
@@ -20,45 +25,82 @@ struct SettingsView: View {
     @State private var preferredTheme: Theme = .system
     @State private var studyReminderTime = Date()
     @State private var isShowingSubjectsEditor = false // drives the custom bottom drawer
+    
+    @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                Form {
-                    Section(header: Text("List")) {
-                        Button() {
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
-                                isShowingSubjectsEditor.toggle()
-                            }
-                        } label: {
-                            Label("Edit Subjects", systemImage: "list.bullet")
+            Form {
+                Section("List") {
+                    Button() {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.85)) {
+                            isShowingSubjectsEditor.toggle()
                         }
-                        .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
-                            SubjectsEditor(isPresented: $isShowingSubjectsEditor)
-                                .padding(10)
-                                .presentationDetents([.fraction(0.6)])
-                                .presentationDragIndicator(.visible)
-                                .presentationBackgroundInteraction(.enabled)
-                        }
+                    } label: {
+                        Label("Edit Subjects", systemImage: "list.bullet")
                     }
-                    
-                    Section(footer: Text("Version 1.0.0")) {
-                        Button(role: .destructive) {
-                        } label: {
-                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
+                    .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
+                        SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
+                            .presentationDetents([.fraction(0.6)])
+                            .presentationDragIndicator(.visible)
+                            .presentationBackgroundInteraction(.enabled)
+                    }
+                }
+
+                Section("Debug") {
+                    Button {
+                        insertFakeSession()
+                    } label: {
+                        Label("Generate Fake Study Session", systemImage: "wand.and.stars")
+                    }
+                }
+
+                Section(footer: Text("Version 1.0.0")) {
+                    Button(role: .destructive) {
+                    } label: {
+                        Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                     }
                 }
             }
             .navigationTitle("Settings")
+            .toolbar {
+                // DEV ONLY — see CLAUDE.md "Developer-Only Views"
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        DebugDataView()
+                    } label: {
+                        Image(systemName: "ladybug")
+                    }
+                }
+            }
         }
     }
     
     func dismissedSubjectsEditor() {
-        
+
+    }
+
+    func insertFakeSession() {
+        let startedAt = Date().addingTimeInterval(-3600)
+        let session = StudySession(
+            subjectName: "Test Subject",
+            startedAt: startedAt,
+            endedAt: Date(),
+            notes: "Fake session for testing delete"
+        )
+        modelContext.insert(session)
+        do {
+            try modelContext.save()
+            logger.log("worked!")
+        } catch {
+            logger.log("Failed to insert: \(error)")
+        }
     }
 }
 
 #Preview {
-    SettingsView()
+    
+    SettingsView(settingsSheetDetent: .fraction(0.5))
+    
 }
