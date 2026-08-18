@@ -231,100 +231,95 @@ struct StudyTrackingView: View {
 			Spacer()
 			
 			//MARK: Section Length / Buttons
-			ZStack {
-				HStack {
-					HStack {  //child hstack1, aligned to be right-most within the available space
+			HStack(alignment: .center) {
 						// "Pause at" text: fades in and slides from left when paused
-						VStack {
-							if vm.activeSession != nil {
-								if vm.ssw?.stopwatchIsRunning ?? false {  //
+					VStack {
+						if vm.activeSession != nil {
+							if vm.ssw?.stopwatchIsRunning ?? false {  //
 
-									Text(
-										"temp"
-									)  //parse through a helper; format the timeinterval as hour/minute/second
-									.font(.headline.monospacedDigit())
+								Text(
+									"temp"
+								)  //parse through a helper; format the timeinterval as hour/minute/second
+								.font(.headline.monospacedDigit())
 
-									Text("since last break")
-										.font(.caption)
-										.foregroundColor(.secondary)
+								Text("since last break")
+									.font(.caption)
+									.foregroundColor(.secondary)
 
-								} else {
+							} else {
 
-									Text(
-										"temp"
-									)  //parse through a helper; format the timeinterval as hour/minute/second
-									.font(.headline.monospacedDigit())
+								Text(
+									"temp"
+								)  //parse through a helper; format the timeinterval as hour/minute/second
+								.font(.headline.monospacedDigit())
 
-									Text("Break Length")
-										.font(.caption)
-										.foregroundColor(.secondary)
+								Text("Break Length")
+									.font(.caption)
+									.foregroundColor(.secondary)
 
-								}
 							}
 						}
-						.frame(maxWidth: .infinity, alignment: isSessionPaused ? .trailing : .center) //align to left when paused, right when running
 					}
-					.padding(.horizontal)
-
-					HStack {  //child hstack2, aligned to be left-most within the available space
-						GlassEffectContainer(spacing: 16) {
-							// Both buttons sit directly next to each other (no stretching
-							// spacer between them) so the container's fluid glass blend can
-							// actually reach across the gap while the end button inserts/removes —
-							// that adjacency is what sells the morph, not a manual transition.
-							HStack(spacing: 16) {
-								Button {
-									withAnimation(.smooth(duration: 0.4)) {
-										switch vm.currentSessionState {
-										case .noSession:
-											vm.startSession(ctx: modelContext)
-
-										case .sessionPaused:
-											print("resuming session")
-											vm.resumeSession()
-
-										case .sessionRunning: //parses start anchor
-											print("pausing session")
-											vm.pauseSession()
-
-										}
-									}
-								} label: {
-									// Sizing/font applied to the content BEFORE .buttonStyle(.glass),
-									// with .glassEffectID chained immediately after it — that order is
-									// what lets the container track this as the actual glass surface.
-									Text(mainButtonLabel)
-										.id(mainButtonLabel)
-										.transition(.blurReplace)
-										.font(.headline)
-										.padding(.horizontal)  //padding for start button, makes button wider than text
-								}
-								.buttonStyle(.glass)
-								.glassEffectID("startPauseButton", in: glassNamespace)
-
-								if isSessionPaused {
-									Button {
-										vm.endSession(context: modelContext)
-									} label: {
-										Text("Endbutton")
-											.font(.headline)
-											.padding(.horizontal)  //padding for start button, makes button wider than text
-									}
-									.buttonStyle(.glass)
-									.glassEffectID("endSessionButton", in: glassNamespace)
-									// No manual `.transition` here — GlassEffectContainer +
-									// matching glassEffectIDs already supplies the morph
-									// transition on insert/remove; adding our own fights it.
-								}
-							}
-							.frame(
-								maxWidth: .infinity,
-								alignment: .leading
-							)  //align to left
-						}
-					}
+					.frame(alignment: isSessionPaused ? .trailing : .center) //align to left when paused, right when running
 				}
-			}
+				.padding(.horizontal)
+
+//					HStack {  //child hstack2, aligned to be left-most within the available space
+				GlassEffectContainer(spacing: 16) {
+					// Both buttons sit directly next to each other (no stretching
+					// spacer between them) so the container's fluid glass blend can
+					// actually reach across the gap while the end button inserts/removes —
+					// that adjacency is what sells the morph, not a manual transition.
+					HStack(spacing: 16) {
+						Button {
+							withAnimation(.smooth(duration: 0.4)) {
+								switch vm.currentSessionState {
+								case .noSession:
+									vm.startSession(ctx: modelContext)
+
+								case .sessionPaused:
+									print("resuming session")
+									vm.resumeSession()
+
+								case .sessionRunning: //parses start anchor
+									print("pausing session")
+									vm.pauseSession()
+
+								}
+							}
+						} label: {
+							// Sizing/font applied to the content BEFORE .buttonStyle(.glass),
+							// with .glassEffectID chained immediately after it — that order is
+							// what lets the container track this as the actual glass surface.
+							Text(mainButtonLabel)
+								.id(mainButtonLabel)
+								.transition(.blurReplace)
+								.font(.body)
+								.padding(.horizontal)  //padding for start button, makes button wider than text
+						}
+						.buttonStyle(.glass)
+						.glassEffectID("startPauseButton", in: glassNamespace)
+
+						if isSessionPaused {
+							Button {
+								vm.endSession(context: modelContext)
+							} label: {
+								Text("Endbutton")
+									.font(.body)
+									.padding(.horizontal)  //padding for start button, makes button wider than text
+							}
+							.buttonStyle(.glass)
+							.glassEffectID("endSessionButton", in: glassNamespace)
+							// No manual `.transition` here — GlassEffectContainer +
+							// matching glassEffectIDs already supplies the morph
+							// transition on insert/remove; adding our own fights it.
+						}
+					}
+					.frame(
+						maxWidth: .infinity,
+						alignment: .leading
+					)  //align to left
+				}
 		}
 	}
 	
