@@ -2,11 +2,10 @@ import SwiftUI
 
 struct SessionDetailView: View {
     let session: StudySession
-
     var body: some View {
         List {
-            Section("Overview") {
-                LabeledContent("Subject", value: session.subjectName ?? "Backup")
+			Section() {
+                LabeledContent("Subject", value: session.subjectName ?? "subjectName missing")
                 LabeledContent("Started", value: session.startedAt.formatted(date: .abbreviated, time: .shortened))
                 if let endedAt = session.endedAt {
                     LabeledContent("Ended", value: endedAt.formatted(date: .abbreviated, time: .shortened))
@@ -15,7 +14,17 @@ struct SessionDetailView: View {
                 }
                 LabeledContent("Total duration", value: formattedDuration(session.totalDuration))
                 LabeledContent("Active duration", value: formattedDuration(session.totalActiveDuration))
-            }
+			} header: {
+				HStack {
+					Text("Overview")
+					Spacer()
+					if (session.subject == nil) {
+						Text("NO SESSION ATTATCHED")
+							.foregroundStyle(Color.red)
+							.bold()
+					}
+				}
+			}
 
             if let studyScore = session.studyScore {
                 Section("Score") {
