@@ -11,7 +11,7 @@ struct StudyAppApp: App {
 	
     var body: some Scene {
         WindowGroup {
-			MainTabView(buildNum: build)
+			MainTabView()
         }
         .modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self])
         
@@ -20,5 +20,5 @@ struct StudyAppApp: App {
 
 #Preview("App Entry") {
     // Preview the main entry point of the app
-    MainTabView(buildNum: "studyAppApp preview")
+    MainTabView()
 }

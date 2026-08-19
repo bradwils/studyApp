@@ -1,8 +1,6 @@
 import SwiftUI
 
 struct MainTabView: View {
-
-	var buildNum: String
 	
     var body: some View {
         TabView {
@@ -46,5 +44,5 @@ struct MainTabView: View {
 }
 
 #Preview {
-	MainTabView(buildNum: "preview")
+	MainTabView()
 }
