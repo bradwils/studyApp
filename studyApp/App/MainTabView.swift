@@ -36,9 +36,9 @@ struct MainTabView: View {
                     SessionsView()
                 }
             }
-			Tab(buildNum, systemImage: "number") {
+			Tab("master [CI/CD]", systemImage: "number") {
 				NavigationStack {
-					Text(buildNum)
+					Text("master [CI/CD]")
 				}
 			}
         }
