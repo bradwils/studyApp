@@ -214,3 +214,22 @@ Transform tasks into verifiable goals before starting. For multi-step work, stat
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
 ```
+
+
+# CI/CD Pipeline
+
+## Development Branch
+```dev```
+When making changes, they should usually be made in feature branches, pulling off of the dev/ branch. 
+These builds should normally be deployed with the tag 'build', which will kick off an XCode Cloud workflow to build and deploy the app onto Testflight's Dev build.
+
+
+## UAT branch
+```UAT-testflight```
+When changes have been made and are ready to be tested, they should go to UAT-testflight. Anything being pulled into here will be automatically built, regardless of tag, as it should be updated when new changes are going through.
+These changes are BETA, expepcted to be okay but may have rough edges that are not perfect.
+
+
+## Master
+```master```
+Will eventually be the master branch. Builds should only be kicked off when attatched with the tag 'build'.
