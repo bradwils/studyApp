@@ -50,7 +50,8 @@ struct SocialView: View {
                         friendList(restingFriends, online: false)
                     }
 
-                    Spacer().frame(height: 24)
+                    Spacer()
+						.frame(height: 24)
                 }
             }
 			.frame(maxWidth: 600)
@@ -65,7 +66,7 @@ struct SocialView: View {
             // MARK: Profile / settings menu (toolbar)
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    NavigationLink("Settings") { SettingsView() }
+//                    NavigationLink("Settings") { SettingsView() }
                     NavigationLink("Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
                 } label: {
                     Image(systemName: "person.crop.circle.fill")

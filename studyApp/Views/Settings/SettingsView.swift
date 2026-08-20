@@ -3,6 +3,8 @@ import SwiftData
 import OSLog
 
 struct SettingsView: View {
+	
+	var build: String
     
     var logger = Logger(subsystem: "com.studyApp", category: "SettingsView")
     
@@ -56,7 +58,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(footer: Text("Version 1.0.0")) {
+                Section(footer: Text(buildFooterText)) {
                     Button(role: .destructive) {
                     } label: {
                         Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
@@ -101,6 +103,6 @@ struct SettingsView: View {
 
 #Preview {
     
-    SettingsView(settingsSheetDetent: .fraction(0.5))
+	SettingsView(build: "PREVIEW", settingsSheetDetent: .fraction(0.5))
     
 }
