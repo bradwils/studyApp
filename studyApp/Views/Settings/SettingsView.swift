@@ -3,6 +3,8 @@ import SwiftData
 import OSLog
 
 struct SettingsView: View {
+	
+	var build: String
     
     var logger = Logger(subsystem: "com.studyApp", category: "SettingsView")
     
@@ -101,6 +103,6 @@ struct SettingsView: View {
 
 #Preview {
     
-    SettingsView(settingsSheetDetent: .fraction(0.5))
+	SettingsView(build: "PREVIEW", settingsSheetDetent: .fraction(0.5))
     
 }
