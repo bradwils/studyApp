@@ -40,6 +40,7 @@ struct SettingsView: View {
                     } label: {
                         Label("Edit Subjects", systemImage: "list.bullet")
                     }
+                    .accessibilityIdentifier("editSubjectsButton")
                     .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
                         SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
                             .presentationDetents([.fraction(0.6)])

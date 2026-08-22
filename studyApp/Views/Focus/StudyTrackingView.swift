@@ -299,6 +299,7 @@ struct StudyTrackingView: View {
 						}
 						.buttonStyle(.glass)
 						.glassEffectID("startPauseButton", in: glassNamespace)
+						.accessibilityIdentifier("startPauseButton")
 
 						if isSessionPaused {
 							Button {
@@ -310,6 +311,7 @@ struct StudyTrackingView: View {
 							}
 							.buttonStyle(.glass)
 							.glassEffectID("endSessionButton", in: glassNamespace)
+							.accessibilityIdentifier("endSessionButton")
 							// No manual `.transition` here — GlassEffectContainer +
 							// matching glassEffectIDs already supplies the morph
 							// transition on insert/remove; adding our own fights it.
