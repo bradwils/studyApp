@@ -43,6 +43,19 @@ studyItemField (@Model) {
 
 ```
 
+## FieldKind
+Can resolve to either:
+- Label (stringValue)
+- Number (doubleValue)
+- Slider (intValue)
+  - Max Slider Value (intMaxValue)
+  - Slider Stepping Value (intStepValue)
+- Tag (selectedStrings -> operates based on a runtime @Query based on app-wide options)
+- Date (dateValue)
+- Time (timeIntervalValue)
+- dropdown (stringValue -> operates based on a runtime @Query for subject's dropdownOptions)
+
+```swift
 ---
 
 ## Subject Relationship

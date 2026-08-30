@@ -8,15 +8,27 @@ import SwiftData
 
 @Model
 final class StudyItemField {
-	var type: StudyItem.FieldKind
+	var type: StudyItem.FieldKind //based on the enum, this will ALSO hold the value required.
 	
-	var subject: Subject
 	
-	var dropdownOptions: [String]? = []//
+	
+	
+	//MARK: Optionals based on seelected field Type
+	//All:
+	var intValue: Int? // Used for --> Slider
+	var doubleValue: Double? // Used for Number
+	var stringValue: String? // Used for --> Label, Dropdown
+	var dateValue: Date?
+	var timeIntervalValue: TimeInterval?
+	
+	var intMaxValue: Int? //Used for --> Max Slider Value
+	var intStepValue: Int? //Used for --> intStepValue
 
-	init(type: StudyItem.FieldKind, subject: Subject) {
+	var selectedStrings: [String?] // Used for --> Selecetd Tags (whose potential options are derived from a @Query within the View.
+	
+	
+	
+	init(type: StudyItem.FieldKind) {
         self.type = type
-		self.subject = subject
-		self.dropdownOptions = subject.dropdownOptions
     }
 }
