@@ -3,46 +3,39 @@
 
 import SwiftUI
 
-// MARK: - DashboardHeader
-
-//UITWEAK
-// DashboardHeader v3: three stats grouped into one glass container
-// separated by Dividers, rather than three independent glass cards.
-// The heading row and streak badge are unchanged.
-// All glass effects applied without shape arguments.
-
-/// Summary banner displayed above the friends feed on the Social screen.
+// Summary banner above the friends feed: heading row with live-friends line
+// and streak chip, plus a three-cell stats card.
 struct DashboardHeader: View {
-
-    // MARK: Properties
 
     var currentSessionTime: String
     var currentSubject: String
     var streakCount: Int
     var totalDailyTime: String
-    var onlineFriends = 2
+    var onlineFriends: Int
 
-    // MARK: Body
+    private var friendsStatusText: String {
+        switch onlineFriends {
+        case 0: "No friends online right now"
+        case 1: "1 friend studying now"
+        default: "\(onlineFriends) friends studying now"
+        }
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: DS.Space.l) {
 
-            // MARK: Heading row
-            // Title on the left, streak badge on the right.
             HStack(alignment: .center) {
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: DS.Space.xs) {
                     Text("Your Study Day")
                         .font(.title2.weight(.bold))
                         .foregroundStyle(.primary)
 
-                    // MARK: Live friends indicator
-                    HStack(spacing: 5) {
+                    HStack(spacing: DS.Space.xs) {
                         Circle()
-                            .fill(onlineFriends > 0 ? Color.green : Color.secondary.opacity(0.4))
+                            .fill(onlineFriends > 0 ? DS.Color.active : DS.Color.offline.opacity(0.4))
                             .frame(width: 7, height: 7)
-                        Text(onlineFriends > 0
-                             ? "\(onlineFriends) friends studying now"
-                             : "No friends online right now")
+                            .accessibilityHidden(true)
+                        Text(friendsStatusText)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -50,73 +43,44 @@ struct DashboardHeader: View {
 
                 Spacer()
 
-                // MARK: Streak badge
-                HStack(spacing: 5) {
-                    Image(systemName: "flame.fill")
-                        .foregroundStyle(.orange)
-                    Text("\(streakCount)")
-                        .font(.title3.weight(.bold))
-                        .foregroundStyle(.orange)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .glassEffect()
+                iconAndTextPill(text: "\(streakCount)", systemImage: "flame.fill", tint: DS.Color.streak)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(streakCount) day study streak")
             }
 
-            // MARK: Stats group
-            // One glass container with three cells separated by Dividers.
-            // Cells are aligned left / center / right for visual variety.
+            // StatCell carries its own internal padding, so the group takes
+            // surfaceCard directly with no extra padding of its own.
             HStack(spacing: 0) {
-                statCell(icon: "timer",      iconColor: .blue,   label: "Session", value: currentSessionTime, alignment: .leading)
-                Divider().padding(.vertical, 10)
-                statCell(icon: "book.fill",  iconColor: .purple, label: "Subject",  value: currentSubject,        alignment: .center)
-                Divider().padding(.vertical, 10)
-                statCell(icon: "clock.fill", iconColor: .green,  label: "Today",    value: totalDailyTime,         alignment: .trailing)
+                StatCell(systemImage: "timer", tint: .indigo, label: "Session", value: currentSessionTime, alignment: .leading)
+                Divider().padding(.vertical, DS.Space.s)
+                StatCell(systemImage: "book.fill", tint: .indigo, label: "Subject", value: currentSubject, alignment: .center)
+                Divider().padding(.vertical, DS.Space.s)
+                StatCell(systemImage: "clock.fill", tint: .indigo, label: "Today", value: totalDailyTime, alignment: .trailing)
             }
-            .frame(maxWidth: .infinity)
-            .glassEffect()
+            .surfaceCard()
         }
-    }
-
-    // MARK: - Helpers
-
-    /// A single stat cell used inside the stats group.
-    @ViewBuilder
-    private func statCell(icon: String, iconColor: Color, label: String, value: String, alignment: HorizontalAlignment) -> some View {
-        VStack(alignment: alignment, spacing: 5) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(iconColor)
-                Text(label)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Text(value)
-                .font(.subheadline.weight(.semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .monospacedDigit()
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .frame(maxWidth: .infinity)
     }
 }
-//UIEND
-
-// MARK: - Preview
 
 #Preview {
-    NavigationStack {
-        DashboardHeader(
-            currentSessionTime: "01:22",
-            currentSubject: "Mathematics",
-            streakCount: 12,
-            totalDailyTime: "03:41"
-        )
-        .padding()
+    ZStack {
+        ScreenBackground()
+        VStack(spacing: DS.Space.xl) {
+            DashboardHeader(
+                currentSessionTime: "01:22",
+                currentSubject: "Mathematics",
+                streakCount: 12,
+                totalDailyTime: "03:41",
+                onlineFriends: 3
+            )
+            DashboardHeader(
+                currentSessionTime: "00:00",
+                currentSubject: "Math",
+                streakCount: 0,
+                totalDailyTime: "00:00",
+                onlineFriends: 0
+            )
+        }
+        .padding(DS.Space.l)
     }
 }
-

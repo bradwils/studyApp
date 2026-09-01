@@ -13,8 +13,8 @@ struct FocusIntensitySlider: View {
     var range: ClosedRange<Double> // allowed span of sliderProgress
     @Binding var complete: Bool // set true on release once past commitThreshold
 
-    @Binding var sliderDraggableElementWidth: CGFloat // knob (and end-cap) width
-    @Binding var sliderDraggableElementHeight: CGFloat // knob (and end-cap) height
+    var knobWidth: CGFloat // knob (and end-cap) width
+    var knobHeight: CGFloat // knob (and end-cap) height
 
     // Latches the knob's leading edge at the start of a drag so motion is
     // relative to where the knob already was, not where the finger landed.
@@ -22,8 +22,6 @@ struct FocusIntensitySlider: View {
 
     // Measured rather than assumed, so the drag maps onto whatever width the parent hands us.
     @State private var totalWidth: CGFloat = 0
-
-    private var knobRadius: CGFloat { sliderDraggableElementWidth / 2 }
 
     // sliderProgress mapped from `range` to 0...1
     private var normalizedProgress: Double {
@@ -46,10 +44,21 @@ struct FocusIntensitySlider: View {
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { totalWidth = $0 }
         .background(
             Capsule()
-                .fill(Color.gray.opacity(0.2))
+                .fill(.quaternary)
         )
+        // The drag is pointer-only, so VoiceOver/Switch Control get a direct
+        // activate action — without it there is no route into focus mode at all.
+        .accessibilityElement()
+        .accessibilityAddTraits(.isButton)
+        // Default label lives on the component so a call site that forgets its
+        // own label never ships an unnamed button.
+        .accessibilityLabel("Focus intensity")
+        .accessibilityHint("Enters focus mode")
+        .accessibilityAction {
+            sliderProgress = range.upperBound
+            complete = true
+        }
     }
-
 
     // MARK: - Layers
 
@@ -57,14 +66,14 @@ struct FocusIntensitySlider: View {
         // Dashed-outline end-cap marking the commit point.
         Capsule()
             .glassEffect()
-            .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+            .frame(width: knobWidth, height: knobHeight)
             .overlay {
                 Capsule()
                     .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [7, 10]))
             }
             .offset(x: trackWidth)
             .opacity(0.4)
-            .foregroundColor(.secondary)
+            .foregroundStyle(.secondary)
     }
 
     private func fillTrailCapsule(knobLeftEdge: CGFloat) -> some View {
@@ -77,26 +86,25 @@ struct FocusIntensitySlider: View {
                     endPoint: .trailing
                 )
             )
-            .frame(width: knobLeftEdge + sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+            .frame(width: knobLeftEdge + knobWidth, height: knobHeight)
     }
 
-	//yep
     private func knobCapsule(trackWidth: CGFloat, knobLeftEdge: CGFloat) -> some View {
         Capsule()
-            .frame(width: sliderDraggableElementWidth, height: sliderDraggableElementHeight)
+            .frame(width: knobWidth, height: knobHeight)
             .glassEffect(.regular.interactive())
             .offset(x: knobLeftEdge)
+            .contentShape(.capsule)
             .gesture(dragGesture(trackWidth: trackWidth, knobLeftEdge: knobLeftEdge))
     }
 
     // MARK: - Geometry & drag math
 
-	//yep
     private func trackWidth(forTotalWidth totalWidth: CGFloat) -> CGFloat {
         // Track excludes the knob's own width so the thumb stays fully inside the slider bounds.
-        max(totalWidth - sliderDraggableElementWidth, 0)
+        max(totalWidth - knobWidth, 0)
     }
-	//
+
     private func knobLeftEdge(trackWidth: CGFloat) -> CGFloat {
         let clampedProgress = min(max(normalizedProgress, 0), 1)
         return clampedProgress * trackWidth
@@ -138,7 +146,7 @@ private struct DottedLineFiller: View {
     var body: some View {
         HairlineShape()
             .stroke(
-                Color.black.opacity(0.35),
+                .secondary,
                 style: StrokeStyle(lineWidth: lineWidth, lineCap: .round, dash: [4, 10])
             )
             .frame(height: lineWidth)
@@ -154,13 +162,25 @@ private struct HairlineShape: Shape {
     }
 }
 
-#Preview {
+#Preview("Light") {
     FocusIntensitySlider(
         sliderProgress: .constant(50),
         range: 0...100,
         complete: .constant(false),
-        sliderDraggableElementWidth: .constant(90),
-        sliderDraggableElementHeight: .constant(60)
+        knobWidth: 90,
+        knobHeight: 60
     )
     .padding()
+}
+
+#Preview("Dark") {
+    FocusIntensitySlider(
+        sliderProgress: .constant(50),
+        range: 0...100,
+        complete: .constant(false),
+        knobWidth: 90,
+        knobHeight: 60
+    )
+    .padding()
+    .preferredColorScheme(.dark)
 }

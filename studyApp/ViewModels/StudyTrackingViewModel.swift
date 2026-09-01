@@ -102,15 +102,6 @@ final class StudyTrackingViewModel {
     
     
 
-    // TODO(human): Add a single computed var (e.g. `currentTimerAnchor`) that resolves
-    // to whichever timer is currently authoritative: nothing running, the break timer
-    // (ssw?.lastPausedAt), or the study timer (ssw?.adjustedStartTimeForAnchor). Derive it
-    // from `ssw?.stopwatchIsRunning` and whether `ssw` exists at all. StudyTrackingView's
-    // timerAndControlsSection should then switch on this single value instead of branching
-    // on ssw state directly.
-    //
-    // Note: the daily-total-vs-weekly-total display (driven by hasAlreadyStudiedToday())
-    // is a separate, not-yet-addressed concern — out of scope for this var.
 	//MARK: View-Functions
 
 
@@ -146,7 +137,6 @@ final class StudyTrackingViewModel {
     //      - End the study Break
     //      - Resume stopwatch & update resume timing
     func pauseSession() {
-        let now = Date()
         logger.log("pauseSession() called")
         guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
         ssw!.startBreak()
@@ -217,24 +207,4 @@ final class StudyTrackingViewModel {
         //todo
         return false; //stub placeholder
     }
-    
-    
-    public func logAllVars() {
-        logger.log("""
-        
-        --- StudyTrackingViewModel State ---
-        sessionIsRunning:  \(self.sessionIsRunning)
-        totalStudyingTime: \(self.totalStudyingTime)
-        totalBreakTime:    \(self.totalBreakTime)
-        activeSession:     \(String(describing: self.activeSession))
-        selectedSubject:   \(self.selectedSubject != nil ? String(describing: self.selectedSubject!.name) : "nil")
-        ssw (Stopwatch):   \(String(describing: self.ssw))
-        studyBreaks:       \(self.studyBreaks.count) break(s)
-        studySections:     \(self.studySections.count) section(s)
-        breakThreshold:    \(self.breakThreshold)
-        ------------------------------------
-        """)
-    }
-    
-    
 }
