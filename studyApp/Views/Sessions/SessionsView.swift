@@ -39,12 +39,8 @@ struct SessionsView: View {
                         }
                     }
                 }
-                // Let the shared ambient background show through instead of the
-                // list's opaque default, matching the other tabs.
-                .scrollContentBackground(.hidden)
             }
         }
-        .background { ScreenBackground() }
         .navigationTitle("Sessions")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

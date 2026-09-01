@@ -44,7 +44,25 @@ struct StudyTrackingView: View {
 
     var body: some View {
         ZStack {
-            ScreenBackground()
+            LinearGradient(
+                colors: [
+                    Color.pink.opacity(0.35),
+                    Color.purple.opacity(0.35),
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.35),
+                    Color.blue.opacity(0.35),
+                ],
+                startPoint: .topTrailing,
+                endPoint: .bottomLeading
+            )
+            .ignoresSafeArea()
 
             VStack(spacing: DS.Space.xl) {
                 headerRow
