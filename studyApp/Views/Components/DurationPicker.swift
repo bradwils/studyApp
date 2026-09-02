@@ -84,12 +84,22 @@ struct DurationPicker: View {
 
 #Preview {
     @Previewable @State var duration: TimeInterval = 25 * 60
+    @Previewable @State var minHours = 0
+    @Previewable @State var maxHours = 8
+    @Previewable @State var minMinutes = 0
+    @Previewable @State var maxMinutes = 59
 
     ZStack {
         Color.black.ignoresSafeArea()
 
         VStack(spacing: DS.Space.xl) {
-            DurationPicker(duration: $duration)
+            DurationPicker(
+                duration: $duration,
+                minHours: $minHours,
+                maxHours: $maxHours,
+                minMinutes: $minMinutes,
+                maxMinutes: $maxMinutes
+            )
 
             Text("Selected: \(Int(duration / 60)) minutes")
                 .foregroundStyle(.white)

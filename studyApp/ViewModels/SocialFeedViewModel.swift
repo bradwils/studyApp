@@ -20,6 +20,10 @@ final class SocialFeedViewModel: ObservableObject {
     @Published var streakCount: Int
     @Published var totalDailyTime: String
 
+    // A friend counts as studying while their session is unlocked.
+    var activeFriends: [SocialFeedItem] { items.filter { !$0.isLocked } }
+    var offlineFriends: [SocialFeedItem] { items.filter { $0.isLocked } }
+
     init(
         items: [SocialFeedItem] = SocialFeedViewModel.sampleItems,
         currentSessionTime: String = "00:00",

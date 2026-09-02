@@ -10,20 +10,23 @@ struct FriendCard: View {
 
     var item: SocialFeedItem
 
-    private var statusTint: Color { item.isActive ? DS.Color.active : DS.Color.offline }
+    // A friend counts as studying while their session is unlocked.
+    private var isActive: Bool { !item.isLocked }
+
+    private var statusTint: Color { isActive ? DS.Color.active : DS.Color.offline }
 
     var body: some View {
         HStack(spacing: DS.Space.m) {
-            if item.isActive {
+            if isActive {
                 Capsule()
                     .fill(DS.Color.active)
                     .frame(width: 3, height: 40)
                     .accessibilityHidden(true)
             }
 
-            AvatarBadge(name: item.name, tint: statusTint, size: item.isActive ? 44 : 32)
+            AvatarBadge(name: item.name, tint: statusTint, size: isActive ? 44 : 32)
 
-            if item.isActive {
+            if isActive {
                 activeDetails
             } else {
                 offlineDetails
@@ -88,7 +91,7 @@ struct FriendCard: View {
     }
 
     private var accessibilitySummary: String {
-        if item.isActive {
+        if isActive {
             "\(item.name), studying \(item.subject), \(item.timer) elapsed, \(item.dailyTotalTime) today"
         } else {
             "\(item.name), offline, \(item.subject), \(item.timer)"
@@ -100,8 +103,8 @@ struct FriendCard: View {
     ZStack {
         ScreenBackground()
         VStack(spacing: DS.Space.s) {
-            FriendCard(item: SocialFeedItem(name: "Carol", subject: "Chemistry", subjectCode: "CHEM", isActive: true, timer: "00:30", dailyTotalTime: "6:00"))
-            FriendCard(item: SocialFeedItem(name: "Earl", subject: "English", subjectCode: "ENG", isActive: false, timer: "00:50", dailyTotalTime: "8:00"))
+            FriendCard(item: SocialFeedItem(name: "Carol", subject: "Chemistry", subjectCode: "CHEM", isLocked: false, timer: "00:30", photo: "person.crop.square", dailyTotalTime: "6:00"))
+            FriendCard(item: SocialFeedItem(name: "Earl", subject: "English", subjectCode: "ENG", isLocked: true, timer: "00:50", photo: "person.crop.square.fill", dailyTotalTime: "8:00"))
         }
         .padding(DS.Space.xl)
     }

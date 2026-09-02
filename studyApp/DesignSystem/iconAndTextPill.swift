@@ -1,4 +1,4 @@
-//  StatusChip.swift
+//  iconAndTextPill.swift
 //  studyApp
 
 import SwiftUI
