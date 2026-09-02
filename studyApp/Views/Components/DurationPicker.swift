@@ -83,21 +83,16 @@ struct DurationPicker: View {
 // MARK: - Preview
 
 #Preview {
-    struct PreviewWrapper: View {
-        @State private var duration: TimeInterval = 25 * 60 // 25 minutes
-        
-        var body: some View {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                VStack(spacing: 20) {
-                    DurationPicker(duration: $duration, minHours: .constant(0), maxHours: .constant(8), minMinutes: .constant(0), maxMinutes: .constant(60))
-                    
-                    Text("Selected: \(Int(duration / 60)) minutes")
-                        .foregroundColor(.white)
-                }
-            }
+    @Previewable @State var duration: TimeInterval = 25 * 60
+
+    ZStack {
+        Color.black.ignoresSafeArea()
+
+        VStack(spacing: DS.Space.xl) {
+            DurationPicker(duration: $duration)
+
+            Text("Selected: \(Int(duration / 60)) minutes")
+                .foregroundStyle(.white)
         }
     }
-    return PreviewWrapper()
 }

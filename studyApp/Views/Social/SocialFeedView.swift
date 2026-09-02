@@ -1,60 +1,42 @@
 import SwiftUI
 
-// MARK: - SocialView
-
 struct SocialView: View {
 
-    // MARK: State
-
-    @StateObject private var viewModel = SocialFeedViewModel()
-    @Environment(\.colorScheme) var colorScheme
-
-    // MARK: Derived lists
-    // Friends are split so "studying" and "on break" get separate sections.
-    private var studyingFriends: [SocialFeedItem] { viewModel.items.filter { !$0.isLocked } }
-    private var restingFriends:  [SocialFeedItem] { viewModel.items.filter {  $0.isLocked } }
-
-    // MARK: Body
+    @State private var viewModel = SocialFeedViewModel()
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         ZStack(alignment: .top) {
-
-            // MARK: Background
             backgroundGradient
                 .allowsHitTesting(false)
                 .ignoresSafeArea(edges: .top)
 
-            // MARK: Content
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-
-                    // MARK: Dashboard header (stats + streak)
                     DashboardHeader(
                         currentSessionTime: viewModel.currentSessionTime,
                         currentSubject: viewModel.currentSubject,
                         streakCount: viewModel.streakCount,
-                        totalDailyTime: viewModel.totalDailyTime
+                        totalDailyTime: viewModel.totalDailyTime,
+                        onlineFriends: viewModel.activeFriends.count
                     )
-                    .padding(.horizontal, 20)
-                    .padding(.top, 12)
+                    .padding(.horizontal, DS.Space.l)
+                    .padding(.top, DS.Space.m)
 
-                    // MARK: "Studying Now" section
-                    if !studyingFriends.isEmpty {
-                        feedSectionHeader(title: "Active now", count: studyingFriends.count, color: .green) //TODO: change this, make it so then the color is not parsed but rather read by the user's current status.
-                        friendList(studyingFriends, online: true)
+                    if !viewModel.activeFriends.isEmpty {
+                        sectionHeader("Active now", count: viewModel.activeFriends.count, tint: DS.Color.active)
+                        friendList(viewModel.activeFriends)
                     }
 
-                    // MARK: "Offline" section
-                    if !restingFriends.isEmpty {
-                        feedSectionHeader(title: "Offline", count: restingFriends.count, color: .gray.opacity(0.6))
-                        friendList(restingFriends, online: false)
+                    if !viewModel.offlineFriends.isEmpty {
+                        sectionHeader("Offline", count: viewModel.offlineFriends.count, tint: DS.Color.offline)
+                        friendList(viewModel.offlineFriends)
                     }
-
-                    Spacer().frame(height: 24)
                 }
+                .padding(.bottom, DS.Space.xxl)
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
             }
-			.frame(maxWidth: 600)
-
             .scrollIndicators(.hidden)
         }
         .navigationTitle("Social")
@@ -62,21 +44,19 @@ struct SocialView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .background(colorScheme == .dark ? Color.black : Color.white)
         .toolbar {
-            // MARK: Profile / settings menu (toolbar)
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     NavigationLink("Settings") { SettingsView() }
-                    NavigationLink("Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
+                    NavigationLink("My Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
                 } label: {
                     Image(systemName: "person.crop.circle.fill")
                         .font(.title3)
                         .foregroundStyle(.primary)
                 }
+                .accessibilityLabel("Profile and settings")
             }
         }
     }
-
-    // MARK: - Background gradient
 
     private var backgroundGradient: some View {
         ZStack {
@@ -119,56 +99,31 @@ struct SocialView: View {
         }
     }
 
-    // MARK: - Section helpers
-
-    
-    /// A section header label with a coloured count pill.
-    @ViewBuilder
-    private func feedSectionHeader(title: String, count: Int, color: Color) -> some View {
-        HStack(spacing: 8) {
-            Text(title)
-                .font(.title3.weight(.semibold))
-            Text("\(count)")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(color, in: Capsule())
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 28)
-        .padding(.bottom, 10)
+    private func sectionHeader(_ title: String, count: Int, tint: Color) -> some View {
+        SectionHeader(title: title, count: count, tint: tint)
+            .padding(.horizontal, DS.Space.l)
+            .padding(.top, DS.Space.xxl)
+            .padding(.bottom, DS.Space.s)
     }
 
-    /// A list of friend cards with navigation links.
-    /// Uses OnlineUserCard for studying friends, OfflineUserCard for resting friends.
-    @ViewBuilder
-    private func friendList(_ items: [SocialFeedItem], online: Bool) -> some View {
-        LazyVStack(spacing: 8) {
+    private func friendList(_ items: [SocialFeedItem]) -> some View {
+        LazyVStack(spacing: DS.Space.s) {
             ForEach(items) { item in
                 NavigationLink {
                     StudyMemberDetailView(memberName: item.name)
                 } label: {
-                    if online {
-                        OnlineUserCard(item: item)
-                            .padding(.horizontal, 16)
-                    } else {
-                        OfflineUserCard(item: item)
-                            .padding(.horizontal, 16)
-                    }
+                    FriendCard(item: item)
                 }
                 .buttonStyle(.plain)
                 .hoverEffect(.highlight)
             }
         }
+        .padding(.horizontal, DS.Space.l)
     }
 }
-
-// MARK: - Preview
 
 #Preview {
     NavigationStack {
         SocialView()
     }
 }
-

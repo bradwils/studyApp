@@ -7,11 +7,8 @@ import SwiftUI
 import SwiftData
 import OSLog
 
-
-
 struct ActiveSubjectList: View {
-    var logger = Logger(subsystem: "com.studyApp", category: "ActiveSubjectList")
-    
+    private static let logger = Logger(subsystem: "com.studyApp", category: "ActiveSubjectList")
 
     @Environment(\.modelContext) private var modelContext
 
@@ -26,7 +23,7 @@ struct ActiveSubjectList: View {
             if subjects.isEmpty {
                 Text("No subjects yet")
                     .font(.callout)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 Picker("Subject", selection: $selectedSubject) {
@@ -40,7 +37,7 @@ struct ActiveSubjectList: View {
                 .onAppear { //update the view before it appears
                     if selectedSubject == nil {
                         selectedSubject = subjects.first
-                        logger.log("Overrode nil subject selection, is now \(selectedSubject?.name ?? "nil")")
+                        Self.logger.log("Overrode nil subject selection, is now \(selectedSubject?.name ?? "nil")")
                     }
                 }
                 .onChange(of: subjects) { old, new in
@@ -51,4 +48,12 @@ struct ActiveSubjectList: View {
             }
         }
     }
+}
+
+#Preview {
+    @Previewable @State var selected: Subject?
+
+    ActiveSubjectList(isEnabled: true, selectedSubject: $selected)
+        .padding()
+        .modelContainer(for: Subject.self, inMemory: true)
 }

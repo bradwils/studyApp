@@ -1,11 +1,19 @@
 import SwiftUI
+import SwiftData
 
 struct SessionDetailView: View {
     let session: StudySession
+
     var body: some View {
         List {
-			Section() {
-                LabeledContent("Subject", value: session.subjectName ?? "subjectName missing")
+            Section {
+                heroCard
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            Section("Overview") {
+                LabeledContent("Subject", value: session.subjectName ?? "Unknown subject")
                 LabeledContent("Started", value: session.startedAt.formatted(date: .abbreviated, time: .shortened))
                 if let endedAt = session.endedAt {
                     LabeledContent("Ended", value: endedAt.formatted(date: .abbreviated, time: .shortened))
@@ -14,17 +22,7 @@ struct SessionDetailView: View {
                 }
                 LabeledContent("Total duration", value: formattedDuration(session.totalDuration))
                 LabeledContent("Active duration", value: formattedDuration(session.totalActiveDuration))
-			} header: {
-				HStack {
-					Text("Overview")
-					Spacer()
-					if (session.subject == nil) {
-						Text("NO SESSION ATTATCHED")
-							.foregroundStyle(Color.red)
-							.bold()
-					}
-				}
-			}
+            }
 
             if let studyScore = session.studyScore {
                 Section("Score") {
@@ -41,12 +39,7 @@ struct SessionDetailView: View {
             if let breaks = session.breaks, !breaks.isEmpty {
                 Section("Breaks (\(breaks.count))") {
                     ForEach(breaks) { studyBreak in
-                        VStack(alignment: .leading) {
-                            Text(studyBreak.startedAt.formatted(date: .omitted, time: .shortened))
-                            Text(formattedDuration(studyBreak.duration))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        intervalRow(startedAt: studyBreak.startedAt, duration: studyBreak.duration)
                     }
                 }
             }
@@ -54,12 +47,7 @@ struct SessionDetailView: View {
             if let sections = session.sections, !sections.isEmpty {
                 Section("Sections (\(sections.count))") {
                     ForEach(sections) { section in
-                        VStack(alignment: .leading) {
-                            Text(section.startedAt.formatted(date: .omitted, time: .shortened))
-                            Text(formattedDuration(section.duration))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+                        intervalRow(startedAt: section.startedAt, duration: section.duration)
                     }
                 }
             }
@@ -86,6 +74,34 @@ struct SessionDetailView: View {
             }
         }
         .navigationTitle(session.subjectName ?? "Session")
+        .toolbarTitleDisplayMode(.inline)
+    }
+
+    private var heroCard: some View {
+        VStack(spacing: DS.Space.s) {
+            Text(session.subjectName ?? "Unknown subject")
+                .font(.headline)
+                .foregroundStyle(.secondary)
+            Text(formattedDuration(session.totalDuration))
+                .font(.largeTitle.weight(.semibold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+        }
+        .frame(maxWidth: .infinity)
+        .surfaceCard()
+        .accessibilityElement(children: .combine)
+    }
+
+    private func intervalRow(startedAt: Date, duration: TimeInterval) -> some View {
+        VStack(alignment: .leading, spacing: DS.Space.xs) {
+            Text(startedAt.formatted(date: .omitted, time: .shortened))
+            Text(formattedDuration(duration))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+        }
+        .accessibilityElement(children: .combine)
     }
 
     private func formattedDuration(_ interval: TimeInterval) -> String {
@@ -95,6 +111,13 @@ struct SessionDetailView: View {
 
 #Preview {
     NavigationStack {
-        SessionDetailView(session: StudySession(startedAt: .now.addingTimeInterval(-3600), endedAt: .now))
+        SessionDetailView(
+            session: StudySession(
+                subjectName: "Mathematics",
+                startedAt: .now.addingTimeInterval(-3600),
+                endedAt: .now
+            )
+        )
     }
+    .modelContainer(for: StudySession.self, inMemory: true)
 }
