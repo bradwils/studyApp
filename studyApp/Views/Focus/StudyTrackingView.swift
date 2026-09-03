@@ -12,6 +12,8 @@ struct StudyTrackingView: View {
 	
 	@Environment(\.horizontalSizeClass) var sizeClass //for later changes
 	
+	@Environment(\.accessibilityReduceMotion) private var reduceMotion
+	
 	//MARK: Glass Namespaces
 	@Namespace private var glassNamespace
 	
@@ -204,6 +206,30 @@ struct StudyTrackingView: View {
 		return false
 	}
 
+	private func performMainAction() {
+		withMorphAnimation {
+			switch vm.currentSessionState {
+			case .noSession:
+				vm.startSession(ctx: modelContext)
+			case .sessionPaused:
+				vm.resumeSession()
+			case .sessionRunning:
+				vm.pauseSession()
+			}
+		}
+	}
+
+	// Glass morph + label swap; skipped entirely under Reduce Motion.
+	private func withMorphAnimation(_ changes: () -> Void) {
+		if reduceMotion {
+			changes()
+		} else {
+			withAnimation(.smooth(duration: 0.4)) {
+				changes()
+			}
+		}
+	}
+
 	private var timerAndControlsSection: some View {
 
 		//if there is an active session, skip the 'empty/daily' section
@@ -272,23 +298,9 @@ struct StudyTrackingView: View {
 					// that adjacency is what sells the morph, not a manual transition.
 					HStack(spacing: 16) {
 						Button {
-							withAnimation(.smooth(duration: 0.4)) {
-								switch vm.currentSessionState {
-								case .noSession:
-									vm.startSession(ctx: modelContext)
-
-								case .sessionPaused:
-									print("resuming session")
-									vm.resumeSession()
-
-								case .sessionRunning: //parses start anchor
-									print("pausing session")
-									vm.pauseSession()
-
-								}
-							}
+							performMainAction()
 						} label: {
-							// Sizing/font applied to the content BEFORE .buttonStyle(.glass),
+							// Sizing/font applied to the content BEFORE the button style,
 							// with .glassEffectID chained immediately after it — that order is
 							// what lets the container track this as the actual glass surface.
 							Text(mainButtonLabel)
@@ -297,15 +309,17 @@ struct StudyTrackingView: View {
 								.font(.body)
 								.padding(.horizontal)  //padding for start button, makes button wider than text
 						}
-						.buttonStyle(.glass)
+						.buttonStyle(.glassProminent)
 						.glassEffectID("startPauseButton", in: glassNamespace)
 						.accessibilityIdentifier("startPauseButton")
 
 						if isSessionPaused {
 							Button {
-								vm.endSession(context: modelContext)
+								withMorphAnimation {
+									vm.endSession(context: modelContext)
+								}
 							} label: {
-								Text("Endbutton")
+								Text("End Session")
 									.font(.body)
 									.padding(.horizontal)  //padding for start button, makes button wider than text
 							}
