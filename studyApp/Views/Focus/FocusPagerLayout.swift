@@ -12,9 +12,6 @@ enum FocusPagerLayout {
     // otherwise push the gap to different offsets.
     static let headerSlotHeight: CGFloat = 96
 
-    static let ringDiameter: CGFloat = 250
-    static let ringLineWidth: CGFloat = 8
-
     // Page index within the horizontal pager.
     static let trackingPage = 0
     static let focusPage = 1

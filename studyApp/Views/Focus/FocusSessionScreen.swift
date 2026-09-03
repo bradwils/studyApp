@@ -126,7 +126,6 @@ struct FocusSessionScreen: View {
 
             PinnedTimerSlot()
                 .overlay { timerDigits }
-                .overlay { progressRing }
 
             Spacer()
         }
@@ -156,20 +155,6 @@ struct FocusSessionScreen: View {
             )
         )
         .foregroundStyle(timerColor)
-    }
-
-    // Concentric with the digits because it lives in this fixed layer, but only means
-    // anything on the focus page, so it fades in with the swipe.
-    private var progressRing: some View {
-        Circle()
-            .trim(from: 0, to: vm.focusProgress)
-            .stroke(
-                timerColor.opacity(0.8),
-                style: StrokeStyle(lineWidth: FocusPagerLayout.ringLineWidth, lineCap: .round)
-            )
-            .frame(width: FocusPagerLayout.ringDiameter, height: FocusPagerLayout.ringDiameter)
-            .rotationEffect(.degrees(-90))
-            .opacity(vm.targetDuration == nil ? 0 : pageBlend)
     }
 
     private var pageIndicator: some View {
