@@ -331,10 +331,6 @@ struct StudyTrackingView: View {
 							// transition on insert/remove; adding our own fights it.
 						}
 					}
-					.frame(
-						maxWidth: .infinity,
-						alignment: .leading
-					)  //align to left
 				}
 		}
 	}
