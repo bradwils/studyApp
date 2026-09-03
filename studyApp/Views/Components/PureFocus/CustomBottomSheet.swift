@@ -286,8 +286,12 @@ struct CustomBottomSheet: View {
     ///   - containerMinY: The minimum Y position of the container in global coordinates
     /// - Returns: A configured DragGesture
     private func createDragGesture(containerHeight: CGFloat, containerMinY: CGFloat) -> some Gesture {
-        DragGesture()
+        DragGesture(minimumDistance: 10)
             .onChanged { value in
+                // Horizontal drags belong to the pager underneath, so only vertical
+                // intent is claimed here — anything sideways falls through to it.
+                guard abs(value.translation.width) <= abs(value.translation.height) else { return }
+
                 handleDragChanged(
                     value: value,
                     containerHeight: containerHeight,
@@ -336,6 +340,7 @@ struct CustomBottomSheet: View {
         containerHeight: CGFloat,
         containerMinY: CGFloat
     ) {
+        guard isDragging else { return }
         isDragging = false
         
         // STEP 1: Convert detent ratios (0.1, 0.3, 0.7) to absolute heights

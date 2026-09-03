@@ -51,6 +51,14 @@ final class StudyTrackingViewModel {
 	
 	private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
 
+    var targetDuration: TimeInterval?
+    var focusLockEnabled: Bool = false
+
+    var minHours: Int = 0
+    var maxHours: Int = 8
+    var minMinutes: Int = 0
+    var maxMinutes: Int = 59
+
 	//MARK: Enums
 	
 	enum SessionState: Equatable {
@@ -96,6 +104,19 @@ final class StudyTrackingViewModel {
         }
         logger.log("all else")
         return .sessionPaused(ssw!.lastPausedAt!) //give the Date paused at.
+    }
+
+    var elapsed: TimeInterval {
+        ssw?.totalRunningTime ?? 0
+    }
+
+    var focusProgress: CGFloat {
+        guard let target = targetDuration, target > 0 else { return 0 }
+        return CGFloat(min(elapsed / target, 1))
+    }
+
+    var timerIsRunning: Bool {
+        ssw?.stopwatchIsRunning ?? false
     }
 
 
@@ -210,6 +231,15 @@ final class StudyTrackingViewModel {
         logger.log("updateSubjectSelection(_:) called with subject: \(String(describing: subject))")
         guard activeSession == nil else { return }
         selectedSubject = subject
+    }
+
+    func setTarget(_ duration: TimeInterval) {
+        targetDuration = duration
+    }
+
+    // Non-destructive by design: the session and stopwatch keep running, only the target is forgotten.
+    func clearTarget() {
+        targetDuration = nil
     }
 
     public func hasAlreadyStudiedToday() -> Bool {

@@ -7,7 +7,7 @@ struct MainTabView: View {
 
             Tab("Focus", systemImage: "book.badge.plus", role: .search) {
                 NavigationStack {
-                    StudyTrackingView()
+                    FocusSessionScreen()
                 }
             }
             

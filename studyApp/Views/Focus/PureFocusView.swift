@@ -4,57 +4,50 @@
 //  Created by brad wils on 15/12/25.
 
 import SwiftUI
+import SwiftData
 import UIKit
 
+// The focus page of FocusSessionScreen's pager. Transparent and timer-less: the
+// container draws the gradient and the pinned timer, and `PinnedTimerSlot` is the
+// gap this page leaves for it.
 //need to use white UI elements exclusively.
-struct PureFocusView: View {
+struct FocusPageContent: View {
 
-    @Environment(\.dismiss) var dismiss //get the environment dismiss value
+    let vm: StudyTrackingViewModel
 
-    @Binding var isPresented: Bool //to be able to dismiss
+    @Environment(\.modelContext) private var modelContext
 
-    /// Subject the current session is allocated to — its `code` drives the top-of-screen label.
-    let subject: Subject?
+    // MARK: - Target Duration
 
-    @State var timerTimeInterval: TimeInterval = 0 //0.0 gets binded to our durationpicker, so this gets changed as the picker changes value.
+    @State private var isEditingTarget = false
+    @State private var draftTarget: TimeInterval = 0
 
-    // MARK: - State Properties
+    // MARK: - Unlock Confirmation (shake-to-confirm)
 
-    @State private var vm = PureFocusViewModel()
-
-    //Lock (focus feature)
-    @State private var focusLockEnabled: Bool = false;
-
-    // MARK: - Leave Confirmation (shake-to-confirm)
-
-    /// Taps required on "Leave" once a timer has started, before it's allowed to dismiss.
-    private let leaveTapsRequiredToExit = 10
+    /// Taps required on the lock button, while locked, before focus lock releases.
+    private let unlockTapsRequired = 10
     /// Minimum gap between taps that count — filters out accidental double-taps/mashing.
-    private let leaveTapMinInterval: TimeInterval = 0.15
+    private let unlockTapMinInterval: TimeInterval = 0.15
 
-    @State private var leaveTapCount = 0
-    @State private var lastLeaveTapAt: Date = .distantPast
-    @State private var leaveShakeTrigger: CGFloat = 0
-
-
+    @State private var unlockTapCount = 0
+    @State private var lastUnlockTapAt: Date = .distantPast
+    @State private var unlockShakeTrigger: CGFloat = 0
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            // Animated gradient background
-            TimerGradientBackground(
-                progress: vm.timerProgress,
-                isTimerActive: $vm.timerActivelyRunning
-            )
-            
-            VStack() {
+            // Spacing 0 above the slot for the same reason as the tracking page: the slot
+            // must sit exactly headerSlotHeight down to meet the pinned timer layer.
+            VStack(spacing: 0) {
                 topScreenCode
-                Spacer()
-                    .frame(maxHeight: 150)
-                
-                // Timer controls
-                timerControlsSection
-                
-                Spacer()
+                    .frame(height: FocusPagerLayout.headerSlotHeight)
+
+                PinnedTimerSlot()
+
+                VStack {
+                    timerControlsSection
+
+                    Spacer()
+                }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.horizontal, 24)
@@ -62,70 +55,80 @@ struct PureFocusView: View {
 			//THIS WILL BE CHANGED SO WHEN WE HAVE A WIDER ORIENTATION, MOVE THIS TO BE ON THE SIDE AND ADJUST PUREFOCUSVIEW ALIGNMENT TO MATCH. so, (simple) we'll vstack it instead of hstack depending on horizontalSizeClass
             CustomBottomSheet()
         }
-        .toolbar(.hidden, for: .tabBar)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button("Leave") {
-                    handleLeaveTap()
-                }
-                .modifier(ShakeEffect(animatableData: leaveShakeTrigger))
-            }
-        }
-        .foregroundColor(dynamicForegroundColor)
-        .navigationBarBackButtonHidden(false)
-        .onChange(of: vm.timerActivelyExists) { _, timerExists in
-            // A fresh timer gets a fresh set of confirmation taps.
-            if !timerExists {
-                leaveTapCount = 0
+        .toolbar(vm.focusLockEnabled ? .hidden : .visible, for: .tabBar)
+        .onChange(of: vm.focusLockEnabled) { _, locked in
+            // A freshly engaged lock gets a fresh set of confirmation taps.
+            if locked {
+                unlockTapCount = 0
             }
         }
     }
 
-    // MARK: - Leave Confirmation
+    // MARK: - Unlock Confirmation
 
-    /// Once a timer has started, "Leave" requires `leaveTapsRequiredToExit` taps
-    /// (each acknowledged with a shake + haptic) before it actually dismisses.
-    private func handleLeaveTap() {
-        guard vm.timerActivelyExists else {
-            dismiss()
+    /// Locking is a single tap; unlocking takes `unlockTapsRequired` deliberate taps,
+    /// each acknowledged with a shake + haptic.
+    private func handleLockTap() {
+        guard vm.focusLockEnabled else {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                vm.focusLockEnabled = true
+            }
             return
         }
 
         let now = Date()
-        guard now.timeIntervalSince(lastLeaveTapAt) >= leaveTapMinInterval else { return }
-        lastLeaveTapAt = now
+        guard now.timeIntervalSince(lastUnlockTapAt) >= unlockTapMinInterval else { return }
+        lastUnlockTapAt = now
 
-        leaveTapCount += 1
-        guard leaveTapCount < leaveTapsRequiredToExit else {
-            dismiss()
+        unlockTapCount += 1
+        guard unlockTapCount < unlockTapsRequired else {
+            withAnimation(.easeInOut(duration: 0.5)) {
+                vm.focusLockEnabled = false
+            }
             return
         }
 
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         withAnimation(.linear(duration: 0.25)) {
-            leaveShakeTrigger += 1
+            unlockShakeTrigger += 1
         }
     }
-    
+
+    // MARK: - Session Controls
+
+    private var mainButtonSymbol: String {
+        if case .sessionRunning = vm.currentSessionState { return "pause.fill" }
+        return "play.fill"
+    }
+
+    private var mainButtonLabel: String {
+        switch vm.currentSessionState {
+        case .noSession:
+            return "Start"
+        case .sessionPaused:
+            return "Resume"
+        case .sessionRunning:
+            return "Pause"
+        }
+    }
+
+    private func performMainAction() {
+        switch vm.currentSessionState {
+        case .noSession:
+            vm.startSession(ctx: modelContext)
+        case .sessionPaused:
+            vm.resumeSession()
+        case .sessionRunning:
+            vm.pauseSession()
+        }
+    }
+
     // MARK: - Subviews
-    
+
     private var timerControlsSection: some View {
         VStack(spacing: 20) {
-            // Remaining time display
-            Text(remainingTimeFormatted)
-                .bold()
-                .font(.system(size: 70))
-                .monospacedDigit()
-            
-            remainingTime
-                
-            
-            // Duration picker (when timer is not running)
-            if !vm.timerActivelyRunning && vm.elapsedTime == 0 {
-                durationPicker
-            }
-            
-            // Timer control buttons
+            targetSection
+
             HStack(spacing: 20) {
                 //UITWEAK
                 // .buttonStyle(.glass) is an iOS 26 style that provides the system glass
@@ -133,16 +136,12 @@ struct PureFocusView: View {
                 // to manually manage foreground/background colors or pressed states.
                 // Start/Pause button
                 Button(action: {
-                    vm.toggleTimer()
+                    performMainAction()
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: vm.timerActivelyRunning ? "pause.fill" : "play.fill")
-                        
-                        if (vm.timerActivelyExists) {
-                            Text(vm.timerActivelyRunning ? "Pause" : "Resume")
-                        } else {
-                            Text("Start")
-                        }
+                        Image(systemName: mainButtonSymbol)
+
+                        Text(mainButtonLabel)
                     }
                     .font(.title3)
                     .fontWeight(.semibold)
@@ -151,37 +150,30 @@ struct PureFocusView: View {
                 }
                 .buttonStyle(.glass)
                 //UIEND
-                
+
                 //lock button: PAID FEATURE
                 Button(action: {
-                    withAnimation(
-                        .easeInOut(duration: 0.5)
-                    ) {
-                        focusLockEnabled.toggle()
-                        
-                    }
+                    handleLockTap()
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: focusLockEnabled ? "lock.fill" : "lock.open.fill")
+                        Image(systemName: vm.focusLockEnabled ? "lock.fill" : "lock.open.fill")
                             .contentTransition(.symbolEffect(.replace.magic(fallback: .offUp.byLayer), options: .nonRepeating))
-                            
-                        
-                        if (vm.timerActivelyExists) {
-                            Text(vm.timerActivelyRunning ? "Pause" : "Resume")
-                        } else {
-                            Text("Start")
-                        }
+
+                        Text(vm.focusLockEnabled ? "Unlock" : "Lock")
                     }
                 }
                 .buttonStyle(.glass)
-                
+                .modifier(ShakeEffect(animatableData: unlockShakeTrigger))
+
                 //UITWEAK
-                // Reset button (only show when timer has started)
+                // Reset button (only show when a target exists) — drops the target only,
+                // the session itself keeps running.
                 // Uses the same .glass style so it visually matches the other controls.
-                if vm.elapsedTime > 0 {
+                if vm.targetDuration != nil {
                     Button(action: {
                         withAnimation {
-                            vm.resetTimer()
+                            vm.clearTarget()
+                            isEditingTarget = false
                         }
                     }) {
                         Image(systemName: "arrow.counterclockwise")
@@ -196,41 +188,43 @@ struct PureFocusView: View {
             .padding(.top, 10)
         }
     }
-    
-    private var durationPicker: some View {
-        VStack(spacing: 8) {
-            DurationPicker(duration: $vm.currentTimerTotalDuration, minHours: $vm.minHours, maxHours: $vm.maxHours, minMinutes: $vm.minMinutes, maxMinutes: $vm.maxMinutes)
+
+    @ViewBuilder
+    private var targetSection: some View {
+        if vm.targetDuration == nil && !isEditingTarget {
+            Button("Set target") {
+                isEditingTarget = true
+            }
+            .buttonStyle(.glass)
+        } else {
+            VStack(spacing: 8) {
+                durationPicker
+
+                if vm.targetDuration != draftTarget {
+                    Button("Set") {
+                        vm.setTarget(draftTarget)
+                        isEditingTarget = false
+                    }
+                    .buttonStyle(.glass)
+                }
+            }
         }
     }
-    
+
+    private var durationPicker: some View {
+        @Bindable var vm = vm
+        return DurationPicker(duration: $draftTarget, minHours: $vm.minHours, maxHours: $vm.maxHours, minMinutes: $vm.minMinutes, maxMinutes: $vm.maxMinutes)
+    }
+
     private var topScreenCode: some View {
-        Text(subject?.code ?? "—")
+        Text(vm.selectedSubject?.code ?? "—")
             .font(.system(size: 35))
             .lineLimit(1)
     }
-    
-    // MARK: - Computed Properties
-    
-    private var remainingTimeFormatted: String {
-        vm.remainingTime.formattedClock
-    }
-    
-    /// Dynamically adjust foreground color based on background brightness
-    private var dynamicForegroundColor: Color {
-        vm.timerProgress > 0.6 ? .black : .white
-    }
-    
-    //new timer stuff
-    var remainingTime: some View {
-        Text("vm.totalduration: \(vm.currentTimerTotalDuration)")
-    }
 }
-    
-                
+
+
 #Preview {
-    PureFocusView(isPresented: .constant(true), subject: Subject(name: "Mathematics", code: "MATH101"))
+    FocusPageContent(vm: StudyTrackingViewModel())
+        .modelContainer(for: Subject.self, inMemory: true)
 }
-    
-
-
-//TODO: make the picker bind to vm.currentTimerTotalDuration properly.
