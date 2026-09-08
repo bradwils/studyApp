@@ -7,9 +7,7 @@ import SwiftData
 // sit outside for the same reason — a background per page drags a hard vertical seam
 // across the screen on every drag.
 struct FocusSessionScreen: View {
-	
-	@State private var scrollPage: Int = 1
- 
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var vm: StudyTrackingViewModel
@@ -195,9 +193,10 @@ struct FocusSessionScreen: View {
     private var pageIndicator: some View {
         HStack(spacing: 6) {
             ForEach(0..<2, id: \.self) { page in
-                let isActive = page == FocusPagerLayout.trackingPage ? 1 - pageBlend : pageBlend //re-update this!
+                let isActive = page == FocusPagerLayout.trackingPage ? 1 - pageBlend : pageBlend
                 Circle()
-                    .fill()
+                    .fill(.white)
+                    .opacity(0.35 + 0.65 * isActive)
                     .frame(width: 6, height: 6)
             }
         }

@@ -48,7 +48,7 @@ final class StudyTrackingViewModel {
 		///To initialise, pass the starting time & the TimeInterval of the goal.
 		init(startTime: Date, goal: TimeInterval) {
 			self.pureFocusStartTime = startTime
-			self.pureFocusGoal = Date.now.addingTimeInterval(goal)
+			self.pureFocusGoal = startTime.addingTimeInterval(goal)
 		}
 
 	}
@@ -214,9 +214,13 @@ final class StudyTrackingViewModel {
         }
         ssw!.endBreak()
         activeSession?.lastPausedAt = nil
-        
+
         studyBreaks.last?.endedAt = now
-        
+
+        // A pure-focus goal is a fixed Date, not a duration, so a pause has to be
+        // paid back by pushing the goal out — otherwise the break silently counts
+        // against the focus target.
+        activePureFocusSession?.pureFocusGoal.addTimeInterval(pausedDuration)
     }
 
     //Finalize section and assign all values over to the study session to 'finish' it
@@ -232,6 +236,8 @@ final class StudyTrackingViewModel {
         ssw?.end()
         ssw = nil
         activeSession = nil
+        closePureFocusSession()
+        focusLockEnabled = false
     }
 
     /// Abort an active session without persisting; use for user-initiated cancels.
@@ -241,6 +247,8 @@ final class StudyTrackingViewModel {
         try? ctx.save()
         activeSession = nil
         ssw = nil
+        closePureFocusSession()
+        focusLockEnabled = false
     }
 
     /// Increment an interruption counter (e.g., notifications/away events); can be wired to external signals later.
