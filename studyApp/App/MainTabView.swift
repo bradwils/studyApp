@@ -2,6 +2,8 @@ import SwiftUI
 
 struct MainTabView: View {
 	
+	var identifier: String
+	
     var body: some View {
         TabView {
 
@@ -13,7 +15,7 @@ struct MainTabView: View {
             
             Tab("Debug", systemImage: "exclamationmark.triangle.fill") {
                 NavigationStack {
-                    SettingsView()
+					SettingsView(build: identifier)
                 }
             }
             
@@ -34,15 +36,10 @@ struct MainTabView: View {
                     SessionsView()
                 }
             }
-			Tab("master [CI/CD]", systemImage: "number") {
-				NavigationStack {
-					Text("master [CI/CD]")
-				}
-			}
         }
     }
 }
 
 #Preview {
-	MainTabView()
+	MainTabView(identifier: "preview")
 }
