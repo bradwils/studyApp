@@ -156,6 +156,7 @@ struct TrackingPageContent: View {
 			}
 		}
 	}
+		
 
 	// Glass morph + label swap; skipped entirely under Reduce Motion.
 	private func withMorphAnimation(_ changes: () -> Void) {
@@ -239,9 +240,6 @@ struct TrackingPageContent: View {
 							.buttonStyle(.glass)
 							.glassEffectID("endSessionButton", in: glassNamespace)
 							.accessibilityIdentifier("endSessionButton")
-							// No manual `.transition` here — GlassEffectContainer +
-							// matching glassEffectIDs already supplies the morph
-							// transition on insert/remove; adding our own fights it.
 						}
 					}
 				}

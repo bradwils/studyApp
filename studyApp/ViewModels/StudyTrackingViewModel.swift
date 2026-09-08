@@ -3,55 +3,66 @@
 //
 //  Session Store / Logic for study tracking.
 
-import Foundation
 import Combine
+import Foundation
 import SwiftData
 import os
 
-// MARK: - State Overview
-// Three layers of state are touched during a session lifecycle:
-//
-// VM (self)
-//   activeSession       — the live StudySession being built; nil when idle
-//   completedSessions   — archive of finished sessions
-//   selectedSubject     — subject for the next/current session
-//   sessionIsRunning    — true if there's an active stopwatch (running or paused)
-//   ssw    — optional Stopwatch tracking elapsed time
-//
-// Stopwatch (ssw)
-//   startedAt           — wall-clock anchor; re-anchored on resume
-//   stopwatchIsRunning  — true while actively counting
-//   lastPausedAt        — set on pause; used to compute break length on resume
-//   previousBreaksLength— accumulated break time subtracted from wall time
-//   totalStudyingTime   — computed: wall elapsed − previousBreaksLength
-//
-// StudySession (activeSession)
-//   startedAt / endedAt — session boundaries
-//   lastPausedAt        — persisted pause timestamp (mirrors stopwatch.lastPausedAt)
-//   totalBreakDuration  — accumulated break time written on end
-//   breaks              — [StudyBreak] appended when pause > breakThreshold
-//   interruptionCount   — incremented by addInterruption()
-//   studyScore / notes / friends / location — written at endSession()
+//TODO: Check over changes, particuarly for the PureFocusTimer.
 
 @Observable
 final class StudyTrackingViewModel {
-    let logger = Logger(subsystem: "com.studyApp", category: "StudyTrackingViewModel")
+    let studyTrackingLogger = Logger(subsystem: "com.studyApp", category: "studyTracking")
+	
+	let pureFocusLogger = Logger(subsystem: "com.studyApp", category: "pureFocus")
     
+	
 
     var ssw: Stopwatch?
     var studyBreaks: [StudyBreak]
     var studySections: [StudySection]
     var activeSession: StudySession? {
         didSet {
-            logger.log("activeSession set to \(String(describing: self.activeSession))")
+            studyTrackingLogger.log("activeSession set to \(String(describing: self.activeSession))")
         }
     }
 	
     var selectedSubject: Subject?
 	
 	private let breakThreshold: TimeInterval = 60 * 3 // 3 minutes to count as a break
+	
+	
+	//MARK: PureFocus vars
+	
+	var activePureFocusSession: pureFocusSession? = nil
+	
+	struct pureFocusSession {
 
-    var targetDuration: TimeInterval?
+		///Marks the starting Date of the pureFocusSesssion
+		let pureFocusStartTime: Date
+
+		///Marks the goal Date of the pureFocusSession; cleared independently of the
+		///session by closeSession() so the clock can keep running with no target.
+		var pureFocusGoal: Date
+
+		///To initialise, pass the starting time & the TimeInterval of the goal.
+		init(startTime: Date, goal: TimeInterval) {
+			self.pureFocusStartTime = startTime
+			self.pureFocusGoal = Date.now.addingTimeInterval(goal)
+		}
+
+	}
+
+	/// marks how we've been focused for in our session
+	var pureFocusDuration: TimeInterval? {
+		guard let startTime = self.activePureFocusSession?.pureFocusStartTime else { return nil }
+		return Date.now.timeIntervalSince(startTime)
+	}
+
+	var isFocusSessionRunning: Bool { return activePureFocusSession != nil }
+
+	
+	///Controlled by the lock button
     var focusLockEnabled: Bool = false
 
     var minHours: Int = 0
@@ -66,6 +77,7 @@ final class StudyTrackingViewModel {
 		case noSession
 		case sessionRunning(Date) //Date contains the adjustedStartTimeForAnchor
 		case sessionPaused(Date)  //Date contains lastPausedAt
+		
 		
 	}
 	
@@ -88,31 +100,42 @@ final class StudyTrackingViewModel {
 
     // Minimum paused duration that counts as a break when resuming; tweak for different break heuristics.
     
+	
 	var sessionIsRunning: Bool {
-		ssw != nil
+		activeSession != nil
 	}
     
 
     var currentSessionState: SessionState {
         guard let isRunning = ssw?.stopwatchIsRunning else {
-            logger.log("logging noSession")
+            studyTrackingLogger.log("logging noSession")
             return .noSession
         }
+		
         if isRunning == true { //give the anchor Date
-            logger.log("isRunning == true")
+            studyTrackingLogger.log("isRunning == true")
             return .sessionRunning(ssw!.adjustedStartTimeForAnchor!)
         }
-        logger.log("all else")
+		
+        studyTrackingLogger.log("all else")
         return .sessionPaused(ssw!.lastPausedAt!) //give the Date paused at.
     }
 
     var elapsed: TimeInterval {
         ssw?.totalRunningTime ?? 0
     }
+	
 
-    var focusProgress: CGFloat {
-        guard let target = targetDuration, target > 0 else { return 0 }
-        return CGFloat(min(elapsed / target, 1))
+    var pureFocusSessionProgress: CGFloat? {
+		guard let session = self.activePureFocusSession else { return nil }
+				
+		let goal =  session.pureFocusGoal
+				
+		let target = goal.timeIntervalSince(session.pureFocusStartTime)
+				
+		guard target > 0 else { return nil }
+		let elapsedFraction = Date.now.timeIntervalSince(session.pureFocusStartTime) / target
+        return CGFloat(min(max(elapsedFraction, 0), 1))
     }
 
     var timerIsRunning: Bool {
@@ -138,9 +161,9 @@ final class StudyTrackingViewModel {
     // Start a fresh session (count-up) for an optional subject; discards any in-progress session.
     func startSession(ctx: ModelContext) {
         let now = Date()
-        logger.log("startSession() called")
+        studyTrackingLogger.log("startSession() called")
         guard activeSession == nil else {
-            logger.warning("Failed to start session; there is already an active session.")
+            studyTrackingLogger.warning("Failed to start session; there is already an active session.")
             return
         }
 
@@ -149,7 +172,7 @@ final class StudyTrackingViewModel {
         studySections = []
 
         activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: now)
-        logger.log("Session Started")
+        studyTrackingLogger.log("Session Started")
         
         ctx.insert(activeSession!)
         try? ctx.save()
@@ -157,7 +180,7 @@ final class StudyTrackingViewModel {
 
     /// Convenience for the UI start/stop button; routes to pause/resume depending on current state.
     func togglePause() {
-        logger.log("togglePause() called")
+        studyTrackingLogger.log("togglePause() called")
         guard activeSession != nil else { return }
         (ssw?.stopwatchIsRunning ?? false) ? pauseSession() : resumeSession()
     }
@@ -168,7 +191,7 @@ final class StudyTrackingViewModel {
     //      - Resume stopwatch & update resume timing
     func pauseSession() {
         let now = Date()
-        logger.log("pauseSession() called")
+        studyTrackingLogger.log("pauseSession() called")
         guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
         ssw!.startBreak()
         activeSession?.lastPausedAt = ssw!.lastPausedAt
@@ -178,7 +201,7 @@ final class StudyTrackingViewModel {
 
     /// Resume timing and log a break if the pause exceeded the break threshold.
     func resumeSession() {
-        logger.log("resumeSession() called")
+        studyTrackingLogger.log("resumeSession() called")
         guard let pausedAt = ssw!.lastPausedAt, !(ssw?.stopwatchIsRunning ?? false) else { return }
         let now = Date()
         let pausedDuration = now.timeIntervalSince(pausedAt)
@@ -198,7 +221,7 @@ final class StudyTrackingViewModel {
 
     //Finalize section and assign all values over to the study session to 'finish' it
     func endSession(context: ModelContext) {
-        logger.log("endSession() called")
+        studyTrackingLogger.log("endSession() called")
         guard let session = activeSession else { return }
         let now = Date()
         session.endedAt = now
@@ -213,7 +236,7 @@ final class StudyTrackingViewModel {
 
     /// Abort an active session without persisting; use for user-initiated cancels.
     func cancelActiveSession(ctx: ModelContext) {
-        logger.log("current session cancelled")
+        studyTrackingLogger.log("current session cancelled")
         ctx.delete(activeSession!)
         try? ctx.save()
         activeSession = nil
@@ -222,35 +245,35 @@ final class StudyTrackingViewModel {
 
     /// Increment an interruption counter (e.g., notifications/away events); can be wired to external signals later.
     func addInterruption() {
-        logger.log("addInterruption() called")
+        studyTrackingLogger.log("addInterruption() called")
         activeSession?.interruptionCount += 1
     }
 
     /// Update the subject selection for the next session (only allowed when no session is active).
     func updateSubjectSelection(_ subject: Subject?) {
-        logger.log("updateSubjectSelection(_:) called with subject: \(String(describing: subject))")
+        studyTrackingLogger.log("updateSubjectSelection(_:) called with subject: \(String(describing: subject))")
         guard activeSession == nil else { return }
         selectedSubject = subject
     }
 
-    func setTarget(_ duration: TimeInterval) {
-        targetDuration = duration
+    func startPureFocusSession(_ duration: TimeInterval) {
+		let now = Date.now
+		activePureFocusSession = pureFocusSession(startTime: now, goal: duration)
     }
 
     // Non-destructive by design: the session and stopwatch keep running, only the target is forgotten.
-    func clearTarget() {
-        targetDuration = nil
+    func closePureFocusSession() {
+		activePureFocusSession = nil
     }
 
     public func hasAlreadyStudiedToday() -> Bool {
-        logger.log("hasAlreadyStudiedToday() called")
-        //todo
+
         return false; //stub placeholder
     }
     
     
     public func logAllVars() {
-        logger.log("""
+        studyTrackingLogger.log("""
         
         --- StudyTrackingViewModel State ---
         sessionIsRunning:  \(self.sessionIsRunning)

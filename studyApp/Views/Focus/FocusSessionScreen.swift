@@ -7,40 +7,58 @@ import SwiftData
 // sit outside for the same reason — a background per page drags a hard vertical seam
 // across the screen on every drag.
 struct FocusSessionScreen: View {
-
+	
+	@State private var scrollPage: Int = 1
+ 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var vm = StudyTrackingViewModel()
+    @State private var vm: StudyTrackingViewModel
 
-    // 0 on the tracking page, 1 on the focus page, continuous in between.
+    /// 0 on the tracking page, 1 on the focus page, provides continious scale for opacity functions
     @State private var pageOffset: CGFloat = 0
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerFontSize: CGFloat = 90
 
-    var body: some View {
-        ZStack {
-            // focusProgress resolves Date.now on read, so @Observable has nothing to
-            // invalidate on and the ring, gradient and colour would render once and
-            // freeze. These two layers are pumped by a clock instead; the pager is
-            // deliberately left outside so a tick doesn't rebuild the page content.
-            ticking { backgroundLayer }
-            pager
-            ticking { pinnedTimerLayer }
-        }
+    // Defaulted so every real call site (MainTabView) is unaffected; the preview below
+    // injects a pre-seeded vm so the animated gradient has something to show.
+    init(vm: StudyTrackingViewModel = StudyTrackingViewModel()) {
+        _vm = State(initialValue: vm)
     }
 
-    // Redraw pump only — the closure re-reads vm.focusProgress on each tick rather than
-    // deriving anything from the tick date. Idle sessions need no pump at all.
-    @ViewBuilder
-    private func ticking<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View {
-        switch vm.currentSessionState {
-        case .noSession:
-            content()
-        case .sessionRunning(let anchor), .sessionPaused(let anchor):
-            TimelineView(.periodic(from: anchor, by: 1)) { _ in
-                content()
+    var body: some View {
+        ZStack {
+            // backgroundLayer and pinnedTimerLayer share one TimelineView so timerDigits'
+            // blendMode(.difference) composites against the actual gradient pixels instead
+            // of being isolated into its own empty layer — confirmed in the simulator.
+            // pager stays outside so a tick doesn't rebuild page content; drawing it last
+            // (on top) is safe because pinnedTimerLayer already disables hit testing, and
+            // both pager pages leave the same headerSlotHeight gap the digits sit in, so
+            // nothing visually overlaps.
+			
+			///Ticking pushes our changes for the background layer
+			
+			ZStack {
+				ticking {
+                    backgroundLayer
+//                    pinnedTimerLayer moved --> check this doesnt cause isues!
+                }
+				pinnedTimerLayer
             }
+            pager
         }
+    }
+	/// Allow periodic updates for contained views; currently used to allow the creeping foucs session gradient background to update every 0.5s
+    /// double viewbuilder allows for, if needed, stacked views to be parsed through
+    @ViewBuilder
+    private func ticking<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View { //remember; Content is a generic term, 'content' is what we're identifying the closure as. Here, we're ultimately saying 'something generic, Content, needs to conform to some type of View. content, my closure, is what ends up getting captured by the second closure (TimelineView(xxyz) { HERE } (and persists beyond just the function, as per @escaping).
+		switch vm.currentSessionState {
+		case .noSession:
+			content()
+		case .sessionRunning(let anchor), .sessionPaused(let anchor):
+			TimelineView(.periodic(from: anchor, by: 0.5)) { _ in //analyse the battery drain & potential differences later, can probably be nuked to 10s
+				content()
+			}
+		}
     }
 
     // Reduce Motion gets the destination state rather than a crossfade travelling with the drag.
@@ -57,15 +75,20 @@ struct FocusSessionScreen: View {
                 TrackingPageContent(vm: vm)
                     .containerRelativeFrame(.horizontal)
 
-                FocusPageContent(vm: vm)
-                    .containerRelativeFrame(.horizontal)
+				if (vm.sessionIsRunning) {
+					FocusPageContent(vm: vm)
+						.containerRelativeFrame(.horizontal)
+				}
             }
-            .scrollTargetLayout()
+			.scrollTargetLayout()
         }
-        .scrollTargetBehavior(.paging)
-        .scrollIndicators(.hidden)
-        .scrollBounceBehavior(.basedOnSize)
+		
+		.scrollTargetBehavior(.paging)
+		.scrollIndicators(.never)
+		.scrollBounceBehavior(.basedOnSize)
         .scrollDisabled(vm.focusLockEnabled)
+		
+		///Track how far we've moved between screen1 and screen2. Needed to animate the gradual opacity of the bg & the pager dots
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
             let width = geometry.containerSize.width
             guard width > 0 else { return 0 }
@@ -84,7 +107,7 @@ struct FocusSessionScreen: View {
             trackingGradient
                 .opacity(1 - pageBlend)
 
-            TimerGradientBackground(progress: vm.focusProgress, isTimerActive: vm.timerIsRunning)
+            TimerGradientBackground(progress: vm.pureFocusSessionProgress ?? 0, isTimerActive: vm.timerIsRunning)
                 .opacity(pageBlend)
         }
         .ignoresSafeArea()
@@ -126,72 +149,71 @@ struct FocusSessionScreen: View {
 
             PinnedTimerSlot()
                 .overlay { timerDigits }
-                .overlay { progressRing }
 
             Spacer()
         }
-        .overlay(alignment: .top) {
-            pageIndicator
-                .padding(.top, 8)
-        }
+		.overlay(alignment: .top) {
+			if case .sessionRunning = vm.currentSessionState { pageIndicator }
+		}
         .allowsHitTesting(false)
     }
 
-    private var timerDigits: some View {
-        Group {
-            switch vm.currentSessionState {
-            case .noSession:
-                Text("--:--")
-            case .sessionRunning(let anchor):
-                ElapsedTimerText(anchor: anchor)
-            case .sessionPaused(let anchor):
-                ElapsedTimerText(anchor: anchor)
-            }
-        }
-        .font(
-            .system(
-                size: timerFontSize,
-                weight: .semibold,
-                design: .monospaced
-            )
-        )
-        .foregroundStyle(timerColor)
-    }
+	//main Timer Element Content. Runs through two enums; changing content based on first if there is a PureFocusSession active and second by the state of the second (given no PureFocusSession)
+	private var timerDigits: some View {
+		Group {
+			if (vm.isFocusSessionRunning) {
+				ElapsedTimerText(anchor: vm.activePureFocusSession!.pureFocusGoal) // change timer to pureFocus start time anchor
+			} else {
+				switch vm.currentSessionState {
+				case .noSession:
+					Text("--:--")
+				case .sessionRunning(let anchor): //anchor = total study time cumulative
+					ElapsedTimerText(anchor: anchor)
+				case .sessionPaused(let anchor): //anchor = start of break time
+					ElapsedTimerText(anchor: anchor)
+				}
+			}
+
+
+		}
+		.font(
+			.system(
+				size: timerFontSize,
+				weight: .semibold,
+				design: .monospaced
+			)
+		)
+		// Auto-contrast against whatever's underneath, instead of thresholding
+		// focusProgress by hand: difference(white, background) flips black/white.
+		.foregroundStyle(.white)
+		.blendMode(.difference)
+	}
 
     // Concentric with the digits because it lives in this fixed layer, but only means
     // anything on the focus page, so it fades in with the swipe.
-    private var progressRing: some View {
-        Circle()
-            .trim(from: 0, to: vm.focusProgress)
-            .stroke(
-                timerColor.opacity(0.8),
-                style: StrokeStyle(lineWidth: FocusPagerLayout.ringLineWidth, lineCap: .round)
-            )
-            .frame(width: FocusPagerLayout.ringDiameter, height: FocusPagerLayout.ringDiameter)
-            .rotationEffect(.degrees(-90))
-            .opacity(vm.targetDuration == nil ? 0 : pageBlend)
-    }
 
     private var pageIndicator: some View {
         HStack(spacing: 6) {
             ForEach(0..<2, id: \.self) { page in
-                let isActive = page == FocusPagerLayout.trackingPage ? 1 - pageBlend : pageBlend
+                let isActive = page == FocusPagerLayout.trackingPage ? 1 - pageBlend : pageBlend //re-update this!
                 Circle()
-                    .fill(timerColor.opacity(0.2 + 0.5 * isActive))
+                    .fill()
                     .frame(width: 6, height: 6)
             }
         }
     }
 
-    // The focus gradient turns white from the bottom up, so past its midpoint the digits
-    // flip to black — the same rule PureFocusView applies to its own controls.
-    private var timerColor: Color {
-        let focusColor: Color = vm.focusProgress > 0.6 ? .black : .white
-        return Color.primary.mix(with: focusColor, by: pageBlend)
-    }
 }
 
 #Preview {
-    FocusSessionScreen()
-        .modelContainer(for: [StudySession.self, Subject.self], inMemory: true)
+    let container = try! ModelContainer(
+        for: StudySession.self, Subject.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
+    let vm = StudyTrackingViewModel()
+    vm.startSession(ctx: container.mainContext)
+    vm.startPureFocusSession(5 * 60)
+
+    return FocusSessionScreen(vm: vm)
+        .modelContainer(container)
 }
