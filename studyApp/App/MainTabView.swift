@@ -21,7 +21,7 @@ struct MainTabView: View {
             
             Tab("Social", systemImage: "figure.2") {
                 NavigationStack {
-                    SocialView()
+                    SocialView(build: identifier)
                 }
             }
             

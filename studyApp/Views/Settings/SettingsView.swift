@@ -31,6 +31,8 @@ struct SettingsView: View {
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
 
+    private var buildFooterText: String { "Version 1.0.0 (\(build))" }
+
     var body: some View {
         NavigationStack {
             Form {
