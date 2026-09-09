@@ -106,6 +106,5 @@ struct SettingsView: View {
 
 #Preview {
     
-	SettingsView(build: "PREVIEW", settingsSheetDetent: .fraction(0.5))
-    
+	SettingsView(build: "9/9/26 merge")
 }
