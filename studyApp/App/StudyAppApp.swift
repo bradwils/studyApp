@@ -22,3 +22,4 @@ struct StudyAppApp: App {
     // Preview the main entry point of the app
     MainTabView()
 }
+

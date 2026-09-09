@@ -7,20 +7,25 @@
 import Foundation
 import SwiftData
 
+///The idea of a StudyItem has three parts:
+///- Task(Name, Subject, Completed at)
+///- Task Breakdown (notes
+///- Configuration
+
 @Model
 final class StudyItem {
 	@Attribute(.unique) var id: UUID
 	
 	var createdAt: Date             // set at init
 	var updatedAt: Date             // touches on any mutation
-	var completedAt: Date?          // set when status → Completed
-	var subject: Subject?           // reference (nullify on subject delete)
+	var completedAt: Date? = nil         // set when status → Completed
+	var subject: Subject? = nil           // reference (nullify on subject delete)
 	
 	//Default fields that are user-configurable
 	var taskName: String            // task name
 	
 	//  status: StudyItemStatus     // global: .notStarted, .inProgress, .completed, .paused
-	var notes: String?              // user notes
+	var notes: String? = nil              // user notes
 	
 	@Relationship(deleteRule: .cascade)
 	var fields: [StudyItemField]    // array of fields that the user can add (by default includes a couple)
@@ -43,7 +48,8 @@ final class StudyItem {
 		self.subject = nil
 		self.taskName = "taskName"
 		self.notes = "notesnotesnotes"
-		self.fields = [.number(0)]
+		
+		self.fields = [StudyItemField(type: .text("labelLabel", "content"))]
 	}
 	
 	
@@ -66,18 +72,6 @@ final class StudyItem {
         self.notes = notes
         self.fields = fields
     }
-	
-	
-	
-	 enum FieldKind: Codable {
-		case label(String)
-		case number(Double)
-		case slider(Int)
-		case tag(String)
-		case date(Date)
-		case time(TimeInterval)
-		case dropdown(String)
-	}
 }
 
 
