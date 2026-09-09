@@ -1,6 +1,6 @@
 # Study App
 
-This is the main iOS app for tracking study sessions, built with SwiftUI.
+This is the main iOS app for tracking study sessions, built with SwiftUI. Built for students, by students.
 
 ## Structure
 
