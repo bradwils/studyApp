@@ -25,7 +25,7 @@ struct TimerGradientBackground: View {
     
     
     /// Whether the timer is running (affects animation style)
-    @Binding var isTimerActive: Bool
+    var isTimerActive: Bool
     
     /// Animating offset for the idle radiating effect
     @State private var idleAnimationOffset: CGFloat = 0

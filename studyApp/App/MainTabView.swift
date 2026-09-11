@@ -2,24 +2,26 @@ import SwiftUI
 
 struct MainTabView: View {
 	
+	var identifier: String
+	
     var body: some View {
         TabView {
 
             Tab("Focus", systemImage: "book.badge.plus", role: .search) {
                 NavigationStack {
-                    StudyTrackingView()
+                    FocusSessionScreen()
                 }
             }
             
             Tab("Debug", systemImage: "exclamationmark.triangle.fill") {
                 NavigationStack {
-                    SettingsView()
+					SettingsView(build: identifier)
                 }
             }
             
             Tab("Social", systemImage: "figure.2") {
                 NavigationStack {
-                    SocialView()
+                    SocialView(build: identifier)
                 }
             }
             
@@ -34,15 +36,10 @@ struct MainTabView: View {
                     SessionsView()
                 }
             }
-			Tab("master [CI/CD]", systemImage: "number") {
-				NavigationStack {
-					Text("master [CI/CD]")
-				}
-			}
         }
     }
 }
 
 #Preview {
-	MainTabView()
+	MainTabView(identifier: "preview")
 }
