@@ -84,11 +84,9 @@ final class StudySection {
 @Model
 final class StudySession: Identifiable {
     
-    
-    var id: UUID
 
     //each StudySession must be identifiabe by having a unique id.
-    #Unique<StudySession>([\.id])
+	@Attribute(.unique) var id: UUID
 
     
     // References a subject but doesn't own it — nullify so deleting a subject doesn't delete sessions
