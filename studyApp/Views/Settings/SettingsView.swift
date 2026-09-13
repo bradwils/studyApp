@@ -58,7 +58,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(footer: Text(buildFooterText)) {
+                Section(footer: Text("master")) {
                     Button(role: .destructive) {
                     } label: {
                         Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
