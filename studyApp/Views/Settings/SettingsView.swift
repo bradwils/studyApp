@@ -56,7 +56,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(footer: Text("Version 1.0.0")) {
+                Section(footer: Text("UAT-testflight")) {
                     Button(role: .destructive) {
                     } label: {
                         Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
