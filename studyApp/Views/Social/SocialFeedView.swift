@@ -4,8 +4,6 @@ import SwiftUI
 
 struct SocialView: View {
 
-    var build: String
-
     // MARK: State
 
     @StateObject private var viewModel = SocialFeedViewModel()
@@ -68,7 +66,7 @@ struct SocialView: View {
             // MARK: Profile / settings menu (toolbar)
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    NavigationLink("Settings") { SettingsView(build: build) }
+                    NavigationLink("Settings") { SettingsView() }
                     NavigationLink("Profile") { StudyMemberDetailView(memberName: "Preview User 0") }
                 } label: {
                     Image(systemName: "person.crop.circle.fill")
@@ -171,7 +169,7 @@ struct SocialView: View {
 
 #Preview {
     NavigationStack {
-        SocialView(build: "preview")
+        SocialView()
     }
 }
 
