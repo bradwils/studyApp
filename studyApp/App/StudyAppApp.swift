@@ -11,7 +11,7 @@ struct StudyAppApp: App {
         WindowGroup {
 			MainTabView()
         }
-        .modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self])
+        .modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self, StudyItem.self])
         
     }
 }
@@ -20,3 +20,4 @@ struct StudyAppApp: App {
     // Preview the main entry point of the app
 	MainTabView()
 }
+
