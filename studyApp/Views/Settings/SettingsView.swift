@@ -29,7 +29,14 @@ struct SettingsView: View {
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
 
-    private var buildFooterText: String { "dev" }
+    // StudyAppLane is stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
+    private var buildFooterText: String {
+        let info = Bundle.main.infoDictionary
+        let lane = info?["StudyAppLane"] as? String ?? "local"
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(lane) · \(version) (\(build))"
+    }
 
     var body: some View {
         NavigationStack {
