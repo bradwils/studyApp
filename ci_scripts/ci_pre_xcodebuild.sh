@@ -34,7 +34,7 @@ if [[ -n "${CI_TAG:-}" && "${CI_TAG}" == v* ]]; then
   VERSION="${CI_TAG#v}"
   # App Store Connect accepts at most three dot-separated integers, no leading
   # zeros. Fail loudly here rather than 40 minutes later at the upload step.
-  if [[ ! "$VERSION" =~ '^[1-9]?[0-9]+(\.[0-9]+){0,2}$' ]]; then
+  if [[ ! "$VERSION" =~ '^(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){0,2}$' ]]; then
     echo "error: tag '${CI_TAG}' is not 1-3 dot-separated integers" >&2
     exit 1
   fi
