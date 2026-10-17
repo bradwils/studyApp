@@ -194,6 +194,9 @@ Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full detai
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
 - `master` only accepts PRs from `UAT-testflight` or `hotfix/*` (enforced by the `source-branch` check)
 - Land a change once, in `dev`, and promote it — never open matching PRs into several branches
+- Branches are `type/short-slug` (`feat/sub-timer`, `fix/crash-on-launch`), using the Conventional Commits types; `hotfix/*` stays as is
+- Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`. PR titles matter because merge commits take the PR title
+- Commits written by an agent end the subject with the agent's name in brackets, e.g. `docs(claude): document commit conventions [Claude]`. Don't add `Co-Authored-By` trailers
 - No force pushes or deletion of `dev`, `UAT-testflight` or `master`; `v*` tags can't be moved or deleted
 - Never hardcode per-branch values in source — CI stamps the lane into the build (`StudyAppLane` in Info.plist)
 
