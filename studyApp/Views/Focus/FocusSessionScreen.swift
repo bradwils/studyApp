@@ -146,7 +146,7 @@ struct FocusSessionScreen: View {
                 .frame(height: FocusPagerLayout.headerSlotHeight)
 
             PinnedTimerSlot()
-                .overlay { timerDigits }
+                .overlay { FocusTimerContent }
 
             Spacer()
         }
@@ -157,10 +157,11 @@ struct FocusSessionScreen: View {
     }
 
 	//main Timer Element Content. Runs through two enums; changing content based on first if there is a PureFocusSession active and second by the state of the second (given no PureFocusSession)
-	private var timerDigits: some View {
+	private var FocusTimerContent: some View {
 		Group {
 			if (vm.isFocusSessionRunning) {
 				ElapsedTimerText(anchor: vm.activePureFocusSession!.pureFocusGoal) // change timer to pureFocus start time anchor
+				
 			} else {
 				switch vm.currentSessionState {
 				case .noSession:
@@ -206,12 +207,12 @@ struct FocusSessionScreen: View {
 
 #Preview {
     let container = try! ModelContainer(
-        for: StudySession.self, Subject.self,
+        for: AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     let vm = StudyTrackingViewModel()
     vm.startSession(ctx: container.mainContext)
-    vm.startPureFocusSession(5 * 60)
+    vm.startPureFocusSession(5)
 
     return FocusSessionScreen(vm: vm)
         .modelContainer(container)
