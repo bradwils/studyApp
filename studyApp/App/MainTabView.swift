@@ -7,13 +7,13 @@ struct MainTabView: View {
 
             Tab("Focus", systemImage: "book.badge.plus", role: .search) {
                 NavigationStack {
-                    StudyTrackingView()
+                    FocusSessionScreen()
                 }
             }
             
             Tab("Debug", systemImage: "exclamationmark.triangle.fill") {
                 NavigationStack {
-                    SettingsView()
+					SettingsView()
                 }
             }
             
@@ -34,11 +34,6 @@ struct MainTabView: View {
                     SessionsView()
                 }
             }
-			Tab("master [CI/CD]", systemImage: "number") {
-				NavigationStack {
-					Text("master [CI/CD]")
-				}
-			}
         }
     }
 }

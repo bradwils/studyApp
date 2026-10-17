@@ -6,9 +6,7 @@ import SwiftData
 
 @main
 struct StudyAppApp: App {
-	
-	var build: String = "REVIEW_settingsAndSessionsPadding"
-	
+		
     var body: some Scene {
         WindowGroup {
 			MainTabView()
@@ -20,5 +18,5 @@ struct StudyAppApp: App {
 
 #Preview("App Entry") {
     // Preview the main entry point of the app
-    MainTabView()
+	MainTabView()
 }

@@ -179,7 +179,8 @@ Filter at the database level — don't fetch everything and filter in Swift.
 
 ## Current Maintenance Notes
 
-- `StudyTrackingViewModel` references properties not yet on `StudySession` (`isPaused`, `lastResumedAt`, `companions`) — these need to be added or the VM updated
+- `studyAppTests/studyAppTests.swift` still targets the removed `UserProfileStore`, so the unit test target doesn't compile — rewrite against an in-memory SwiftData container before adding a CI test action
+- `StudyTrackingViewModel.endSession(context:)` never calls `context.save()`
 
 See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decisions and [todos/ui-design-ideas.md](todos/ui-design-ideas.md) for UX/design ideas.
 
@@ -187,9 +188,14 @@ See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decis
 
 ## Git Workflow
 
-- Main branch: `master`
-- Feature branches: descriptive names (`timer-fix`, `swiftdata-session-tracking`)
-- No force pushes to `master`
+Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full details, release steps and hotfixes: [pipeline.md](pipeline.md).
+
+- Branch features off `dev`; `dev` accepts direct pushes
+- `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
+- `master` only accepts PRs from `UAT-testflight` or `hotfix/*` (enforced by the `source-branch` check)
+- Land a change once, in `dev`, and promote it — never open matching PRs into several branches
+- No force pushes or deletion of `dev`, `UAT-testflight` or `master`; `v*` tags can't be moved or deleted
+- Never hardcode per-branch values in source — CI stamps the lane into the build (`StudyAppLane` in Info.plist)
 
 ---
 
@@ -214,3 +220,18 @@ Transform tasks into verifiable goals before starting. For multi-step work, stat
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
 ```
+
+---
+
+# CI/CD Pipeline
+
+Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
+
+| Branch | Builds when | Lands in |
+|---|---|---|
+| `dev` | every push | TestFlight internal → **Self** |
+| `UAT-testflight` | every push | TestFlight external → **UAT** |
+| `master` | `v*` tag only (publish a GitHub Release from `master`) | TestFlight external → **Stable**, then App Store review |
+
+- Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
+- `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built

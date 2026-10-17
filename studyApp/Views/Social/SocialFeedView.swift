@@ -50,7 +50,8 @@ struct SocialView: View {
                         friendList(restingFriends, online: false)
                     }
 
-                    Spacer().frame(height: 24)
+                    Spacer()
+						.frame(height: 24)
                 }
             }
 			.frame(maxWidth: 600)
