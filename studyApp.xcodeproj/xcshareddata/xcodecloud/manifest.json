@@ -1,0 +1,9 @@
+{
+  "id" : "2d0f7fcd-7122-4739-b6ae-bf6b01043056",
+  "targets" : [
+    {
+      "id" : "C4F54545-E295-4304-A95E-3B9BF44E1F39",
+      "name" : "studyApp"
+    }
+  ]
+}

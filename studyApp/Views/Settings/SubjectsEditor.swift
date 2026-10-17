@@ -49,6 +49,7 @@ struct SubjectsEditor: View {
                                 .foregroundStyle(.tertiary)
                         }
                         .listRowBackground(Color.clear)
+                        .accessibilityIdentifier("subjectRow_\(subject.code)")
                     }
                     .onDelete { indexSet in
                         withAnimation(.easeInOut) {
@@ -67,6 +68,7 @@ struct SubjectsEditor: View {
                     .textContentType(.givenName)
                     .submitLabel(.next)
                     .focused($isNameFocused)
+                    .accessibilityIdentifier("subjectNameField")
 
                 DotStyleDivider(orientation: .horizontal)
 
@@ -75,6 +77,7 @@ struct SubjectsEditor: View {
                         .autocorrectionDisabled()
                         .submitLabel(.done)
                         .onSubmit { vm.addSubject(context: modelContext) }
+                        .accessibilityIdentifier("subjectCodeField")
 
                     Text("\(vm.newSubjectCode.count)/4")
                         .font(.caption)
@@ -97,6 +100,7 @@ struct SubjectsEditor: View {
             .opacity(vm.canAddSubject ? 1 : 0.5)
             .background(.thinMaterial)
             .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .accessibilityIdentifier("addSubjectButton")
         }
         .padding()
     }

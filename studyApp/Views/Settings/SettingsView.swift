@@ -3,9 +3,7 @@ import SwiftData
 import OSLog
 
 struct SettingsView: View {
-	
-	var build: String
-    
+
     var logger = Logger(subsystem: "com.studyApp", category: "SettingsView")
     
     private enum Theme: String, CaseIterable, Identifiable {
@@ -31,6 +29,15 @@ struct SettingsView: View {
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
 
+    // StudyAppLane is stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
+    private var buildFooterText: String {
+        let info = Bundle.main.infoDictionary
+        let lane = info?["StudyAppLane"] as? String ?? "local"
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(lane) · \(version) (\(build))"
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -42,6 +49,7 @@ struct SettingsView: View {
                     } label: {
                         Label("Edit Subjects", systemImage: "list.bullet")
                     }
+                    .accessibilityIdentifier("editSubjectsButton")
                     .sheet(isPresented: $isShowingSubjectsEditor, onDismiss: dismissedSubjectsEditor) {
                         SubjectsEditor(isPresented: $isShowingSubjectsEditor, currentDetent: $settingsSheetDetent)
                             .presentationDetents([.fraction(0.6)])
@@ -58,7 +66,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section(footer: Text("master")) {
+                Section(footer: Text(buildFooterText)) {
                     Button(role: .destructive) {
                     } label: {
                         Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
@@ -103,6 +111,6 @@ struct SettingsView: View {
 
 #Preview {
     
-	SettingsView(build: "PREVIEW", settingsSheetDetent: .fraction(0.5))
+	SettingsView(settingsSheetDetent: .fraction(0.5))
     
 }

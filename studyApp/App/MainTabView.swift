@@ -2,20 +2,18 @@ import SwiftUI
 
 struct MainTabView: View {
 	
-	var identifier: String
-	
     var body: some View {
         TabView {
 
             Tab("Focus", systemImage: "book.badge.plus", role: .search) {
                 NavigationStack {
-                    StudyTrackingView()
+                    FocusSessionScreen()
                 }
             }
             
             Tab("Debug", systemImage: "exclamationmark.triangle.fill") {
                 NavigationStack {
-					SettingsView(build: identifier)
+					SettingsView()
                 }
             }
             
@@ -41,5 +39,5 @@ struct MainTabView: View {
 }
 
 #Preview {
-	MainTabView(identifier: "preview")
+	MainTabView()
 }
