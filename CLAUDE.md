@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Start
 
-**Build:**
+**Build for Simulator:**
 ```bash
 xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination generic/platform=iOS
 ```
@@ -28,6 +28,7 @@ SwiftUI iOS app — social study tracking, focus timer, and group collaboration.
 - `ViewModels/` — `@Observable final class`; business logic and form state
 - `Views/` — SwiftUI views organized by feature (Social, Focus, Groups, Settings, Profile)
 
+- `Extensions
 See [AppOverview.md](docs/AppOverview.md) for full folder structure.
 
 ---
