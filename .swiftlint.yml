@@ -1,0 +1,50 @@
+included:
+  - studyApp
+  - studyAppTests
+  - studyAppUITests
+
+excluded:
+  - studyApp/Resources
+
+# Whitespace is swift-format's job; two tools fixing the same thing fight each other
+disabled_rules:
+  - trailing_whitespace
+  - vertical_whitespace
+  - todo
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - sorted_first_last
+  - fatal_error_message
+
+line_length:
+  warning: 140
+  error: 300
+  ignores_urls: true
+  ignores_comments: true
+
+identifier_name:
+  excluded: [id, r, g, b, a]
+
+# Xcode generates these test target names in lowercase
+type_name:
+  excluded: [studyAppTests, studyAppUITests, studyAppUITestsLaunchTests]
+
+# Previews build in-memory containers with try!
+force_try: warning
+
+# Layer rules from CLAUDE.md. Warning, not error, while the SwiftData migration is in progress
+custom_rules:
+  viewmodel_imports_swiftui:
+    name: "No SwiftUI in ViewModels"
+    regex: '^import SwiftUI'
+    included: 'studyApp/ViewModels/.*\.swift'
+    message: "ViewModels must not know about the UI layer; drop 'import SwiftUI'"
+    severity: warning
+  model_imports_swiftui_or_os:
+    name: "No SwiftUI or os in Models"
+    regex: '^import (SwiftUI|os)\b'
+    included: 'studyApp/Models/.*\.swift'
+    message: "@Model types are pure data; no SwiftUI, no logging"
+    severity: warning
