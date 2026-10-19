@@ -1,12 +1,10 @@
 import SwiftUI
-import OSLog
 
 enum AppTab: Hashable {
     case focus, debug, social, groups, sessions
 }
 
 struct MainTabView: View {
-//	let tabViewLogger = Logger(subsystem: "com.studyApp", category: "tabView")
     @Environment(AppSession.self) private var appSession
 
     var body: some View {
@@ -44,9 +42,6 @@ struct MainTabView: View {
                 }
             }
         }
-//		.onChange(of: appSession.selectedTab) { oldValue, newValue in
-//			tabViewLogger.log("Moved from \(String(describing: oldValue)) to \(String(describing: newValue))")
-//		}
     }
 }
 
