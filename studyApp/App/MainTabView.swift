@@ -5,10 +5,12 @@ enum AppTab: Hashable {
 }
 
 struct MainTabView: View {
-    @State private var selection: AppTab = .focus
+    @Environment(AppSession.self) private var appSession
 
     var body: some View {
-        TabView(selection: $selection) {
+		//Bindable allows for us to create a reference that we can use below to talk to selectedTab within the appSession.
+        @Bindable var session = appSession
+        TabView(selection: $session.selectedTab) {
 
             Tab("Focus", systemImage: "book.badge.plus", value: AppTab.focus, role: .search) {
                 NavigationStack {
@@ -45,4 +47,5 @@ struct MainTabView: View {
 
 #Preview {
 	MainTabView()
+		.environment(AppSession())
 }
