@@ -86,7 +86,7 @@ struct StudySessionTests {
 	
 	@MainActor
 	@Test("Ending a StudySession clears vm from session-related vars")
-	func StartAndEndSessionWithClearVars() async throws { //async allows for await keyword
+	func startAndEndSessionWithClearVars() async throws { //async allows for await keyword
 		let container = try ModelContainer(
 			for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
 			configurations: ModelConfiguration(isStoredInMemoryOnly: true) //temporary storage system

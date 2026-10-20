@@ -1,0 +1,44 @@
+only_rules:
+  - type_name
+  - identifier_name
+  - force_cast
+  - force_try
+  - force_unwrapping
+  - unused_import
+  - unused_closure_parameter
+  - unused_optional_binding
+  - empty_count
+  - implicit_optional_initialization
+  - private_over_fileprivate
+  - fatal_error_message
+  - duplicate_imports
+  - todo
+  - custom_rules
+
+included:
+  - studyApp
+  - studyAppTests
+  - studyAppUITests
+
+# Force rules stay warnings: intentional uses get `// swiftlint:disable:next <rule>`
+force_cast: warning
+force_try: warning
+force_unwrapping: warning
+
+identifier_name:
+  min_length: 2
+  excluded: [id, vm, x, y, i, j, r, g, b, a]
+
+custom_rules:
+  no_swiftui_in_viewmodels:
+    name: "ViewModels must not import SwiftUI"
+    regex: '^import SwiftUI'
+    included: 'studyApp/ViewModels/.*\.swift'
+    message: "ViewModels don't know they're powering UI - see CLAUDE.md layer rules"
+    severity: error
+  no_swiftui_in_models:
+    name: "Models must not import SwiftUI/os"
+    regex: '^import (SwiftUI|os)\b'
+    included: 'studyApp/Models/.*\.swift'
+    message: "Models are pure data - no SwiftUI or logging imports"
+    severity: error
