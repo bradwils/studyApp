@@ -9,8 +9,8 @@ final class SubjectsEditorVM {
     var newSubjectCode: String = ""
 
     var canAddSubject: Bool {
-        newSubjectName.count > 0 && newSubjectName.count <= 32 &&
-        newSubjectCode.count > 0 && newSubjectCode.count <= 4
+        !newSubjectName.isEmpty && newSubjectName.count <= 32 &&
+        !newSubjectCode.isEmpty && newSubjectCode.count <= 4
     }
     
     //recieve context as soon as called

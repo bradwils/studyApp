@@ -36,7 +36,7 @@ final class StudyTrackingViewModel {
 	
 	var activePureFocusSession: pureFocusSession? = nil
 	
-	struct pureFocusSession {
+	struct PureFocusSession {
 
 		///Marks the starting Date of the pureFocusSesssion
 		let pureFocusStartTime: Date
@@ -266,7 +266,7 @@ final class StudyTrackingViewModel {
 
     func startPureFocusSession(_ duration: TimeInterval) {
 		let now = Date.now
-		activePureFocusSession = pureFocusSession(startTime: now, goal: duration)
+		activePureFocusSession = PureFocusSession(startTime: now, goal: duration)
     }
 
     // Non-destructive by design: the session and stopwatch keep running, only the target is forgotten.

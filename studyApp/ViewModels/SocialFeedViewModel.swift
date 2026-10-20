@@ -1,5 +1,4 @@
 import Foundation
-import SwiftUI
 import Combine
 
 /// ViewModel powering the Social feed.
