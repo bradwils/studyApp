@@ -16,6 +16,13 @@ xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination gener
 xcodebuild test -project studyApp.xcodeproj -scheme studyApp
 ```
 
+**Cloud sessions (Linux):** `xcodebuild`, SwiftUI and SwiftData are unavailable — builds and tests run in Xcode Cloud. `.claude/hooks/session-start.sh` installs Swift, `swift-format` and SwiftLint so these still work:
+```bash
+swiftlint lint                       # config: .swiftlint.yml
+swift-format lint -r studyApp        # config: .swift-format
+swiftc -parse $(find studyApp -name '*.swift')   # syntax check only
+```
+
 ---
 
 ## Architecture Overview
