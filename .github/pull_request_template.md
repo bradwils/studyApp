@@ -8,19 +8,20 @@ Title (GitHub can't pre-fill it, so set it by hand; the PR title check enforces 
 
 ## What changed
 
-<!-- Bullet the changes. Describe what changed, not how. -->
--
+<!-- explanation; what does this pr actually do?-->
+- 
+- reviewing notes
 
-## Notes
+## Technical Changes
 
-<!-- Migrations, breaking changes, or follow-ups a reviewer needs. Delete this section if there are none. -->
+<!-- outline changes in the codebase appropriately -->
 
 ## Tested
 
-<!-- Tick everything you ran. If nothing needed testing, tick the last box and say why. -->
+<!-- Tick everything you ran -->
 - [ ] Unit tests (`xcodebuild test -project studyApp.xcodeproj -scheme studyApp`)
 - [ ] UI tests
 - [ ] Simulator build
 - [ ] Device build
 - [ ] Manual check (say what you checked)
-- [ ] No testing needed (say why)
+- [ ] No testing needed (why?)
