@@ -1,15 +1,15 @@
 <!--
-Title (GitHub can't pre-fill it, so set it by hand; the PR title check enforces it):
   type(scope): description (#issue)
+  
   type: feat | fix | docs | style | refactor | perf | test | build | ci | chore | revert
-  scope: optional, lowercase (e.g. nav, sessions, ci)
+  (scope): optional, lowercase (e.g. nav, sessions, ci)
+  description: abc
   e.g. fix(nav): keep tab selection after relaunch (#142)
 -->
 
 ## What changed
-
 <!-- explanation; what does this pr actually do?-->
-- 
+
 - reviewing notes
 
 ## Technical Changes
@@ -25,3 +25,6 @@ Title (GitHub can't pre-fill it, so set it by hand; the PR title check enforces 
 - [ ] Device build
 - [ ] Manual check (say what you checked)
 - [ ] No testing needed (why?)
+
+## Todo before merge
+<!-- @claude -->
