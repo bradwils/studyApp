@@ -24,6 +24,10 @@ studyApp/
 ├── App/                    # App entry point and main navigation
 │   ├── StudyAppApp.swift   # App entry point
 │   └── MainTabView.swift   # Tab navigation
+├── Config/                 # Release rings and feature flags (see FeatureFlags.md)
+│   ├── ReleaseRing.swift
+│   ├── FeatureFlag.swift
+│   └── FeatureFlags.swift
 ├── Views/                  # All view files organized by feature
 │   ├── Social/             # Social feed and components
 │   ├── Focus/              # Focus mode views
