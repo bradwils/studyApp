@@ -24,6 +24,7 @@ SwiftUI iOS app — social study tracking, focus timer, and group collaboration.
 
 **Layers:**
 - `App/` — entry point (`StudyAppApp.swift`) and tab navigation (`MainTabView.swift`)
+- `Config/` — build-level configuration: `ReleaseRing`, `FeatureFlag`, `FeatureFlags` (see Feature Flags below)
 - `Models/` — SwiftData `@Model final class` definitions; pure data only
 - `ViewModels/` — `@Observable final class`; business logic and form state
 - `Views/` — SwiftUI views organized by feature (Social, Focus, Groups, Settings, Profile)
@@ -100,6 +101,21 @@ var sessions: [StudySession]
 - `deleteRule: .cascade` — "I own this; delete it with me"
 - `deleteRule: .nullify` — "I reference this; if it's deleted, set my reference to nil"
 - `inverse:` — makes the relationship bidirectional (navigate from either end); without it, the back-reference doesn't exist
+
+### Feature Flags
+
+Release flags live in `Config/`; full guide: [docs/FeatureFlags.md](docs/FeatureFlags.md).
+
+- Each `FeatureFlag` case declares the widest `ReleaseRing` it's on in (`.local < .dev < .uat < .production`); the build's ring comes from the CI-stamped `StudyAppLane`. Roll out by widening `enabledThrough` on `dev` and promoting — never per-branch values
+- Toggle points only in Views: `@Environment(FeatureFlags.self)` + `isEnabled(_:)`. ViewModels never read flags; the view passes the `Bool` in
+- Any preview whose view tree reads flags needs `.environment(FeatureFlags())` or it crashes
+- Delete a flag one release after it reaches `.production`; never reuse or rename one
+
+```swift
+if featureFlags.isEnabled(.devTools) {
+	Section("Debug") { /* ... */ }
+}
+```
 
 ---
 

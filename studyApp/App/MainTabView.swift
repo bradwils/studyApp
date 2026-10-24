@@ -53,4 +53,5 @@ struct MainTabView: View {
 #Preview {
 	MainTabView()
 		.environment(AppSession())
+		.environment(FeatureFlags())
 }

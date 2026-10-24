@@ -8,11 +8,13 @@ import SwiftData
 struct StudyAppApp: App {
 	//Root properties with some key information about what's happening in the app
 	@State private var session = AppSession()
+	@State private var featureFlags = FeatureFlags()
 
     var body: some Scene {
         WindowGroup {
 			MainTabView()
 				.environment(session)
+				.environment(featureFlags)
         }
         .modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self])
 
@@ -23,4 +25,5 @@ struct StudyAppApp: App {
     // Preview the main entry point of the app
 	MainTabView()
 		.environment(AppSession())
+		.environment(FeatureFlags())
 }

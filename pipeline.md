@@ -201,6 +201,17 @@ APIs with `if #available(iOS 26, *)`.
 
 ---
 
+## Feature flags
+
+Promoting a branch does not expose a feature; widening its ring does. Unfinished
+work rides every promotion as compiled-in code that is switched off, because
+each flag in `studyApp/Config/FeatureFlag.swift` is on only up to its
+`enabledThrough` ring. To show it in UAT or production, widen that one line on
+`dev` and promote as usual. The file is identical on every branch, so it never
+conflicts. See [docs/FeatureFlags.md](docs/FeatureFlags.md).
+
+---
+
 ## Gotchas
 
 **`ci_scripts/` must exist on every branch that builds.** Xcode Cloud reads it

@@ -28,6 +28,7 @@ struct SettingsView: View {
     
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
+    @Environment(FeatureFlags.self) private var featureFlags
 
     // StudyAppLane is stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
     private var buildFooterText: String {
@@ -58,11 +59,24 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Debug") {
-                    Button {
-                        insertFakeSession()
-                    } label: {
-                        Label("Generate Fake Study Session", systemImage: "wand.and.stars")
+                if featureFlags.isEnabled(.devTools) {
+                    Section("Debug") {
+                        Button {
+                            insertFakeSession()
+                        } label: {
+                            Label("Generate Fake Study Session", systemImage: "wand.and.stars")
+                        }
+                    }
+                }
+
+                // DEV ONLY — see CLAUDE.md "Developer-Only Views"
+                if featureFlags.allowsOverrides {
+                    Section("Developer") {
+                        NavigationLink {
+                            FeatureFlagsView()
+                        } label: {
+                            Label("Feature Flags", systemImage: "flag")
+                        }
                     }
                 }
 
@@ -76,11 +90,13 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .toolbar {
                 // DEV ONLY — see CLAUDE.md "Developer-Only Views"
-                ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink {
-                        DebugDataView()
-                    } label: {
-                        Image(systemName: "ladybug")
+                if featureFlags.isEnabled(.devTools) {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        NavigationLink {
+                            DebugDataView()
+                        } label: {
+                            Image(systemName: "ladybug")
+                        }
                     }
                 }
             }
@@ -112,5 +128,6 @@ struct SettingsView: View {
 #Preview {
     
 	SettingsView(settingsSheetDetent: .fraction(0.5))
+		.environment(FeatureFlags())
     
 }
