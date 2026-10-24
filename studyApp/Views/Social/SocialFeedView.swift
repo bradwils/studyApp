@@ -171,5 +171,6 @@ struct SocialView: View {
     NavigationStack {
         SocialView()
     }
+    .environment(FeatureFlags())
 }
 
