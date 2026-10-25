@@ -11,7 +11,6 @@ only_rules:
   - private_over_fileprivate
   - fatal_error_message
   - duplicate_imports
-  - todo
   - custom_rules
 
 # Needs compiler logs, so it only runs under `swiftlint analyze`, not in CI's `swiftlint lint`
