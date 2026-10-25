@@ -25,8 +25,8 @@ struct CountdownTimerText: View {
 }
 
 #Preview {
-	@Previewable @State var d: Date = Date.now.addingTimeInterval(-4)
+	@Previewable @State var date: Date = Date.now.addingTimeInterval(-4)
 
-	CountdownTimerText(distanceInFuture: d)
+	CountdownTimerText(distanceInFuture: date)
 }
  

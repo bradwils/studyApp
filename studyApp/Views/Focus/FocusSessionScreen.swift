@@ -146,7 +146,7 @@ struct FocusSessionScreen: View {
                 .frame(height: FocusPagerLayout.headerSlotHeight)
 
             PinnedTimerSlot()
-                .overlay { FocusTimerContent }
+                .overlay { focusTimerContent }
 
             Spacer()
         }
@@ -157,7 +157,7 @@ struct FocusSessionScreen: View {
     }
 
 	//main Timer Element Content. Runs through two enums; changing content based on first if there is a PureFocusSession active and second by the state of the second (given no PureFocusSession)
-	private var FocusTimerContent: some View {
+	private var focusTimerContent: some View {
 		Group {
 			if (vm.isFocusSessionRunning) {
 				// swiftlint:disable:next force_unwrapping
@@ -209,7 +209,7 @@ struct FocusSessionScreen: View {
 #Preview {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self,
+        for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     let vm = StudyTrackingViewModel()
