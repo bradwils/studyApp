@@ -14,7 +14,7 @@ struct StudyAppApp: App {
 			MainTabView()
 				.environment(session)
         }
-        .modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self])
+        .modelContainer(for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self])
 
     }
 }

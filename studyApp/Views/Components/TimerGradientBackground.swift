@@ -212,7 +212,7 @@ struct TimerGradientBackground: View {
 
 // MARK: - Animatable radial gradient helper
 
-fileprivate struct RadialAnimatedGradient: AnimatableModifier {
+private struct RadialAnimatedGradient: AnimatableModifier {
     var colors: [Color]
     var center: UnitPoint
     var startRadius: CGFloat

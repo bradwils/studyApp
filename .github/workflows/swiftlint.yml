@@ -19,4 +19,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       # Warnings are annotated on the PR but don't fail the job; errors do.
-      - run: swiftlint lint --baseline .swiftlint.baseline.json --reporter github-actions-logging
+      - run: swiftlint lint --reporter github-actions-logging

@@ -4,7 +4,6 @@ only_rules:
   - force_cast
   - force_try
   - force_unwrapping
-  - unused_import
   - unused_closure_parameter
   - unused_optional_binding
   - empty_count
@@ -14,6 +13,10 @@ only_rules:
   - duplicate_imports
   - todo
   - custom_rules
+
+# Needs compiler logs, so it only runs under `swiftlint analyze`, not in CI's `swiftlint lint`
+analyzer_rules:
+  - unused_import
 
 included:
   - studyApp

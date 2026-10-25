@@ -71,12 +71,14 @@ struct StudySessionTests {
 		#expect(stored.count == 1)
 		
 		let session = try #require(stored.first)
-		#expect(session.subject!.id == subject.id)
-		#expect(session.subject!.name == subject.name)
+		let sessionSubject = try #require(session.subject)
+		let endedAt = try #require(session.endedAt)
+		#expect(sessionSubject.id == subject.id)
+		#expect(sessionSubject.name == subject.name)
 		#expect(session.subjectName == "testing_subject")
 		#expect(session.endedAt != nil)
 		#expect(session.interruptionCount == 0)
-		#expect(session.endedAt!.timeIntervalSince(Date.now) < 3)
+		#expect(endedAt.timeIntervalSince(Date.now) < 3)
 		#expect(vm.ssw == nil)
 		
 		

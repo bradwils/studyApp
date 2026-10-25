@@ -34,7 +34,7 @@ final class StudyTrackingViewModel {
 	
 	//MARK: PureFocus vars
 	
-	var activePureFocusSession: pureFocusSession? = nil
+	var activePureFocusSession: PureFocusSession?
 	
 	struct PureFocusSession {
 
@@ -114,10 +114,12 @@ final class StudyTrackingViewModel {
 		
         if isRunning == true { //give the anchor Date
             studyTrackingLogger.log("isRunning == true")
+            // swiftlint:disable:next force_unwrapping
             return .sessionRunning(ssw!.adjustedStartTimeForAnchor!)
         }
 		
         studyTrackingLogger.log("all else")
+        // swiftlint:disable:next force_unwrapping
         return .sessionPaused(ssw!.lastPausedAt!) //give the Date paused at.
     }
 
@@ -174,6 +176,7 @@ final class StudyTrackingViewModel {
         activeSession = StudySession(subject: selectedSubject, subjectName: selectedSubject?.name, startedAt: now)
         studyTrackingLogger.log("Session Started")
         
+        // swiftlint:disable:next force_unwrapping
         ctx.insert(activeSession!)
         try? ctx.save()
     }
@@ -193,8 +196,8 @@ final class StudyTrackingViewModel {
         let now = Date()
         studyTrackingLogger.log("pauseSession() called")
         guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
-        ssw!.startBreak()
-        activeSession?.lastPausedAt = ssw!.lastPausedAt
+        ssw?.startBreak()
+        activeSession?.lastPausedAt = ssw?.lastPausedAt
 
 
     }
@@ -202,7 +205,7 @@ final class StudyTrackingViewModel {
     /// Resume timing and log a break if the pause exceeded the break threshold.
     func resumeSession() {
         studyTrackingLogger.log("resumeSession() called")
-        guard let pausedAt = ssw!.lastPausedAt, !(ssw?.stopwatchIsRunning ?? false) else { return }
+        guard let pausedAt = ssw?.lastPausedAt, !(ssw?.stopwatchIsRunning ?? false) else { return }
         let now = Date()
         let pausedDuration = now.timeIntervalSince(pausedAt)
 //        if pausedDuration >= breakThreshold {
@@ -212,7 +215,7 @@ final class StudyTrackingViewModel {
         } else {
             //update normal time to disregard break
         }
-        ssw!.endBreak()
+        ssw?.endBreak()
         activeSession?.lastPausedAt = nil
 
         studyBreaks.last?.endedAt = now
@@ -243,6 +246,7 @@ final class StudyTrackingViewModel {
     /// Abort an active session without persisting; use for user-initiated cancels.
     func cancelActiveSession(ctx: ModelContext) {
         studyTrackingLogger.log("current session cancelled")
+        // swiftlint:disable:next force_unwrapping
         ctx.delete(activeSession!)
         try? ctx.save()
         activeSession = nil
@@ -288,7 +292,7 @@ final class StudyTrackingViewModel {
         totalStudyingTime: \(self.totalStudyingTime)
         totalBreakTime:    \(self.totalBreakTime)
         activeSession:     \(String(describing: self.activeSession))
-        selectedSubject:   \(self.selectedSubject != nil ? String(describing: self.selectedSubject!.name) : "nil")
+        selectedSubject:   \(self.selectedSubject.map { String(describing: $0.name) } ?? "nil")
         ssw (Stopwatch):   \(String(describing: self.ssw))
         studyBreaks:       \(self.studyBreaks.count) break(s)
         studySections:     \(self.studySections.count) section(s)
