@@ -19,11 +19,11 @@ on 2026-10-09, so re-check them there if you have changed a workflow since.
 **Colours.** grey = GitHub automation, blue = Xcode Cloud, green = allowed,
 red = rejected or failed, yellow = a gap or advisory-only check.
 
-Not shown because they are not merged yet: the SwiftLint workflow, which is
-PR #158 (draft, supersedes #152; #152 stays open but conflicts with the theming
-removal). PR #153 (PR template) is merged and PR #139 (cloud session tooling)
-is closed, unmerged. SwiftLint would add a `swiftlint` check to the "New PRs"
-diagrams for `dev`, `UAT-testflight` and `master` once merged.
+Not shown yet: the SwiftLint workflow, merged into `dev` by PR #158 on
+2026-10-26 (supersedes #152). It adds a `swiftlint` check to the "New PRs"
+diagrams for `dev`, `UAT-testflight` and `master`, and runs on pushes to `dev`;
+it reaches UAT and `master` with the next promotion. PR #153 (PR template) is
+merged and PR #139 (cloud session tooling) is closed, unmerged.
 
 ---
 
@@ -268,7 +268,7 @@ flowchart TD
 
 Checked with draft probe PRs (#159 into `dev`, #160 into `master`, both closed,
 branch deleted) and read-only API calls. The SwiftLint workflow was exercised
-from PR #158's branch, so it is not on `dev` yet.
+from PR #158's branch, before #158 merged into `dev`.
 
 | Check | Probe | Expected | Observed | Run |
 |---|---|---|---|---|
