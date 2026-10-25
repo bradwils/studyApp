@@ -415,6 +415,7 @@ struct CustomBottomSheet: View {
             } else if sheetHeight > detentSnapPoints[detentSnapPoints.count - 1] {
                 // Sheet is too large (above maximum detent)
                 // Snap DOWN to maximum detent
+                // swiftlint:disable:next force_unwrapping
                 print("→ Above maximum detent, snapping to \(detentSnapPoints.last!)pt")
                 targetSheetHeight = detentSnapPoints[detentSnapPoints.count - 1]
                 withAnimation(.interactiveSpring(response: 0.25, dampingFraction: 0.7, blendDuration: 0)) {

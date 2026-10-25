@@ -1,0 +1,22 @@
+name: SwiftLint
+
+on:
+  pull_request:
+    branches: [dev, UAT-testflight, master]
+    paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml']
+  push:
+    branches: [dev]
+    paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml']
+
+permissions:
+  contents: read
+
+jobs:
+  swiftlint:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/realm/swiftlint:0.65.1
+    steps:
+      - uses: actions/checkout@v4
+      # Warnings are annotated on the PR but don't fail the job; errors do.
+      - run: swiftlint lint --reporter github-actions-logging
