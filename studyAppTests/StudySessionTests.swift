@@ -71,12 +71,14 @@ struct StudySessionTests {
 		#expect(stored.count == 1)
 		
 		let session = try #require(stored.first)
-		#expect(session.subject!.id == subject.id)
-		#expect(session.subject!.name == subject.name)
+		let sessionSubject = try #require(session.subject)
+		let endedAt = try #require(session.endedAt)
+		#expect(sessionSubject.id == subject.id)
+		#expect(sessionSubject.name == subject.name)
 		#expect(session.subjectName == "testing_subject")
 		#expect(session.endedAt != nil)
 		#expect(session.interruptionCount == 0)
-		#expect(session.endedAt!.timeIntervalSince(Date.now) < 3)
+		#expect(endedAt.timeIntervalSince(Date.now) < 3)
 		#expect(vm.ssw == nil)
 		
 		
@@ -86,7 +88,7 @@ struct StudySessionTests {
 	
 	@MainActor
 	@Test("Ending a StudySession clears vm from session-related vars")
-	func StartAndEndSessionWithClearVars() async throws { //async allows for await keyword
+	func startAndEndSessionWithClearVars() async throws { //async allows for await keyword
 		let container = try ModelContainer(
 			for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
 			configurations: ModelConfiguration(isStoredInMemoryOnly: true) //temporary storage system
