@@ -9,7 +9,6 @@ import SwiftUI
 import SwiftData
 
 struct DebugDataView: View {
-    @Query private var themes: [AppTheme]
     @Query private var subjects: [Subject]
     @Query private var sessions: [StudySession]
     @Query private var breaks: [StudyBreak]
@@ -21,18 +20,6 @@ struct DebugDataView: View {
     var body: some View {
         List {
             Section {
-                modelLink(title: "Themes", systemImage: "paintpalette", count: themes.count) {
-                    DebugModelListView(title: "Themes") { (theme: AppTheme) in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(theme.name).font(.headline)
-                            HStack(spacing: 6) {
-                                swatch(theme.primaryColor)
-                                swatch(theme.secondaryColor)
-                                swatch(theme.accentColor)
-                            }
-                        }
-                    }
-                }
                 modelLink(title: "Subjects", systemImage: "book", count: subjects.count) {
                     DebugModelListView(title: "Subjects") { (subject: Subject) in
                         VStack(alignment: .leading, spacing: 4) {
@@ -116,7 +103,7 @@ struct DebugDataView: View {
         DebugDataView()
     }
     .modelContainer(
-        for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self],
+        for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self],
         inMemory: true
     )
 }
