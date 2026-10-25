@@ -15,8 +15,6 @@ struct DebugDataView: View {
     @Query private var sections: [StudySection]
     @Query private var locations: [SessionLocation]
 
-    @ScaledMetric(relativeTo: .caption) private var swatchSize: CGFloat = 14
-
     var body: some View {
         List {
             Section {
@@ -91,10 +89,6 @@ struct DebugDataView: View {
                 Label(title, systemImage: systemImage)
             }
         }
-    }
-
-    private func swatch(_ color: Color) -> some View {
-        Circle().fill(color).frame(width: swatchSize, height: swatchSize)
     }
 }
 
