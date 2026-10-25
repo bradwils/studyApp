@@ -160,6 +160,7 @@ struct FocusSessionScreen: View {
 	private var FocusTimerContent: some View {
 		Group {
 			if (vm.isFocusSessionRunning) {
+				// swiftlint:disable:next force_unwrapping
 				ElapsedTimerText(anchor: vm.activePureFocusSession!.pureFocusGoal) // change timer to pureFocus start time anchor
 				
 			} else {
@@ -206,6 +207,7 @@ struct FocusSessionScreen: View {
 }
 
 #Preview {
+    // swiftlint:disable:next force_try
     let container = try! ModelContainer(
         for: AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
