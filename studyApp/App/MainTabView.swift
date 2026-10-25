@@ -1,45 +1,56 @@
 import SwiftUI
+import OSLog
+
+enum AppTab: Hashable {
+    case focus, debug, social, groups, sessions
+}
 
 struct MainTabView: View {
-	
-	var identifier: String
-	
-    var body: some View {
-        TabView {
+//	let tabViewLogger = Logger(subsystem: "com.studyApp", category: "tabView")
+    @Environment(AppSession.self) private var appSession
 
-            Tab("Focus", systemImage: "book.badge.plus", role: .search) {
+    var body: some View {
+		//Bindable allows for us to create a reference that we can use below to talk to selectedTab within the appSession.
+        @Bindable var session = appSession
+        TabView(selection: $session.selectedTab) {
+
+            Tab("Focus", systemImage: "book.badge.plus", value: AppTab.focus, role: .search) {
                 NavigationStack {
                     FocusSessionScreen()
                 }
             }
             
-            Tab("Debug", systemImage: "exclamationmark.triangle.fill") {
+            Tab("Debug", systemImage: "exclamationmark.triangle.fill", value: AppTab.debug) {
                 NavigationStack {
-					SettingsView(build: identifier)
+					SettingsView()
                 }
             }
             
-            Tab("Social", systemImage: "figure.2") {
+            Tab("Social", systemImage: "figure.2", value: AppTab.social) {
                 NavigationStack {
-                    SocialView(build: identifier)
+                    SocialView()
                 }
             }
             
-            Tab("Groups", systemImage: "person.3.fill") {
+            Tab("Groups", systemImage: "person.3.fill", value: AppTab.groups) {
                 NavigationStack {
                     GroupsView()
                 }
             }
             
-            Tab("Sessions", systemImage: "clock.arrow.circlepath") {
+            Tab("Sessions", systemImage: "clock.arrow.circlepath", value: AppTab.sessions) {
                 NavigationStack {
                     SessionsView()
                 }
             }
         }
+//		.onChange(of: appSession.selectedTab) { oldValue, newValue in
+//			tabViewLogger.log("Moved from \(String(describing: oldValue)) to \(String(describing: newValue))")
+//		}
     }
 }
 
 #Preview {
-	MainTabView(identifier: "preview")
+	MainTabView()
+		.environment(AppSession())
 }

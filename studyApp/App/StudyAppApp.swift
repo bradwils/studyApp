@@ -6,20 +6,21 @@ import SwiftData
 
 @main
 struct StudyAppApp: App {
-	
-	var build: String = "master"
-	
+	//Root properties with some key information about what's happening in the app
+	@State private var session = AppSession()
+
     var body: some Scene {
         WindowGroup {
-			MainTabView(identifier: build)
+			MainTabView()
+				.environment(session)
         }
-        .modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self, StudyItem.self])
-        
+        .modelContainer(for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self, StudyItem.self])
+
     }
 }
 
 #Preview("App Entry") {
     // Preview the main entry point of the app
-	MainTabView(identifier: "preview")
+	MainTabView()
+		.environment(AppSession())
 }
-

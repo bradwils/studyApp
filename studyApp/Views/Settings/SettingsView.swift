@@ -3,9 +3,7 @@ import SwiftData
 import OSLog
 
 struct SettingsView: View {
-	
-	var build: String
-    
+
     var logger = Logger(subsystem: "com.studyApp", category: "SettingsView")
     
     private enum Theme: String, CaseIterable, Identifiable {
@@ -31,7 +29,14 @@ struct SettingsView: View {
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
 
-    private var buildFooterText: String { "Version 1.0.0 (\(build))" }
+    // StudyAppLane is stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
+    private var buildFooterText: String {
+        let info = Bundle.main.infoDictionary
+        let lane = info?["StudyAppLane"] as? String ?? "local"
+        let version = info?["CFBundleShortVersionString"] as? String ?? "?"
+        let build = info?["CFBundleVersion"] as? String ?? "?"
+        return "\(lane) · \(version) (\(build))"
+    }
 
     var body: some View {
         NavigationStack {
@@ -106,6 +111,6 @@ struct SettingsView: View {
 
 #Preview {
     
-	SettingsView(build: "PREVIEW", settingsSheetDetent: .fraction(0.5))
+	SettingsView(settingsSheetDetent: .fraction(0.5))
     
 }

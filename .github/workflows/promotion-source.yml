@@ -1,0 +1,22 @@
+name: Promotion source
+
+# Required by the master ruleset: master only takes promotions from
+# UAT-testflight, or hotfix/* branches cut from master itself.
+on:
+  pull_request:
+    branches: [master]
+
+permissions: {}
+
+jobs:
+  source-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR source branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          case "$HEAD_REF" in
+            UAT-testflight|hotfix/*) echo "ok: $HEAD_REF -> master" ;;
+            *) echo "::error::master only accepts PRs from UAT-testflight or hotfix/*, not '$HEAD_REF'"; exit 1 ;;
+          esac
