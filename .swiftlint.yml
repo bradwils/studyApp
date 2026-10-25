@@ -27,7 +27,7 @@ force_unwrapping: warning
 
 identifier_name:
   min_length: 2
-  excluded: [id, vm, x, y, i, j, r, g, b, a]
+  excluded: [id, vm, x, y, i, j]
 
 custom_rules:
   no_swiftui_in_viewmodels:
