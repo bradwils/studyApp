@@ -43,7 +43,7 @@ struct ActiveSubjectList: View {
                         logger.log("Overrode nil subject selection, is now \(selectedSubject?.name ?? "nil")")
                     }
                 }
-                .onChange(of: subjects) { old, new in
+                .onChange(of: subjects) { _, new in
                     if selectedSubject == nil, let fallback = new.first {
                         selectedSubject = fallback
                     }
