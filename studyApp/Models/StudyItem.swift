@@ -18,14 +18,14 @@ final class StudyItem {
 	
 	var createdAt: Date             // set at init
 	var updatedAt: Date             // touches on any mutation
-	var completedAt: Date? = nil         // set when status → Completed
-	var subject: Subject? = nil           // reference (nullify on subject delete)
+	var completedAt: Date?         // set when status → Completed
+	var subject: Subject?           // reference (nullify on subject delete)
 	
 	//Default fields that are user-configurable
 	var taskName: String            // task name
 	
 	//  status: StudyItemStatus     // global: .notStarted, .inProgress, .completed, .paused
-	var notes: String? = nil              // user notes
+	var notes: String?              // user notes
 	
 	@Relationship(deleteRule: .cascade)
 	var fields: [StudyItemField]    // array of fields that the user can add (by default includes a couple)
