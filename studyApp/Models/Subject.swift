@@ -12,18 +12,19 @@ final class Subject {
     var name: String
     var code: String
     var createdAt: Date
-    var dropdownOptions: [String] = []
 
     // Nullify so deleting a subject preserves session history (sessions fall back to subjectName)
     @Relationship(deleteRule: .nullify, inverse: \StudySession.subject)
     var sessions: [StudySession]
 
-    init(id: UUID = UUID(), name: String, code: String, createdAt: Date = Date(), dropdownOptions: [String] = [], sessions: [StudySession] = []) {
+    @Relationship(deleteRule: .nullify, inverse: \StudyItem.subject)
+    var items: [StudyItem] = []
+
+    init(id: UUID = UUID(), name: String, code: String, createdAt: Date = Date(), sessions: [StudySession] = []) {
         self.id = id
         self.name = name
         self.code = code
         self.createdAt = createdAt
-        self.dropdownOptions = dropdownOptions
         self.sessions = sessions
     }
 }
