@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import UIKit
 
 // The timer is a sibling of the pager, never a child of a page. Drawing it inside the
 // scrolling content would move it with the pages no matter how carefully the two pages
