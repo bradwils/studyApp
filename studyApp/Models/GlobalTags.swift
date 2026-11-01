@@ -2,12 +2,16 @@ import Foundation
 import SwiftData
 
 
-//Tags are global items that can be assigned to a studyItem. They do not confirm to a relationship, or anything of sorts.
+// Tags are global labels a studyItem can carry (see `StudyItem.tag`).
 @Model
 final class Tag {
     // Lowercased + trimmed name; unique so "Maths" and "maths" can't both exist
     @Attribute(.unique) var key: String
     var color: TagColor = TagColor.blue
+
+    // Nullify so deleting a tag clears it from the items that used it
+    @Relationship(deleteRule: .nullify, inverse: \StudyItem.tag)
+    var items: [StudyItem] = []
 
 
     init(name: String, color: TagColor = .blue) {
