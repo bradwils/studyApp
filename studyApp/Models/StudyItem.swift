@@ -6,7 +6,7 @@ final class StudyItem {
     @Attribute(.unique) var id: UUID
     var taskName: String
     var notes: String?
-    var status: StudyItemStatus = StudyItemStatus.notStarted
+    var status: StudyItemStatus
     var dueDate: Date?
     var priority: StudyItemPriority?
     var createdAt: Date
@@ -17,6 +17,9 @@ final class StudyItem {
     // Survives subject deletion, like StudySession
     var subjectName: String?
 
+    @Relationship(deleteRule: .nullify)
+    var tag: Tag?
+
     @Relationship(deleteRule: .cascade, inverse: \FieldValue.item)
     var values: [FieldValue] = []
 
@@ -24,7 +27,7 @@ final class StudyItem {
         taskName: String,
         subject: Subject? = nil,
         notes: String? = nil,
-        status: StudyItemStatus = .notStarted,
+		status: StudyItemStatus = .notStarted,
         dueDate: Date? = nil,
         priority: StudyItemPriority? = nil
     ) {
