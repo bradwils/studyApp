@@ -1,7 +1,7 @@
 import Foundation
 
 enum FieldKind: Codable {
-    case text, number, date, time, tag
+    case text, number, date, time
     case dropdown(options: [String])
 
     var defaultContent: FieldContent {
@@ -10,7 +10,6 @@ enum FieldKind: Codable {
         case .number: .number(0)
         case .date: .date(.now)
         case .time: .time(0)
-        case .tag: .tag
         case .dropdown(let options): .dropdown(options.first ?? "")
         }
     }
@@ -19,7 +18,6 @@ enum FieldKind: Codable {
 enum FieldContent: Codable {
     case text(String)
     case number(Double)
-    case tag
     case date(Date)
     case time(TimeInterval)
     case dropdown(String)
