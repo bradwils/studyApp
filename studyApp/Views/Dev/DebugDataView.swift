@@ -14,6 +14,9 @@ struct DebugDataView: View {
     @Query private var breaks: [StudyBreak]
     @Query private var sections: [StudySection]
     @Query private var locations: [SessionLocation]
+    @Query private var items: [StudyItem]
+    @Query private var definitions: [FieldDefinition]
+    @Query private var tags: [Tag]
 
     var body: some View {
         List {
@@ -69,8 +72,38 @@ struct DebugDataView: View {
             } footer: {
                 Text("Tap a model to view, inspect, or delete individual records.")
             }
+
+            Section {
+                NavigationLink {
+                    DebugStudyItemListView()
+                } label: {
+                    countLabel("Study Items", systemImage: "checklist", count: items.count)
+                }
+                NavigationLink {
+                    DebugFieldDefinitionListView()
+                } label: {
+                    countLabel("Field Definitions", systemImage: "list.bullet.rectangle", count: definitions.count)
+                }
+                NavigationLink {
+                    DebugTagListView()
+                } label: {
+                    countLabel("Tags", systemImage: "tag", count: tags.count)
+                }
+            } header: {
+                Text("Study Items")
+            } footer: {
+                Text("Create, edit and delete items, their field definitions and global tags.")
+            }
         }
         .navigationTitle("Debug Data")
+    }
+
+    private func countLabel(_ title: String, systemImage: String, count: Int) -> some View {
+        LabeledContent {
+            Text("\(count)").monospacedDigit()
+        } label: {
+            Label(title, systemImage: systemImage)
+        }
     }
 
     @ViewBuilder
@@ -97,7 +130,8 @@ struct DebugDataView: View {
         DebugDataView()
     }
     .modelContainer(
-        for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self],
+        for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
+              StudyItem.self, FieldDefinition.self, FieldValue.self, Tag.self],
         inMemory: true
     )
 }
