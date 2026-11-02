@@ -6,16 +6,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Start
 
-**Build:**
+**Build Simulator:**
 ```bash
 xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination generic/platform=iOS
 ```
+
+**Build on-device:**
+Find the phone and copy its identifier (phone must be unlocked, plugged in or on same Wi-Fi, and trusted)
+```bash
+xcrun devicectl list devices
+
+# 2. set variables for the rest of the steps (UDID is the iPhone 16)
+UDID=00000000-0000000000000000
+BUNDLE_ID=personal.studyBud
+
+# 3. build for the phone into a local ./build folder (run from the repo root)
+xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination "id=$UDID" -derivedDataPath build -allowProvisioningUpdates
+
+# 4. install
+xcrun devicectl device install app --device $UDID build/Build/Products/Debug-iphoneos/studyApp.app
+
+# 5. launch & stream logs
+xcrun devicectl device process launch --device $UDID --console $BUNDLE_ID
+```
+
 
 **Run tests:**
 ```bash
 xcodebuild test -project studyApp.xcodeproj -scheme studyApp
 ```
-
+*later,we'll update this to only include core tests. UI tests are effectivley useless, except for specific flows.*
 ---
 
 ## Architecture Overview
@@ -33,21 +53,6 @@ See [AppOverview.md](docs/AppOverview.md) for full folder structure.
 ---
 
 ## Key Architectural Decisions
-
-### SwiftData Migration (In Progress)
-
-Models are migrating from manual JSON (`Store` singletons) to SwiftData.
-
-- `Subject.swift`, `StudySession.swift` ✅ `@Model final class`
-- `StudyAppApp.swift` ✅ `.modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, SessionLocation.self])`
-- Several views still reference legacy `Store` singletons — migrate with the pattern below
-
-**Migration pattern:**
-1. Create `ViewModels/Feature/FeatureVM.swift` as `@Observable final class`
-2. Move form state and CRUD methods into VM; methods accept `ModelContext` as a parameter (not stored)
-3. In the view: `@Query` for reads, `@Environment(\.modelContext)` for writes
-4. Initialize VM non-optionally: `@State private var vm = FeatureVM()`
-5. Drop the old `Store` dependency
 
 ### MVVM + SwiftData Pattern
 
@@ -97,7 +102,7 @@ var sessions: [StudySession]
 @Relationship(deleteRule: .cascade) var location: SessionLocation?
 ```
 
-- `deleteRule: .cascade` — "I own this; delete it with me"
+- `deleteRule: .cascade` — Owned on this side, if this get's deleted, the other side gets deleted too
 - `deleteRule: .nullify` — "I reference this; if it's deleted, set my reference to nil"
 - `inverse:` — makes the relationship bidirectional (navigate from either end); without it, the back-reference doesn't exist
 
