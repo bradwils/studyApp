@@ -3,9 +3,10 @@
 How code moves from a feature branch to the App Store, and what you have to do
 at each hop.
 
-App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping
-(the `@claude` mention bot, SwiftLint, PR title check). If an app build runs,
-Xcode Cloud ran it.
+App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
+`claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint) and
+`pr-title.yml` (Conventional Commits PR titles). If an app build runs, Xcode
+Cloud ran it.
 
 ---
 
@@ -69,8 +70,13 @@ Open a PR targeting `dev` (or push straight to `dev` for small changes).
 
 Before you merge:
 
-- Build locally at least once. There is no test or validation workflow yet, so
-  a compile error reaches TestFlight before anyone notices.
+- Build locally at least once. SwiftLint runs on PRs into every long-lived
+  branch (and on pushes to `dev`) — errors fail it, warnings are only
+  annotated — but nothing builds or runs tests, so a compile error reaches
+  TestFlight before anyone notices.
+- PR titles into `dev` must follow Conventional Commits (`type(scope):
+  description`); the `PR title` check enforces it, because merge commits take
+  the PR title.
 - If this is the first change of a new release cycle, bump `MARKETING_VERSION`
   and the build number offset in the same commit. See [Versions](#versions).
 
@@ -223,11 +229,11 @@ console. Reload, sign in, and redo the edit.
 
 Known gaps, in rough priority order:
 
-1. **No tests run anywhere.** The unit test target doesn't compile (it targets
-   the removed `UserProfileStore`). Once it does, add an Xcode Cloud workflow
-   that starts on pull requests into `dev`, `UAT-testflight` and `master`,
-   builds and runs unit tests (no archive, no distribution), and make it a
-   required check in the rulesets.
+1. **No tests run anywhere.** The unit tests were rewritten against SwiftData
+   (`AppSessionTests`, `StudySessionTests`), but no workflow runs them. Add an
+   Xcode Cloud workflow that starts on pull requests into `dev`,
+   `UAT-testflight` and `master`, builds and runs unit tests (no archive, no
+   distribution), and make it a required check in the rulesets.
 2. UI tests are slow and flaky per PR. Run them on a nightly schedule against
    `UAT-testflight` instead.
 3. TestFlight "What to Test" notes are written by hand. A `ci_post_clone.sh`
