@@ -46,5 +46,7 @@ jobs:
           # Optional: Add claude_args to customize behavior and configuration
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
-          # claude_args: '--allowed-tools Bash(gh pr *)'
+          claude_args: |
+            --allowed-tools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr edit:*)"
+            --append-system-prompt "When you change a PR or are asked to, keep its description current by editing only the sections of .github/pull_request_template.md. Keep the template headings, never remove human-written text, and only tick Tested boxes for checks you actually ran."
 
