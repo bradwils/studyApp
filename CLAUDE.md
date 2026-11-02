@@ -160,6 +160,10 @@ var mathSubjects: [Subject]
 
 Filter at the database level — don't fetch everything and filter in Swift.
 
+Further, check for a SwiftData migration schema. One will be added before public release, however if there is not one yet, do not worry about it, just note that a reinstall will be needed if you're making changes to models.
+
+If you have made changes, then we might need to add a migration schema. Check if there is already one as a WIP, and add to it. We will be following the UAT version, as that's the first 'public' version. Dev will follow seeding & deleting/re-installing as needed.
+
 ---
 
 ## Code Style
