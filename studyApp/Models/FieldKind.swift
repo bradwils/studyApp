@@ -1,24 +1,18 @@
 import Foundation
 
-enum FieldKind: Codable {
-    case text, number, date, time
-    case dropdown(options: [String])
+// Payload-free discriminator: says which FieldValue slot is live. Dropdown options live on FieldDefinition.
+enum FieldKind: String, Codable, CaseIterable, Identifiable {
+    case text, number, date, time, dropdown
 
-    var defaultContent: FieldContent {
+    var id: String { rawValue }
+
+    var systemImage: String {
         switch self {
-        case .text: .text("")
-        case .number: .number(0)
-        case .date: .date(.now)
-        case .time: .time(0)
-        case .dropdown(let options): .dropdown(options.first ?? "")
+        case .text: "textformat"
+        case .number: "number"
+        case .date: "calendar"
+        case .time: "clock"
+        case .dropdown: "list.bullet"
         }
     }
-}
-
-enum FieldContent: Codable {
-    case text(String)
-    case number(Double)
-    case date(Date)
-    case time(TimeInterval)
-    case dropdown(String)
 }

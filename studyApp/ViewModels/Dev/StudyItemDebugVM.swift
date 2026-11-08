@@ -37,7 +37,14 @@ final class StudyItemDebugVM {
     }
 
     func addValue(for definition: FieldDefinition, to item: StudyItem, context: ModelContext) {
-        let value = FieldValue(content: definition.kind.defaultContent)
+        let value = FieldValue()
+        switch definition.kind {
+        case .text: value.textValue = ""
+        case .number: value.numberValue = 0
+        case .date: value.dateValue = .now
+        case .time: value.timeValue = 0
+        case .dropdown: value.textValue = definition.options.first ?? ""
+        }
         context.insert(value)
         value.definition = definition
         value.item = item

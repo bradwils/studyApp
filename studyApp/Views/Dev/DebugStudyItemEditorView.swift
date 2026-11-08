@@ -96,7 +96,7 @@ struct DebugStudyItemEditorView: View {
             }
             Menu("Add field", systemImage: "plus.circle") {
                 ForEach(unusedDefinitions) { definition in
-                    Button(definition.name, systemImage: FieldKindChoice(definition.kind).systemImage) {
+                    Button(definition.name, systemImage: definition.kind.systemImage) {
                         vm.addValue(for: definition, to: item, context: modelContext)
                     }
                 }
@@ -143,37 +143,41 @@ private struct DebugFieldValueRow: View {
     private var title: String { value.definition?.name ?? "Orphaned field" }
 
     var body: some View {
-        switch value.content {
-        case .text(let text):
+        switch value.definition?.kind {
+        case .text:
             LabeledContent(title) {
-                TextField("Text", text: Binding(get: { text }, set: { value.content = .text($0) }))
+                TextField("Text", text: Binding(get: { value.textValue ?? "" }, set: { value.textValue = $0 }))
                     .multilineTextAlignment(.trailing)
             }
-        case .number(let number):
+        case .number:
             LabeledContent(title) {
-                TextField("0", value: Binding(get: { number }, set: { value.content = .number($0) }), format: .number)
+                TextField("0", value: Binding(get: { value.numberValue ?? 0 }, set: { value.numberValue = $0 }), format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
             }
-        case .date(let date):
-            DatePicker(title, selection: Binding(get: { date }, set: { value.content = .date($0) }))
-        case .time(let seconds):
+        case .date:
+            DatePicker(title, selection: Binding(get: { value.dateValue ?? .now }, set: { value.dateValue = $0 }))
+        case .time:
+            let seconds = value.timeValue ?? 0
             Stepper(
                 "\(title): \(Duration.seconds(seconds).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))",
-                value: Binding(get: { seconds }, set: { value.content = .time($0) }),
+                value: Binding(get: { seconds }, set: { value.timeValue = $0 }),
                 in: 0...36_000,
                 step: 300
             )
-        case .dropdown(let selection):
-            Picker(title, selection: Binding(get: { selection }, set: { value.content = .dropdown($0) })) {
+        case .dropdown:
+            let selection = value.textValue ?? ""
+            Picker(title, selection: Binding(get: { selection }, set: { value.textValue = $0 })) {
                 ForEach(options(including: selection), id: \.self) { Text($0.isEmpty ? "—" : $0).tag($0) }
             }
+        case nil:
+            LabeledContent(title) { Text("No definition").foregroundStyle(.secondary) }
         }
     }
 
     // Keeps a stale selection visible if its option was later removed from the definition
     private func options(including selection: String) -> [String] {
-        guard case .dropdown(let options) = value.definition?.kind else { return [selection] }
+        let options = value.definition?.options ?? []
         return options.contains(selection) ? options : [selection] + options
     }
 }

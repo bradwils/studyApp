@@ -78,11 +78,11 @@ private struct DebugFieldDefinitionForm: View {
                     Toggle("Enabled", isOn: $vm.isEnabled)
                 }
                 Section {
-                    Picker("Kind", selection: $vm.choice) {
-                        ForEach(FieldKindChoice.allCases) { Label($0.rawValue.capitalized, systemImage: $0.systemImage).tag($0) }
+                    Picker("Kind", selection: $vm.kind) {
+                        ForEach(FieldKind.allCases) { Label($0.rawValue.capitalized, systemImage: $0.systemImage).tag($0) }
                     }
                     .disabled(vm.isEditing)
-                    if vm.choice == .dropdown {
+                    if vm.kind == .dropdown {
                         TextField("Options, comma separated", text: $vm.optionsText)
                     }
                 } footer: {
