@@ -4,8 +4,9 @@ How code moves from a feature branch to the App Store, and what you have to do
 at each hop.
 
 App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
-`claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint) and
-`pr-title.yml` (Conventional Commits PR titles). If an app build runs, Xcode
+`claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint),
+`pr-title.yml` (Conventional Commits PR titles) and `testflight-pr.yml` (asks
+Xcode Cloud to build a PR on request, see [PR builds](#pr-builds)). If an app build runs, Xcode
 Cloud ran it.
 
 ---
@@ -24,6 +25,35 @@ skips a step except a hotfix (see below).
 
 The **UAT** and **Stable** groups have no testers yet — builds land there and
 wait. Add testers in App Store Connect → TestFlight when testing starts.
+
+---
+
+## PR builds
+
+Feature branches don't build on their own. To get one onto your phone, put
+`/testflight` on its own line (any case) in the PR description, or in a comment on the PR
+(owner, members and collaborators only).
+
+`testflight-pr.yml` then calls the App Store Connect API and starts a build of
+the PR's head branch on the Xcode Cloud workflow named **PR TestFlight**
+(override with the repo variable `XCODE_CLOUD_PR_WORKFLOW`). That workflow
+archives and distributes to the internal TestFlight group. Because the build is
+started on the branch itself, the Settings footer shows the real branch name,
+the build time in Sydney time, and the usual version (build).
+
+- Triggers: PR opened/reopened, PR description edited (only if the body
+  changed), or a new comment. Pushes do not rebuild; comment `/testflight`
+  again.
+- Fork PRs are skipped (no secrets).
+- Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
+  and `APP_STORE_CONNECT_PRIVATE_KEY`.
+- **One-off setup in Xcode:** create a workflow called `PR TestFlight` whose only
+  start condition is **Manual Start** for *all branches* (Apple refuses an
+  API-started build on a branch the workflow doesn't list, and a Branch Changes
+  condition would build every push), a TestFlight Internal
+  Testing post-action (distribute to **Self**), and the same environment as
+  `dev`. The workflow must run `ci_scripts/`, so the PR's branch has to include
+  that folder.
 
 ---
 
