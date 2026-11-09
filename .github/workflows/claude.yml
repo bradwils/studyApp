@@ -6,7 +6,7 @@ on:
   pull_request_review_comment:
     types: [created]
   pull_request:
-    types: opened
+    types: [opened]
   issues:
     types: [opened, assigned]
   pull_request_review:
