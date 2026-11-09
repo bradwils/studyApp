@@ -247,5 +247,3 @@ Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
-- Build an open PR on demand: put `[testflight]` in the PR description (or in a comment on it, from a collaborator). `.github/workflows/testflight-pr.yml` asks Xcode Cloud to build the PR's branch with the `PR TestFlight` workflow, which distributes to the internal TestFlight group. Editing the description only re-triggers when the body itself changed; comment `[testflight]` again to rebuild after new pushes
-- The Settings footer shows `lane · build time (AEST/AEDT) · version (build)`, stamped by CI
