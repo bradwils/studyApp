@@ -244,6 +244,27 @@ Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
 | `dev` | every push | TestFlight internal → **Self** |
 | `UAT-testflight` | every push | TestFlight external → **UAT** |
 | `master` | `v*` tag only (publish a GitHub Release from `master`) | TestFlight external → **Stable**, then App Store review |
+| any PR | a `testflight-*` tag, made when the PR asks for it (below) | TestFlight internal → **Self** |
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
+
+## Building a PR to TestFlight
+
+To get a PR onto the **Self** group without merging it, put `[testflight]` in the PR description or in a PR comment. `.github/workflows/testflight-pr.yml` then tags the PR's head commit `testflight-pr<N>-<sha7>-<branch>`, and the Xcode Cloud workflow **TestFlight PR** (start condition: tag matches `testflight-*`) archives and distributes it.
+
+- Every new push to the PR builds again; editing the PR without a new commit doesn't, because that commit already has its tag
+- Only the repo owner or collaborators can ask for a build, and only for PRs from this repo, never forks — the repo is public
+- The comment trigger runs from the copy of the workflow on `master`, so it only works once the workflow has been promoted there; the description trigger works as soon as it's on `dev`
+- Don't write the literal marker in a PR description or comment unless you want a build — that includes PR text that merely talks about this feature
+- `testflight-*` tags are disposable and not protected; delete them freely
+- `ci_scripts/ci_pre_xcodebuild.sh` parses the tag format back into the branch name, so change the workflow and the script together
+
+## Build identifier
+
+CI stamps two keys into Info.plist, and the Settings footer shows them as `lane · version (build)` with the build time on the next line:
+
+- `StudyAppLane` — the branch (or `v*` tag). PR builds show the PR's branch, slugged to alphanumerics and hyphens
+- `StudyAppBuiltAt` — build time in Sydney time, e.g. `2026-11-09 20:55 AEDT` (`AEST` outside daylight saving)
+
+The build number in the footer and in TestFlight (`CFBundleVersion`) has to stay a plain integer, so the branch and time can't go there. Local builds show `local` and no time.
