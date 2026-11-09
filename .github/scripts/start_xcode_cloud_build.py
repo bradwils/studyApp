@@ -67,8 +67,16 @@ if workflow is None:
     sys.exit(f"No Xcode Cloud workflow named '{workflow_name}'. Found: {names}")
 
 repos = call("GET", f"/ciProducts/{product['id']}/primaryRepositories")["data"]
-refs = call("GET", f"/scmRepositories/{repos[0]['id']}/gitReferences", limit=200, **{"filter[name]": branch})["data"]
-ref = next((r for r in refs if r["attributes"]["name"] == branch and r["attributes"]["kind"] == "BRANCH"), None)
+# The endpoint has no name filter, so page through until the branch turns up.
+repo_id = repos[0]["id"]
+ref = None
+page = call("GET", f"/scmRepositories/{repo_id}/gitReferences", limit=200)
+while ref is None:
+    ref = next((r for r in page["data"] if r["attributes"]["name"] == branch and r["attributes"]["kind"] == "BRANCH"), None)
+    next_url = page.get("links", {}).get("next")
+    if ref is not None or not next_url:
+        break
+    page = call("GET", next_url)
 if ref is None:
     sys.exit(f"Xcode Cloud can't see branch '{branch}' yet; is it pushed?")
 
