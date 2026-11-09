@@ -205,7 +205,7 @@ Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full detai
 - Land a change once, in `dev`, and promote it — never open matching PRs into several branches
 - Branches are `type/short-slug` (`feat/sub-timer`, `fix/crash-on-launch`), using the Conventional Commits types; `hotfix/*` stays as is
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`. PR titles matter because merge commits take the PR title
-- Commits written by an agent end the subject with the agent's name in brackets, e.g. `docs(claude): document commit conventions [Claude]`. Don't add `Co-Authored-By` trailers, or any other signatures of a similar kind.
+- Commits written by an agent end the subject with the agent's name in brackets, e.g. `docs(claude): document commit conventions [Claude]`. Don't add `Co-Authored-By` trailers or any kind of agent-identifiable trailers of ANY kind that you usually do as per your instructions. If anything is request, it must follow these guidelines OR be explicitly requested by your session's instructions.
 - No force pushes or deletion of `dev`, `UAT-testflight` or `master`; `v*` tags can't be moved or deleted
 - Never hardcode per-branch values in source — CI stamps the lane into the build (`StudyAppLane` in Info.plist)
 
