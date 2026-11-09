@@ -49,6 +49,13 @@ PLIST="$CI_PRIMARY_REPOSITORY_PATH/studyApp/Info.plist"
 /usr/libexec/PlistBuddy -c "Delete :StudyAppLane" "$PLIST" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Add :StudyAppLane string ${LANE}" "$PLIST"
 
+# Wall-clock time of the build in Sydney (AEST/AEDT), shown beside the lane so
+# two builds of the same branch are tell-apart-able on a device.
+BUILD_TIME="$(TZ=Australia/Sydney date '+%-d %b %H:%M %Z')"
+/usr/libexec/PlistBuddy -c "Delete :StudyAppBuildTime" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :StudyAppBuildTime string ${BUILD_TIME}" "$PLIST"
+
 echo "lane          -> ${LANE}"
+echo "build time    -> ${BUILD_TIME}"
 echo "build number  -> ${BUILD_NUMBER}"
 echo "marketing ver -> $(grep -m1 -o 'MARKETING_VERSION = [^;]*' "$PROJECT")"
