@@ -3,13 +3,13 @@
 //
 //  DEV ONLY — see CLAUDE.md "Developer-Only Views". Lists every field with an
 //  enable toggle: the built-in item properties, then the custom FieldDefinitions
-//  (create, edit via swipe, reorder, delete). Deleting one cascades to its FieldValues.
+//  (create, edit via swipe, delete). Deleting one cascades to its FieldValues.
 
 import SwiftUI
 import SwiftData
 
 struct DebugFieldDefinitionListView: View {
-    @Query(sort: \FieldDefinition.order) private var definitions: [FieldDefinition]
+    @Query private var definitions: [FieldDefinition]
     @Environment(\.modelContext) private var modelContext
     @State private var vm = FieldDefinitionFormVM()
     @State private var isShowingForm = false
@@ -40,18 +40,16 @@ struct DebugFieldDefinitionListView: View {
                             Button("Edit", systemImage: "pencil") { present(definition) }
                         }
                 }
-                .onMove { vm.move(definitions, from: $0, to: $1, context: modelContext) }
             }
         }
         .navigationTitle("Fields")
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) { EditButton() }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add", systemImage: "plus") { present(nil) }
             }
         }
         .sheet(isPresented: $isShowingForm) {
-            DebugFieldDefinitionForm(vm: vm, nextOrder: definitions.count)
+            DebugFieldDefinitionForm(vm: vm)
                 .presentationDetents([.medium, .large])
         }
     }
@@ -65,8 +63,6 @@ struct DebugFieldDefinitionListView: View {
 
 private struct DebugFieldDefinitionForm: View {
     @Bindable var vm: FieldDefinitionFormVM
-    let nextOrder: Int
-
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
 
@@ -95,7 +91,7 @@ private struct DebugFieldDefinitionForm: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        vm.save(nextOrder: nextOrder, context: modelContext)
+                        vm.save(context: modelContext)
                         dismiss()
                     }
                     .disabled(!vm.canSave)

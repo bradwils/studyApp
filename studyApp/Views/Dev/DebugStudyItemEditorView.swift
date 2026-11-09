@@ -11,15 +11,14 @@ struct DebugStudyItemEditorView: View {
     @Bindable var item: StudyItem
 
     @Query(sort: \Subject.name) private var subjects: [Subject]
-    @Query(sort: \FieldDefinition.order) private var definitions: [FieldDefinition]
+    @Query private var definitions: [FieldDefinition]
     @Query(sort: \Tag.key) private var tags: [Tag]
     @Environment(\.modelContext) private var modelContext
     @State private var vm = StudyItemDebugVM()
 
-    private var sortedValues: [FieldValue] {
+    private var visibleValues: [FieldValue] {
         item.values
             .filter { $0.definition?.isEnabled ?? true }
-            .sorted { ($0.definition?.order ?? .max) < ($1.definition?.order ?? .max) }
     }
 
     private var unusedDefinitions: [FieldDefinition] {
@@ -87,11 +86,11 @@ struct DebugStudyItemEditorView: View {
 
     private var fieldsSection: some View {
         Section {
-            ForEach(sortedValues) { value in
+            ForEach(visibleValues) { value in
                 DebugFieldValueRow(value: value)
             }
             .onDelete { offsets in
-                let values = sortedValues
+                let values = visibleValues
                 for index in offsets { vm.delete(values[index], from: item, context: modelContext) }
             }
             Menu("Add field", systemImage: "plus.circle") {

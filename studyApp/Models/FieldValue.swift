@@ -16,8 +16,6 @@ final class FieldValue {
     var item: StudyItem?
     @Relationship(deleteRule: .nullify)
     var definition: FieldDefinition?
-    var tags: [Tag] = []
-
     init(textValue: String? = nil, numberValue: Double? = nil, dateValue: Date? = nil, timeValue: TimeInterval? = nil) {
         self.textValue = textValue
         self.numberValue = numberValue
