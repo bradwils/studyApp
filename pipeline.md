@@ -31,7 +31,7 @@ wait. Add testers in App Store Connect → TestFlight when testing starts.
 ## PR builds
 
 Feature branches don't build on their own. To get one onto your phone, put
-`[testflight]` (any case) in the PR description, or in a comment on the PR
+`/testflight` on its own line (any case) in the PR description, or in a comment on the PR
 (owner, members and collaborators only).
 
 `testflight-pr.yml` then calls the App Store Connect API and starts a build of
@@ -42,7 +42,7 @@ started on the branch itself, the Settings footer shows the real branch name,
 the build time in Sydney time, and the usual version (build).
 
 - Triggers: PR opened/reopened, PR description edited (only if the body
-  changed), or a new comment. Pushes do not rebuild; comment `[testflight]`
+  changed), or a new comment. Pushes do not rebuild; comment `/testflight`
   again.
 - Fork PRs are skipped (no secrets).
 - Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`

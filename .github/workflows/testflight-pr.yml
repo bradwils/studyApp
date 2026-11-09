@@ -1,6 +1,6 @@
 name: TestFlight PR build
 
-# Put [testflight] in a PR's description or in a comment on it to start an Xcode
+# Put /testflight on its own line in a PR's description or in a comment on it to start an Xcode
 # Cloud build of that PR's branch. Xcode Cloud archives and ships it to the
 # internal TestFlight group; this file only asks for the build.
 on:
@@ -48,11 +48,11 @@ jobs:
             branch="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$ISSUE_NUMBER" --jq .head.ref)"
           fi
 
-          if printf '%s' "$text" | grep -qiF '[testflight]'; then
+          if printf '%s' "$text" | tr -d '\r' | grep -qiE '^[[:space:]]*/testflight[[:space:]]*$'; then
             echo "build=true" >> "$GITHUB_OUTPUT"
             echo "branch=$branch" >> "$GITHUB_OUTPUT"
           else
-            echo "No [testflight] marker; nothing to do."
+            echo "No /testflight line; nothing to do."
             echo "build=false" >> "$GITHUB_OUTPUT"
           fi
 
