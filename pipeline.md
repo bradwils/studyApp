@@ -4,9 +4,10 @@ How code moves from a feature branch to the App Store, and what you have to do
 at each hop.
 
 App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
-`claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint) and
-`pr-title.yml` (Conventional Commits PR titles). If an app build runs, Xcode
-Cloud ran it.
+`claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint),
+`pr-title.yml` (Conventional Commits PR titles) and `testflight-pr.yml` (tags a
+PR so Xcode Cloud builds it, see [PR to TestFlight](#pr-to-testflight)). If an
+app build runs, Xcode Cloud ran it.
 
 ---
 
@@ -81,6 +82,34 @@ Before you merge:
   and the build number offset in the same commit. See [Versions](#versions).
 
 On merge, `dev` builds and lands in the **Self** TestFlight group.
+
+---
+
+## PR to TestFlight
+
+To try a PR on your phone before it merges, put `[testflight]` in the PR
+description or in a comment on the PR.
+
+`testflight-pr.yml` checks the description and the comments (only from the
+owner and collaborators, only on PRs from this repo) and, if the marker is
+there, tags the PR's head commit `testflight-pr<N>-<sha7>-<branch>`. The Xcode
+Cloud workflow **TestFlight PR** starts on tags matching `testflight-*`, archives
+and distributes to the **Self** group. The build footer shows the PR's branch.
+
+- A new push to the PR builds again. Editing the description without a new
+  commit doesn't, since that commit already has its tag.
+- The comment trigger only fires from the copy of the workflow on `master`
+  (that's how `issue_comment` works), so it starts working after the workflow
+  has been promoted all the way up. The description trigger works from `dev`.
+- Don't write the literal marker in PR text that is only *about* this feature.
+- The tags are disposable. Delete them whenever, only `v*` is protected.
+- The tag name is parsed by `ci_scripts/ci_pre_xcodebuild.sh` to recover the
+  branch, so change both together.
+
+The Xcode Cloud workflow itself lives in App Store Connect, not in the repo:
+Start condition **Tag Changes** matching `testflight-*` (and nothing else, since
+start conditions are OR'd), Xcode **Latest Release**, action **Archive – iOS**,
+post-action **TestFlight Internal Testing → Self**.
 
 ---
 
@@ -186,10 +215,13 @@ perfectly legal.
 `dev` and `UAT-testflight` builds show whatever `MARKETING_VERSION` is set in
 the project, so bump it at the *start* of a cycle, not the end.
 
-The Settings screen footer shows `lane · version (build)`. CI stamps the lane
-(branch or tag name) into Info.plist as `StudyAppLane`; local builds show
-`local`. Never hardcode branch-specific values in source — it makes every
-promotion conflict.
+The Settings screen footer shows `lane · version (build)` and, on the next
+line, when it was built. CI stamps the lane (branch or tag name; PR builds show
+the PR's branch) into Info.plist as `StudyAppLane`, and the build time in Sydney
+time as `StudyAppBuiltAt` (`AEDT` during daylight saving, `AEST` otherwise).
+Local builds show `local` and no time. The build number itself must be a plain
+integer, so neither can go in it. Never hardcode branch-specific values in
+source — it makes every promotion conflict.
 
 ---
 

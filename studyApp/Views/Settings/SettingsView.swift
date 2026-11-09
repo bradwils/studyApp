@@ -29,13 +29,15 @@ struct SettingsView: View {
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
 
-    // StudyAppLane is stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
+    // StudyAppLane and StudyAppBuiltAt are stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
     private var buildFooterText: String {
         let info = Bundle.main.infoDictionary
         let lane = info?["StudyAppLane"] as? String ?? "local"
         let version = info?["CFBundleShortVersionString"] as? String ?? "?"
         let build = info?["CFBundleVersion"] as? String ?? "?"
-        return "\(lane) · \(version) (\(build))"
+        let text = "\(lane) · \(version) (\(build))"
+        guard let builtAt = info?["StudyAppBuiltAt"] as? String else { return text }
+        return "\(text)\n\(builtAt)"
     }
 
     var body: some View {

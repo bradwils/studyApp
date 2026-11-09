@@ -44,11 +44,22 @@ fi
 # The lane is stamped into the build rather than hardcoded per branch, so the
 # same source is identical on dev, UAT and master and promotions never conflict.
 LANE="${CI_TAG:-${CI_BRANCH:-unknown}}"
+# PR builds arrive as a tag made by .github/workflows/testflight-pr.yml:
+# testflight-pr<number>-<sha7>-<branch with non-alphanumerics as hyphens>.
+# Show the branch, not the tag.
+if [[ "${CI_TAG:-}" =~ '^testflight-pr[0-9]+-[0-9a-f]{7}-(.+)$' ]]; then
+  LANE="${match[1]}"
+fi
+# %Z is AEDT during daylight saving and AEST otherwise.
+BUILT_AT="$(TZ=Australia/Sydney date '+%Y-%m-%d %H:%M %Z')"
 PLIST="$CI_PRIMARY_REPOSITORY_PATH/studyApp/Info.plist"
-# This script runs before every xcodebuild call, so the key may already exist.
+# This script runs before every xcodebuild call, so the keys may already exist.
 /usr/libexec/PlistBuddy -c "Delete :StudyAppLane" "$PLIST" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Add :StudyAppLane string ${LANE}" "$PLIST"
+/usr/libexec/PlistBuddy -c "Delete :StudyAppBuiltAt" "$PLIST" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :StudyAppBuiltAt string ${BUILT_AT}" "$PLIST"
 
 echo "lane          -> ${LANE}"
+echo "built at      -> ${BUILT_AT}"
 echo "build number  -> ${BUILD_NUMBER}"
 echo "marketing ver -> $(grep -m1 -o 'MARKETING_VERSION = [^;]*' "$PROJECT")"
