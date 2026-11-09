@@ -47,8 +47,10 @@ the build time in Sydney time, and the usual version (build).
 - Fork PRs are skipped (no secrets).
 - Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
   and `APP_STORE_CONNECT_PRIVATE_KEY`.
-- **One-off setup in Xcode:** create a workflow called `PR TestFlight` with *no*
-  start conditions (it is only started by the API), a TestFlight Internal
+- **One-off setup in Xcode:** create a workflow called `PR TestFlight` whose only
+  start condition is **Manual Start** for *all branches* (Apple refuses an
+  API-started build on a branch the workflow doesn't list, and a Branch Changes
+  condition would build every push), a TestFlight Internal
   Testing post-action (distribute to **Self**), and the same environment as
   `dev`. The workflow must run `ci_scripts/`, so the PR's branch has to include
   that folder.
