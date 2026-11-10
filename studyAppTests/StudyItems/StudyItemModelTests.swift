@@ -40,7 +40,7 @@ struct StudyItemsV2ModelTests {
         let container = try makeStudyItemTestContainer()
         let writer = makeStudyItemTestContext(container)
         let subject = Subject(name: "Mathematics", code: "MTH")
-        let tag = Tag(name: "Revision", color: .mango)
+        let tag = studyApp.Tag(name: "Revision", color: .mango)
         let date = Date(timeIntervalSince1970: 1_800_000_000)
         let item = StudyItem(
             taskName: "Integration", subject: subject, notes: "Exercises 1–5",

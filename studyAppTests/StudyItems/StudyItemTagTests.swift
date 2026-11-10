@@ -7,18 +7,18 @@ import Testing
 struct StudyItemsV2TagTests {
     @Test("Tag initialization normalizes names", arguments: ["Maths", " MATHS ", "\nMaThS\t"])
     func normalizesNames(name: String) {
-        #expect(Tag(name: name).key == "maths")
+        #expect(studyApp.Tag(name: name).key == "maths")
     }
 
     @Test("Tag colors survive persistence", arguments: TagColor.allCases)
     func colorRoundTrip(color: TagColor) throws {
         let container = try makeStudyItemTestContainer()
         let writer = makeStudyItemTestContext(container)
-        writer.insert(Tag(name: "Revision", color: color))
+        writer.insert(studyApp.Tag(name: "Revision", color: color))
         try writer.save()
 
         let reader = makeStudyItemTestContext(container)
-        let tag = try #require(reader.fetch(FetchDescriptor<Tag>()).first)
+        let tag = try #require(reader.fetch(FetchDescriptor<studyApp.Tag>()).first)
         #expect(tag.key == "revision")
         #expect(tag.color == color)
         let data = try JSONEncoder().encode(color)
@@ -28,7 +28,7 @@ struct StudyItemsV2TagTests {
     @Test("Tag form rejects blank and normalized duplicate names")
     func validatesTagNames() {
         let vm = TagDebugVM()
-        let existing = [Tag(name: "Maths")]
+        let existing = [studyApp.Tag(name: "Maths")]
         vm.newName = " \n\t "
         #expect(!vm.canAdd(existing: existing))
         vm.newName = " \nMATHS\t "
@@ -48,7 +48,7 @@ struct StudyItemsV2TagTests {
         #expect(vm.newName.isEmpty)
 
         let reader = makeStudyItemTestContext(container)
-        let tags = try reader.fetch(FetchDescriptor<Tag>())
+        let tags = try reader.fetch(FetchDescriptor<studyApp.Tag>())
         #expect(tags.count == 1)
         #expect(tags.first?.key == "revision")
         #expect(tags.first?.color == .hazel)
@@ -56,11 +56,11 @@ struct StudyItemsV2TagTests {
         vm.newName = "REVISION"
         vm.addTag(existing: tags, context: writer)
         let duplicateReader = makeStudyItemTestContext(container)
-        #expect(try duplicateReader.fetchCount(FetchDescriptor<Tag>()) == 1)
+        #expect(try duplicateReader.fetchCount(FetchDescriptor<studyApp.Tag>()) == 1)
 
-        let tag = try #require(writer.fetch(FetchDescriptor<Tag>()).first)
+        let tag = try #require(writer.fetch(FetchDescriptor<studyApp.Tag>()).first)
         vm.delete(tag, context: writer)
         let deletedReader = makeStudyItemTestContext(container)
-        #expect(try deletedReader.fetchCount(FetchDescriptor<Tag>()) == 0)
+        #expect(try deletedReader.fetchCount(FetchDescriptor<studyApp.Tag>()) == 0)
     }
 }

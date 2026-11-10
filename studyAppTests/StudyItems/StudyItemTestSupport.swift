@@ -6,7 +6,7 @@ func makeStudyItemTestContainer() throws -> ModelContainer {
     try ModelContainer(
         for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self,
         SessionLocation.self, RemoteUser.self, StudyItem.self, FieldDefinition.self,
-        FieldValue.self, Tag.self,
+        FieldValue.self, studyApp.Tag.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
 }

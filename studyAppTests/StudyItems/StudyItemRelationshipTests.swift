@@ -9,7 +9,7 @@ struct StudyItemsV2RelationshipTests {
         let container = try makeStudyItemTestContainer()
         let writer = makeStudyItemTestContext(container)
         let subject = Subject(name: "Physics", code: "PHY")
-        let tag = Tag(name: "Exam")
+        let tag = studyApp.Tag(name: "Exam")
         let item = StudyItem(taskName: "Revise", subject: subject)
         writer.insert(subject)
         writer.insert(tag)
@@ -19,7 +19,7 @@ struct StudyItemsV2RelationshipTests {
 
         let initialReader = makeStudyItemTestContext(container)
         let storedSubject = try #require(initialReader.fetch(FetchDescriptor<Subject>()).first)
-        let storedTag = try #require(initialReader.fetch(FetchDescriptor<Tag>()).first)
+        let storedTag = try #require(initialReader.fetch(FetchDescriptor<studyApp.Tag>()).first)
         #expect(storedSubject.items.map(\.id) == [item.id])
         #expect(storedTag.items.map(\.id) == [item.id])
 
@@ -34,7 +34,7 @@ struct StudyItemsV2RelationshipTests {
         #expect(stored.tag == nil)
         #expect(stored.subjectName == "Physics")
         #expect(try reader.fetchCount(FetchDescriptor<Subject>()) == 0)
-        #expect(try reader.fetchCount(FetchDescriptor<Tag>()) == 0)
+        #expect(try reader.fetchCount(FetchDescriptor<studyApp.Tag>()) == 0)
     }
 
     @Test("Deleting an item cascades its values but preserves shared definitions")
