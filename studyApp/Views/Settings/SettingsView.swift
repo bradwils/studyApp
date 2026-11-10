@@ -59,6 +59,7 @@ struct SettingsView: View {
                     }
                 }
 
+                #if DEBUG
                 Section("Debug") {
                     Button {
                         insertFakeSession()
@@ -66,6 +67,7 @@ struct SettingsView: View {
                         Label("Generate Fake Study Session", systemImage: "wand.and.stars")
                     }
                 }
+                #endif
 
                 Section(footer: Text(buildFooterText)) {
                     Button(role: .destructive) {
@@ -75,6 +77,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            #if DEBUG
             .toolbar {
                 // DEV ONLY — see CLAUDE.md "Developer-Only Views"
                 ToolbarItem(placement: .topBarTrailing) {
@@ -85,6 +88,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            #endif
         }
     }
     
@@ -92,6 +96,7 @@ struct SettingsView: View {
 
     }
 
+    #if DEBUG
     func insertFakeSession() {
         let startedAt = Date().addingTimeInterval(-3600)
         let session = StudySession(
@@ -108,6 +113,7 @@ struct SettingsView: View {
             logger.log("Failed to insert: \(error)")
         }
     }
+    #endif
 }
 
 #Preview {
