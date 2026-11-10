@@ -18,12 +18,6 @@ struct FocusPageContent: View {
 	
 	@State var selectedDuration: TimeInterval = 0
 
-    // MARK: - Target Duration
-
-    /// Natural height of the duration picker, captured once while it's laid out
-    /// normally so the roll-up animation has a concrete value to collapse from.
-    @State private var pickerNaturalHeight: CGFloat?
-
     // MARK: - Unlock Confirmation (shake-to-confirm)
 
     /// Taps required on the lock button, while locked, before focus lock releases.
@@ -189,14 +183,13 @@ struct FocusPageContent: View {
     private var durationPicker: some View {
         @Bindable var vm = vm
         return DurationPicker(duration: $selectedDuration, minHours: $vm.minHours, maxHours: $vm.maxHours, minMinutes: $vm.minMinutes, maxMinutes: $vm.maxMinutes)
-            // Roll up like a sliding door: collapse to a measured-then-zero height instead
-            // of fading, so the lock controls below rise into its place at the same rate
-            // the picker retracts — both driven by the one VStack layout animation.
-            .onGeometryChange(for: CGFloat.self, of: { $0.size.height }) { height in
-                guard !vm.isFocusSessionRunning, height > 0 else { return }
-                pickerNaturalHeight = height
-            }
-            .frame(height: vm.isFocusSessionRunning ? 0 : pickerNaturalHeight, alignment: .top)
+            // Roll up like a sliding door: the picker keeps its ideal height and the frame
+            // around it collapses to zero, so the lock controls below rise into its place
+            // at the same rate the picker retracts. fixedSize is what keeps this stable —
+            // measuring the picker and feeding that back into its own frame re-laid it out
+            // on every pass and hung the main thread.
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(height: vm.isFocusSessionRunning ? 0 : nil, alignment: .top)
             .clipped()
     }
 
