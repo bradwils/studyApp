@@ -48,7 +48,7 @@ the build time in Sydney time, and the usual version (build).
   branch (`master`). Having this workflow on `dev` alone does not activate
   `/testflight` comments; promote it to `master` before relying on comment
   triggers.
-- Fork PRs are skipped (no secrets).
+- Fork PRs and closed PRs are skipped; only open PRs from this repository can build.
 - Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
   and `APP_STORE_CONNECT_PRIVATE_KEY`.
 - **One-off setup in Xcode:** create a workflow called `PR TestFlight` whose only
