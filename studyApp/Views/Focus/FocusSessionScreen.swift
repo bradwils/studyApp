@@ -12,6 +12,8 @@ struct FocusSessionScreen: View {
 
     @State private var vm: StudyTrackingViewModel
 
+    @State private var isFocusLocked = false
+
     /// 0 on the tracking page, 1 on the focus page, provides continious scale for opacity functions
     @State private var pageOffset: CGFloat = 0
 
@@ -36,26 +38,40 @@ struct FocusSessionScreen: View {
 			///Ticking pushes our changes for the background layer
 			
 			ZStack {
-				ticking {
-                    backgroundLayer
-//                    pinnedTimerLayer moved --> check this doesnt cause isues!
+				ticking { date in
+                    backgroundLayer(at: date)
                 }
 				pinnedTimerLayer
             }
             pager
         }
+        .toolbar(isFocusLocked ? .hidden : .visible, for: .tabBar)
+        .onChange(of: vm.activeSession?.id) {
+            isFocusLocked = false
+        }
+        .alert("Couldn't Save", isPresented: isShowingSaveError) {
+            Button("OK") { vm.dismissSaveError() }
+        } message: {
+            Text(vm.saveErrorMessage ?? "")
+        }
     }
-	/// Allow periodic updates for contained views; currently used to allow the creeping foucs session gradient background to update every 0.5s
-    /// double viewbuilder allows for, if needed, stacked views to be parsed through
+
+    private var isShowingSaveError: Binding<Bool> {
+        Binding(
+            get: { vm.saveErrorMessage != nil },
+            set: { if !$0 { vm.dismissSaveError() } }
+        )
+    }
+	/// Ticks only while the focus gradient can actually move: a running session with a target.
+	/// Paused or target-less progress cannot change, so there is nothing to redraw.
     @ViewBuilder
-    private func ticking<Content: View>(@ViewBuilder _ content: @escaping () -> Content) -> some View { //remember; Content is a generic term, 'content' is what we're identifying the closure as. Here, we're ultimately saying 'something generic, Content, needs to conform to some type of View. content, my closure, is what ends up getting captured by the second closure (TimelineView(xxyz) { HERE } (and persists beyond just the function, as per @escaping).
-		switch vm.currentSessionState {
-		case .noSession:
-			content()
-		case .sessionRunning(let anchor), .sessionPaused(let anchor):
-			TimelineView(.periodic(from: anchor, by: 0.5)) { _ in //analyse the battery drain & potential differences later, can probably be nuked to 10s
-				content()
+    private func ticking<Content: View>(@ViewBuilder _ content: @escaping (Date) -> Content) -> some View {
+		if vm.phase == .running && vm.hasFocusTarget {
+			TimelineView(.periodic(from: .now, by: 0.5)) { context in
+				content(context.date)
 			}
+		} else {
+			content(.now)
 		}
     }
 
@@ -73,8 +89,8 @@ struct FocusSessionScreen: View {
                 TrackingPageContent(vm: vm)
                     .containerRelativeFrame(.horizontal)
 
-				if (vm.sessionIsRunning) {
-					FocusPageContent(vm: vm)
+				if vm.hasActiveSession {
+					FocusPageContent(vm: vm, isLocked: isFocusLocked) { isFocusLocked = $0 }
 						.containerRelativeFrame(.horizontal)
 				}
             }
@@ -84,7 +100,7 @@ struct FocusSessionScreen: View {
 		.scrollTargetBehavior(.paging)
 		.scrollIndicators(.never)
 		.scrollBounceBehavior(.basedOnSize)
-        .scrollDisabled(vm.focusLockEnabled)
+        .scrollDisabled(isFocusLocked)
 		
 		///Track how far we've moved between screen1 and screen2. Needed to animate the gradual opacity of the bg & the pager dots
         .onScrollGeometryChange(for: CGFloat.self) { geometry in
@@ -100,12 +116,12 @@ struct FocusSessionScreen: View {
 
     // MARK: - Background Layer
 
-    private var backgroundLayer: some View {
+    private func backgroundLayer(at date: Date) -> some View {
         ZStack {
             trackingGradient
                 .opacity(1 - pageBlend)
 
-            TimerGradientBackground(progress: vm.pureFocusSessionProgress ?? 0, isTimerActive: vm.timerIsRunning)
+            TimerGradientBackground(progress: vm.focusProgress(at: date), isTimerActive: vm.phase == .running)
                 .opacity(pageBlend)
         }
         .ignoresSafeArea()
@@ -151,30 +167,13 @@ struct FocusSessionScreen: View {
             Spacer()
         }
 		.overlay(alignment: .top) {
-			if case .sessionRunning = vm.currentSessionState { pageIndicator }
+			if vm.hasActiveSession { pageIndicator }
 		}
         .allowsHitTesting(false)
     }
 
-	//main Timer Element Content. Runs through two enums; changing content based on first if there is a PureFocusSession active and second by the state of the second (given no PureFocusSession)
 	private var timerDigits: some View {
-		Group {
-			if (vm.isFocusSessionRunning) {
-				// swiftlint:disable:next force_unwrapping
-				ElapsedTimerText(anchor: vm.activePureFocusSession!.pureFocusGoal) // change timer to pureFocus start time anchor
-			} else {
-				switch vm.currentSessionState {
-				case .noSession:
-					Text("--:--")
-				case .sessionRunning(let anchor): //anchor = total study time cumulative
-					ElapsedTimerText(anchor: anchor)
-				case .sessionPaused(let anchor): //anchor = start of break time
-					ElapsedTimerText(anchor: anchor)
-				}
-			}
-
-
-		}
+		SessionTimerText(display: vm.timerDisplay)
 		.font(
 			.system(
 				size: timerFontSize,
@@ -208,12 +207,12 @@ struct FocusSessionScreen: View {
 #Preview {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: StudySession.self, Subject.self,
+        for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
     let vm = StudyTrackingViewModel()
-    vm.startSession(ctx: container.mainContext)
-    vm.startPureFocusSession(5 * 60)
+    vm.startSession(context: container.mainContext)
+    vm.startFocusTarget(duration: 5 * 60)
 
     return FocusSessionScreen(vm: vm)
         .modelContainer(container)

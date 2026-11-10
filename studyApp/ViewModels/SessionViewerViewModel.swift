@@ -4,7 +4,6 @@
 //
 //  Created by brad wils on 20/7/26.
 //
-import Combine
 import Foundation
 import SwiftData
 
@@ -12,18 +11,14 @@ import SwiftData
 final class SessionViewerViewModel {
     //ask for a context with your function
     func removeAllSessions(context: ModelContext) {
-        try? context.delete(model: StudySession.self)
+        try? context.delete(model: StudySession.self, where: #Predicate { $0.endedAt != nil })
         try? context.save()
     }
 
     func deleteSessions(_ sessions: [StudySession], context: ModelContext) {
-        for session in sessions {
+        for session in sessions where session.endedAt != nil {
             context.delete(session)
         }
         try? context.save()
-    }
-    
-    
-    init() {
     }
 }

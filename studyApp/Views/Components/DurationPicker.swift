@@ -20,10 +20,7 @@ struct DurationPicker: View {
     /// Binding to the total duration in seconds
     @Binding var duration: TimeInterval
     
-    @Binding var minHours: Int
-    @Binding var maxHours: Int
-    @Binding var minMinutes: Int
-    @Binding var maxMinutes: Int
+    var limits: FocusDurationLimits = .standard
     
     /// Maximum hours allowed (default: 8)
     
@@ -44,7 +41,7 @@ struct DurationPicker: View {
 							duration = TimeInterval(hours * 3600 + minutes * 60)
 						}
 					)) {
-						ForEach(minHours...maxHours, id: \.self) { hour in
+						ForEach(limits.hours, id: \.self) { hour in
 							Text("\(hour)").tag(hour)
 								.foregroundColor(.white.opacity(0.8))
 							
@@ -65,7 +62,7 @@ struct DurationPicker: View {
                         duration = TimeInterval(hours * 3600 + minutes * 60)
                     }
                 )) {
-                    ForEach(minMinutes ... maxMinutes, id: \.self) { minute in
+                    ForEach(limits.minutes, id: \.self) { minute in
                         Text("\(minute)").tag(minute)
                             .foregroundColor(.white.opacity(0.8))
 
@@ -91,7 +88,7 @@ struct DurationPicker: View {
                 Color.black.ignoresSafeArea()
                 
                 VStack(spacing: 20) {
-                    DurationPicker(duration: $duration, minHours: .constant(0), maxHours: .constant(8), minMinutes: .constant(0), maxMinutes: .constant(60))
+                    DurationPicker(duration: $duration)
                     
                     Text("Selected: \(Int(duration / 60)) minutes")
                         .foregroundColor(.white)

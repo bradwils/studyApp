@@ -1,4 +1,3 @@
-import Combine
 import SwiftUI
 import SwiftData
 
@@ -23,7 +22,6 @@ struct TrackingPageContent: View {
 	// MARK: - State Properties
 
 	@State var onlineFriendCount: Int = 0  //to be dynamic later
-	@State private var currentStudySessionInProgress: Bool = false
 
 	// MARK: - Scaled Metrics
 
@@ -40,9 +38,6 @@ struct TrackingPageContent: View {
 			PinnedTimerSlot()
 
 			VStack {
-				timeSummaryRow
-					.padding()
-
 				controlsSection
 
 				connectionRow
@@ -66,10 +61,18 @@ struct TrackingPageContent: View {
 					.font(.caption)
 					.foregroundColor(.secondary)
 
-				ActiveSubjectList(
-					isEnabled: !currentStudySessionInProgress,
-					selectedSubject: Bindable(vm).selectedSubject
-				)
+				if vm.hasActiveSession {
+					Text(vm.activeSubjectName ?? "No subject")
+						.font(.body)
+				} else {
+					ActiveSubjectList(
+						isEnabled: vm.canSelectSubject,
+						selectedSubject: Binding(
+							get: { vm.selectedSubject },
+							set: { vm.selectSubject($0) }
+						)
+					)
+				}
 			}
 
 			Spacer()
@@ -82,26 +85,6 @@ struct TrackingPageContent: View {
 				Text("00:00:00")
 					.font(.title3.monospacedDigit())
 					.fontWeight(.medium)
-			}
-		}
-	}
-
-	private var timeSummaryRow: some View {
-		Group {
-			if vm.hasAlreadyStudiedToday() {
-				HStack {
-					Text("Time spent studying today")
-						.font(.subheadline)
-						.foregroundColor(.secondary)
-
-					Spacer()
-
-					Text("<- 00:00:00")
-						.font(.subheadline.monospacedDigit())
-						.foregroundColor(.primary)
-				}
-			} else {
-				EmptyView()
 			}
 		}
 	}
@@ -129,30 +112,29 @@ struct TrackingPageContent: View {
 	}
 
 	private var mainButtonLabel: String {
-		switch vm.currentSessionState {
-		case .noSession:
+		switch vm.phase {
+		case .idle:
 			return "Start"
-		case .sessionPaused:
+		case .paused:
 			return "Resume"
-		case .sessionRunning:
+		case .running:
 			return "Pause"
 		}
 	}
 
 	private var isSessionPaused: Bool {
-		if case .sessionPaused = vm.currentSessionState { return true }
-		return false
+		vm.phase == .paused
 	}
 
 	private func performMainAction() {
 		withMorphAnimation {
-			switch vm.currentSessionState {
-			case .noSession:
-				vm.startSession(ctx: modelContext)
-			case .sessionPaused:
-				vm.resumeSession()
-			case .sessionRunning:
-				vm.pauseSession()
+			switch vm.phase {
+			case .idle:
+				vm.startSession(context: modelContext)
+			case .paused:
+				vm.resumeSession(context: modelContext)
+			case .running:
+				vm.pauseSession(context: modelContext)
 			}
 		}
 	}
@@ -175,8 +157,8 @@ struct TrackingPageContent: View {
 			HStack(alignment: .center) {
 						// "Pause at" text: fades in and slides from left when paused
 					VStack {
-						if vm.activeSession != nil {
-							if vm.ssw?.stopwatchIsRunning ?? false {  //
+						if vm.hasActiveSession {
+							if vm.phase == .running {
 
 								Text(
 									"temp"
@@ -230,7 +212,7 @@ struct TrackingPageContent: View {
 						if isSessionPaused {
 							Button {
 								withMorphAnimation {
-									vm.endSession(context: modelContext)
+									vm.finishSession(context: modelContext)
 								}
 							} label: {
 								Text("End Session")
@@ -256,5 +238,8 @@ struct TrackingPageContent: View {
 
 #Preview {
 	TrackingPageContent(vm: StudyTrackingViewModel())
-		.modelContainer(for: Subject.self, inMemory: true)
+		.modelContainer(
+			for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self],
+			inMemory: true
+		)
 }

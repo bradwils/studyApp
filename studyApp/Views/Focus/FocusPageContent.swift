@@ -14,9 +14,10 @@ struct FocusPageContent: View {
 
     let vm: StudyTrackingViewModel
 
-    @Environment(\.modelContext) private var modelContext
-	
-	@State var selectedDuration: TimeInterval = 0
+    let isLocked: Bool
+    let onLockChange: (Bool) -> Void
+
+	@State private var selectedDuration: TimeInterval = 0
 
     // MARK: - Unlock Confirmation (shake-to-confirm)
 
@@ -51,8 +52,7 @@ struct FocusPageContent: View {
 			//THIS WILL BE CHANGED SO WHEN WE HAVE A WIDER ORIENTATION, MOVE THIS TO BE ON THE SIDE AND ADJUST PUREFOCUSVIEW ALIGNMENT TO MATCH. so, (simple) we'll vstack it instead of hstack depending on horizontalSizeClass
 //            CustomBottomSheet()
         }
-        .toolbar(vm.focusLockEnabled ? .hidden : .visible, for: .tabBar)
-        .onChange(of: vm.focusLockEnabled) { _, locked in
+        .onChange(of: isLocked) { _, locked in
             // A freshly engaged lock gets a fresh set of confirmation taps.
             if locked {
                 unlockTapCount = 0
@@ -66,9 +66,9 @@ struct FocusPageContent: View {
     /// Locking is a single tap; unlocking takes `unlockTapsRequired` deliberate taps,
     /// each acknowledged with a shake + haptic.
     private func handleLockTap() {
-        guard vm.focusLockEnabled else {
+        guard isLocked else {
             withAnimation(.easeInOut(duration: 0.5)) {
-                vm.focusLockEnabled = true
+                onLockChange(true)
             }
             return
         }
@@ -80,7 +80,7 @@ struct FocusPageContent: View {
         unlockTapCount += 1
         guard unlockTapCount < unlockTapsRequired else {
             withAnimation(.easeInOut(duration: 0.5)) {
-                vm.focusLockEnabled = false
+                onLockChange(false)
             }
             return
         }
@@ -91,33 +91,6 @@ struct FocusPageContent: View {
     }
 
     // MARK: - Session Controls
-
-    private var mainButtonSymbol: String {
-        if case .sessionRunning = vm.currentSessionState { return "pause.fill" }
-        return "play.fill"
-    }
-
-    private var mainButtonLabel: String {
-        switch vm.currentSessionState {
-        case .noSession:
-            return "Start"
-        case .sessionPaused:
-            return "Resume"
-        case .sessionRunning:
-            return "Pause"
-        }
-    }
-
-    private func performMainAction() {
-        switch vm.currentSessionState {
-        case .noSession:
-            vm.startSession(ctx: modelContext)
-        case .sessionPaused:
-            vm.resumeSession()
-        case .sessionRunning:
-            vm.pauseSession()
-        }
-    }
 
     // MARK: - Subviews
 
@@ -132,10 +105,10 @@ struct FocusPageContent: View {
                     handleLockTap()
                 }) {
                     HStack(spacing: 8) {
-                        Image(systemName: vm.focusLockEnabled ? "lock.fill" : "lock.open.fill")
+                        Image(systemName: isLocked ? "lock.fill" : "lock.open.fill")
                             .contentTransition(.symbolEffect(.replace.magic(fallback: .offUp.byLayer), options: .nonRepeating))
 
-                        Text(vm.focusLockEnabled ? "Unlock State" : "Lock State")
+                        Text(isLocked ? "Unlock State" : "Lock State")
                     }
                 }
                 .buttonStyle(.glass)
@@ -144,10 +117,10 @@ struct FocusPageContent: View {
                 // Reset button (only show when a target exists) — drops the target only,
                 // the session itself keeps running.
                 // Uses the same .glass style so it visually matches the other controls.
-				if (vm.activePureFocusSession != nil) {
+				if vm.hasFocusTarget {
                     Button(action: {
                         withAnimation {
-                            vm.closePureFocusSession()
+                            vm.resetFocusTarget()
                         }
                     }) {
                         Image(systemName: "arrow.counterclockwise")
@@ -156,6 +129,7 @@ struct FocusPageContent: View {
                             .padding(14)
                     }
                     .buttonStyle(.glass)
+                    .accessibilityLabel("Reset focus target")
                 }
                 //UIEND
             }
@@ -169,32 +143,32 @@ struct FocusPageContent: View {
 		VStack(spacing: 8) {
 			durationPicker
 
-			if !vm.isFocusSessionRunning {
+			if !vm.hasFocusTarget {
 				Button("Start Focus Session") {
 					withAnimation(.easeInOut(duration: 0.35)) {
-						vm.startPureFocusSession(selectedDuration)
+						vm.startFocusTarget(duration: selectedDuration)
 					}
 				}
 				.buttonStyle(.glass)
+				.disabled(!FocusDurationLimits.standard.allows(selectedDuration) || vm.phase != .running)
 			}
 		}
     }
 
     private var durationPicker: some View {
-        @Bindable var vm = vm
-        return DurationPicker(duration: $selectedDuration, minHours: $vm.minHours, maxHours: $vm.maxHours, minMinutes: $vm.minMinutes, maxMinutes: $vm.maxMinutes)
+        DurationPicker(duration: $selectedDuration)
             // Roll up like a sliding door: the picker keeps its ideal height and the frame
             // around it collapses to zero, so the lock controls below rise into its place
             // at the same rate the picker retracts. fixedSize is what keeps this stable —
             // measuring the picker and feeding that back into its own frame re-laid it out
             // on every pass and hung the main thread.
             .fixedSize(horizontal: false, vertical: true)
-            .frame(height: vm.isFocusSessionRunning ? 0 : nil, alignment: .top)
+            .frame(height: vm.hasFocusTarget ? 0 : nil, alignment: .top)
             .clipped()
     }
 
     private var topScreenCode: some View {
-        Text(vm.selectedSubject?.code ?? "—")
+        Text(vm.displayedSubjectCode ?? "—")
             .font(.system(size: 35))
             .lineLimit(1)
     }
@@ -202,15 +176,22 @@ struct FocusPageContent: View {
 
 
 #Preview {
+    // swiftlint:disable:next force_try
+    let container = try! ModelContainer(
+        for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
     let vm = StudyTrackingViewModel()
+    vm.startSession(context: container.mainContext)
+    vm.startFocusTarget(duration: 25 * 60)
 
-    ZStack {
+    return ZStack {
         // FocusPageContent is deliberately transparent — FocusSessionScreen normally
         // paints this behind it. Without it the preview is just a blank white page.
-        TimerGradientBackground(progress: vm.pureFocusSessionProgress ?? 0, isTimerActive: vm.timerIsRunning)
+        TimerGradientBackground(progress: vm.focusProgress(at: .now), isTimerActive: vm.phase == .running)
             .ignoresSafeArea()
 
-        FocusPageContent(vm: vm)
+        FocusPageContent(vm: vm, isLocked: false, onLockChange: { _ in })
     }
-    .modelContainer(for: Subject.self, inMemory: true)
+    .modelContainer(container)
 }
