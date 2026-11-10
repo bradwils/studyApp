@@ -13,18 +13,20 @@ import Foundation
 struct StudySessionTests {
 
 	@MainActor
-	private func makeContext() throws -> ModelContext {
-		let container = try ModelContainer(
+	// Returns the container, not its context: a context does not keep its container alive,
+	// and using one after the container is released crashes the test process.
+	private func makeContainer() throws -> ModelContainer {
+		try ModelContainer(
 			for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
 			configurations: ModelConfiguration(isStoredInMemoryOnly: true)
 		)
-		return container.mainContext
 	}
 
 	@MainActor
 	@Test("In progress StudySession appears in SwiftData correctly")
 	func startSessionAndCheck() throws {
-		let context = try makeContext()
+		let container = try makeContainer()
+		let context = container.mainContext
 		let start = Date(timeIntervalSinceReferenceDate: 1_000)
 
 		let subject = Subject(name: "testing_subject", code: "MTH2")
@@ -52,7 +54,8 @@ struct StudySessionTests {
 	@MainActor
 	@Test("Ended StudySession records closed sections and breaks")
 	func startAndEndSessionAndCheck() throws {
-		let context = try makeContext()
+		let container = try makeContainer()
+		let context = container.mainContext
 		var current = Date(timeIntervalSinceReferenceDate: 1_000)
 
 		let subject = Subject(name: "testing_subject", code: "MTH2")
@@ -92,7 +95,8 @@ struct StudySessionTests {
 	@MainActor
 	@Test("Finishing while paused closes the final break once")
 	func finishWhilePaused() throws {
-		let context = try makeContext()
+		let container = try makeContainer()
+		let context = container.mainContext
 		var current = Date(timeIntervalSinceReferenceDate: 1_000)
 
 		let vm = StudyTrackingViewModel(now: { current })
@@ -115,7 +119,8 @@ struct StudySessionTests {
 	@MainActor
 	@Test("Finishing a StudySession clears the view model's session state")
 	func startAndEndSessionWithClearVars() throws {
-		let context = try makeContext()
+		let container = try makeContainer()
+		let context = container.mainContext
 		var current = Date(timeIntervalSinceReferenceDate: 1_000)
 
 		let vm = StudyTrackingViewModel(now: { current })
