@@ -19,7 +19,7 @@ what can merge into `master`). If an app build runs, Xcode Cloud ran it.
 | `master` | shipped | `v*` tag only | TestFlight external → **Stable**, then App Store review | pinned (26.6) |
 
 Direction is always `feature/*` → `dev` → `UAT-testflight` → `master`. Nothing
-skips a step except a hotfix (see below).
+skips a step except a hotfix or CI maintenance (see below).
 
 The **UAT** and **Stable** groups have no testers yet — builds land there and
 wait. Add testers in App Store Connect → TestFlight when testing starts.
@@ -32,7 +32,7 @@ wait. Add testers in App Store Connect → TestFlight when testing starts.
 |---|---|---|---|---|
 | `dev` | ✅ | no | any | no force-push, no deletion |
 | `UAT-testflight` | ❌ | yes, from any branch | merge commit only | no force-push, no deletion |
-| `master` | ❌ | yes, from `UAT-testflight` or `hotfix/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
+| `master` | ❌ | yes, from `UAT-testflight`, `hotfix/*` or `ci/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
 | `v*` tags | — | — | — | can't be moved or deleted once created |
 
 Approvals required: 0 (you can't approve your own PR). Head branches are
@@ -43,14 +43,14 @@ must carry `dev`'s actual commits. Squashing creates a new commit with the same
 content but different history, so the branches drift apart and the next
 promotion conflicts.
 
-**Land a change once.** Make it on `dev` and promote it. Opening matching PRs
+**Land an app change once.** Make it on `dev` and promote it. Opening matching PRs
 into `dev` and `master` is what caused the earlier drift.
 
 ---
 
 ## Starting work
 
-Branch off `dev`, never off `master`:
+Branch app work off `dev`. Hotfixes and CI maintenance branch off `master`:
 
 ```sh
 git checkout dev
@@ -100,7 +100,8 @@ here builds, so merge once, deliberately.
 
 Open a PR from `UAT-testflight` targeting `master`, and merge it with **Create
 a merge commit**. The `source-branch` check rejects a PR from anything other
-than `UAT-testflight` or `hotfix/*`.
+than `UAT-testflight`, `hotfix/*` or `ci/*`. The latter two are exceptions for
+production fixes and CI maintenance, respectively.
 
 **Merging does not build anything.** `master` only builds on a version tag.
 That's deliberate: merging and releasing are separate decisions.
@@ -128,7 +129,7 @@ points at, so a tag on `dev` would ship unreleased work.
 ## Hotfixes
 
 A production bug shouldn't have to travel the whole chain. Branch off `master`
-with a `hotfix/` name (the `source-branch` check only accepts that prefix), fix,
+with a `hotfix/` name, fix,
 PR into `master`, then release:
 
 ```sh
@@ -145,6 +146,25 @@ git checkout dev && git pull
 git merge origin/master
 git push
 ```
+
+---
+
+## CI maintenance
+
+For CI, tooling or documentation changes that need to reach the default branch
+without promoting app work, cut a `ci/*` branch from `master` and open a PR into
+`master`. Merge with **Create a merge commit**. The `source-branch` check accepts
+the prefix; keeping the change limited to maintenance is a review convention,
+not a changed-file restriction.
+
+After merging, merge `master` into `UAT-testflight` through a merge-commit PR
+and back into `dev`, preserving each target's current changes. This carries the
+same commits through all lanes. UAT and dev still build on push; no release tag
+is needed for a CI-only change.
+
+The `source-branch` workflow remains required by the master ruleset. Full
+retirement is tracked separately in #164 and requires removing that live status
+requirement before deleting the workflow.
 
 ---
 
