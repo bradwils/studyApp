@@ -188,7 +188,7 @@ If you have made changes, then we might need to add a migration schema. Check if
 
 ## Current Maintenance Notes
 
-- `studyAppTests/studyAppTests.swift` still targets the removed `UserProfileStore`, so the unit test target doesn't compile — rewrite against an in-memory SwiftData container before adding a CI test action
+- The obsolete `UserProfileStore` test source is gone. Current unit tests are `AppSessionTests.swift` and `StudySessionTests.swift`; the latter uses an in-memory SwiftData container. Their Xcode build and test status is unverified, and no automated unit-test workflow is configured.
 - `StudyTrackingViewModel.endSession(context:)` never calls `context.save()`
 
 See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decisions and [todos/ui-design-ideas.md](todos/ui-design-ideas.md) for UX/design ideas.
