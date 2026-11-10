@@ -1,8 +1,8 @@
 name: TestFlight PR build
 
-# Put /testflight on its own line in a PR's description or in a comment on it to start an Xcode
-# Cloud build of that PR's branch. Xcode Cloud archives and ships it to the
-# internal TestFlight group; this file only asks for the build.
+# Put /testflight on its own line in a PR's description, or in a comment on the PR,
+# to start an Xcode Cloud build of its branch. Xcode Cloud ships it to TestFlight.
+
 on:
   pull_request:
     types: [opened, edited, reopened]
@@ -19,8 +19,7 @@ concurrency:
 
 jobs:
   trigger:
-    # Comments only count on PRs, from people with write-ish access. Fork PRs
-    # never get secrets, so they are skipped rather than failing.
+    # Fork PRs never get secrets. Comments count only from people who can write to the repo.
     if: >-
       (github.event_name == 'pull_request'
         && github.event.pull_request.head.repo.full_name == github.repository
@@ -30,44 +29,31 @@ jobs:
         && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association))
     runs-on: ubuntu-latest
     steps:
-      - name: Look for the marker
-        id: marker
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EVENT: ${{ github.event_name }}
-          PR_BODY: ${{ github.event.pull_request.body }}
-          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          COMMENT_BODY: ${{ github.event.comment.body }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
-        run: |
-          if [[ "$EVENT" == "pull_request" ]]; then
-            text="$PR_BODY"
-            branch="$PR_HEAD_REF"
-          else
-            text="$COMMENT_BODY"
-            branch="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$ISSUE_NUMBER" --jq .head.ref)"
-          fi
-
-          if printf '%s' "$text" | tr -d '\r' | grep -qiE '^[[:space:]]*/testflight[[:space:]]*$'; then
-            echo "build=true" >> "$GITHUB_OUTPUT"
-            echo "branch=$branch" >> "$GITHUB_OUTPUT"
-          else
-            echo "No /testflight line; nothing to do."
-            echo "build=false" >> "$GITHUB_OUTPUT"
-          fi
-
       - uses: actions/checkout@v4
-        if: steps.marker.outputs.build == 'true'
 
       - name: Start Xcode Cloud build
-        if: steps.marker.outputs.build == 'true'
         env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.issue.number }}
+          TEXT: ${{ github.event.pull_request.body || github.event.comment.body }}
           ASC_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           ASC_PRIVATE_KEY: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
           BUNDLE_ID: personal.studyBud
           WORKFLOW_NAME: ${{ vars.XCODE_CLOUD_PR_WORKFLOW || 'PR TestFlight' }}
-          BRANCH: ${{ steps.marker.outputs.branch }}
         run: |
+          if ! printf '%s' "$TEXT" | tr -d '\r' | grep -qiE '^[[:space:]]*/testflight[[:space:]]*$'; then
+            echo "No /testflight line; nothing to do."
+            exit 0
+          fi
+
+          BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName,isCrossRepository,state \
+            --jq 'select(.state == "OPEN" and .isCrossRepository == false) | .headRefName')
+          if [[ -z "$BRANCH" ]]; then
+            echo "PR is closed or comes from a fork; nothing to do."
+            exit 0
+          fi
+          export BRANCH
+
           pip install --quiet pyjwt cryptography
           python3 .github/scripts/start_xcode_cloud_build.py

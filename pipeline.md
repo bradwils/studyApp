@@ -44,7 +44,7 @@ the build time in Sydney time, and the usual version (build).
 - Triggers: PR opened/reopened, PR description edited (only if the body
   changed), or a new comment. Pushes do not rebuild; comment `/testflight`
   again.
-- Fork PRs are skipped (no secrets).
+- Fork PRs and closed PRs are skipped; only open PRs from this repository can build.
 - Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
   and `APP_STORE_CONNECT_PRIVATE_KEY`.
 - **One-off setup in Xcode:** create a workflow called `PR TestFlight` whose only
