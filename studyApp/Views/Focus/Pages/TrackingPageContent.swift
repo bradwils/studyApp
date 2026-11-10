@@ -3,7 +3,7 @@ import SwiftData
 
 // The tracking page of FocusSessionScreen's pager. Deliberately transparent and
 // timer-less: the container draws the background and the pinned timer behind/over
-// every page, and `PinnedTimerSlot` is the gap this page leaves for the timer.
+// every page, and `FocusPageScaffold` leaves the gap for the timer.
 struct TrackingPageContent: View {
 
 	let vm: StudyTrackingViewModel
@@ -14,11 +14,6 @@ struct TrackingPageContent: View {
 
 	@Environment(\.horizontalSizeClass) var sizeClass //for later changes
 
-	@Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-	//MARK: Glass Namespaces
-	@Namespace private var glassNamespace
-
 	// MARK: - State Properties
 
 	@State var onlineFriendCount: Int = 0  //to be dynamic later
@@ -28,15 +23,9 @@ struct TrackingPageContent: View {
 	@ScaledMetric(relativeTo: .caption) private var connectionChipVerticalPadding: CGFloat = 8
 
 	var body: some View {
-		// The header band and the timer slot are spacing-0 and top-inset-free so the slot
-		// lands exactly headerSlotHeight down, matching FocusSessionScreen's pinned layer.
-		// Everything below keeps natural spacing inside a nested stack.
-		VStack(spacing: 0) {
+		FocusPageScaffold {
 			headerRow
-				.frame(height: FocusPagerLayout.headerSlotHeight)
-
-			PinnedTimerSlot()
-
+		} content: {
 			VStack {
 				controlsSection
 
@@ -47,8 +36,6 @@ struct TrackingPageContent: View {
 				horizontalContentScrollRow
 			}
 		}
-		.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-		.padding(.horizontal)
 		.padding(.bottom)
 	}
 
@@ -111,43 +98,18 @@ struct TrackingPageContent: View {
 
 	}
 
-	private var mainButtonLabel: String {
-		switch vm.phase {
-		case .idle:
-			return "Start"
-		case .paused:
-			return "Resume"
-		case .running:
-			return "Pause"
-		}
-	}
-
 	private var isSessionPaused: Bool {
 		vm.phase == .paused
 	}
 
 	private func performMainAction() {
-		withMorphAnimation {
-			switch vm.phase {
-			case .idle:
-				vm.startSession(context: modelContext)
-			case .paused:
-				vm.resumeSession(context: modelContext)
-			case .running:
-				vm.pauseSession(context: modelContext)
-			}
-		}
-	}
-		
-
-	// Glass morph + label swap; skipped entirely under Reduce Motion.
-	private func withMorphAnimation(_ changes: () -> Void) {
-		if reduceMotion {
-			changes()
-		} else {
-			withAnimation(.smooth(duration: 0.4)) {
-				changes()
-			}
+		switch vm.phase {
+		case .idle:
+			vm.startSession(context: modelContext)
+		case .paused:
+			vm.resumeSession(context: modelContext)
+		case .running:
+			vm.pauseSession(context: modelContext)
 		}
 	}
 
@@ -187,44 +149,11 @@ struct TrackingPageContent: View {
 				}
 				.padding(.horizontal)
 
-				GlassEffectContainer(spacing: 16) {
-					// Both buttons sit directly next to each other (no stretching
-					// spacer between them) so the container's fluid glass blend can
-					// actually reach across the gap while the end button inserts/removes —
-					// that adjacency is what sells the morph, not a manual transition.
-					HStack(spacing: 16) {
-						Button {
-							performMainAction()
-						} label: {
-							// Sizing/font applied to the content BEFORE the button style,
-							// with .glassEffectID chained immediately after it — that order is
-							// what lets the container track this as the actual glass surface.
-							Text(mainButtonLabel)
-								.id(mainButtonLabel)
-								.transition(.blurReplace)
-								.font(.body)
-								.padding(.horizontal)  //padding for start button, makes button wider than text
-						}
-						.buttonStyle(.glassProminent)
-						.glassEffectID("startPauseButton", in: glassNamespace)
-						.accessibilityIdentifier("startPauseButton")
-
-						if isSessionPaused {
-							Button {
-								withMorphAnimation {
-									vm.finishSession(context: modelContext)
-								}
-							} label: {
-								Text("End Session")
-									.font(.body)
-									.padding(.horizontal)  //padding for start button, makes button wider than text
-							}
-							.buttonStyle(.glass)
-							.glassEffectID("endSessionButton", in: glassNamespace)
-							.accessibilityIdentifier("endSessionButton")
-						}
-					}
-				}
+				SessionControls(
+					phase: vm.phase,
+					onPrimary: performMainAction,
+					onFinish: { vm.finishSession(context: modelContext) }
+				)
 		}
 	}
 
@@ -237,9 +166,19 @@ struct TrackingPageContent: View {
 // MARK: - Preview
 
 #Preview {
-	TrackingPageContent(vm: StudyTrackingViewModel())
-		.modelContainer(
-			for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self],
-			inMemory: true
-		)
+	// swiftlint:disable:next force_try
+	let container = try! ModelContainer(
+		for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
+		configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+	)
+	let vm = StudyTrackingViewModel()
+	let state = FocusScreenState(pages: [.tracking])
+
+	return ZStack {
+		// The page is deliberately transparent; the shell normally paints this behind it.
+		FocusBackgroundLayer(screenState: state, tracking: vm)
+
+		TrackingPageContent(vm: vm)
+	}
+	.modelContainer(container)
 }

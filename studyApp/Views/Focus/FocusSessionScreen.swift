@@ -1,40 +1,33 @@
 import SwiftUI
 import SwiftData
 
-// The timer is a sibling of the pager, never a child of a page. Drawing it inside the
-// scrolling content would move it with the pages no matter how carefully the two pages
-// were matched; keeping it outside makes drift structurally impossible. The backgrounds
-// sit outside for the same reason — a background per page drags a hard vertical seam
-// across the screen on every drag.
+// Three layers, back to front: the background (FocusBackgroundLayer), the pinned timer
+// (PinnedTimerView, with the page dots on top), and the pager (FocusPager) holding the
+// pages. Each ticks or scrolls on its own: the background owns its 0.5 s timeline, the
+// timer digits own theirs, and the pager redraws only for page changes. The timer is a
+// sibling of the pager, never a child of a page, so drift is structurally impossible; the
+// backgrounds sit outside for the same reason — a background per page drags a hard
+// vertical seam across the screen on every drag. The pager is drawn last because the
+// timer layer disables hit testing, and every page leaves the same gap the digits sit in.
 struct FocusSessionScreen: View {
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     let vm: StudyTrackingViewModel
 
     @State private var screenState = FocusScreenState()
 
-    @ScaledMetric(relativeTo: .largeTitle) private var timerFontSize: CGFloat = 90
-
     var body: some View {
         ZStack {
-            // backgroundLayer and pinnedTimerLayer share one TimelineView so timerDigits'
-            // blendMode(.difference) composites against the actual gradient pixels instead
-            // of being isolated into its own empty layer — confirmed in the simulator.
-            // pager stays outside so a tick doesn't rebuild page content; drawing it last
-            // (on top) is safe because pinnedTimerLayer already disables hit testing, and
-            // both pager pages leave the same headerSlotHeight gap the digits sit in, so
-            // nothing visually overlaps.
-			
-			///Ticking pushes our changes for the background layer
-			
-			ZStack {
-				ticking { date in
-                    backgroundLayer(at: date)
+            FocusBackgroundLayer(screenState: screenState, tracking: vm)
+
+            PinnedTimerView(display: vm.timerDisplay)
+                .overlay(alignment: .top) {
+                    FocusPageIndicator(screenState: screenState)
                 }
-				pinnedTimerLayer
+                .allowsHitTesting(false)
+
+            FocusPager(screenState: screenState) { page in
+                pageContent(for: page)
             }
-            pager
         }
         .toolbar(screenState.isLocked ? .hidden : .visible, for: .tabBar)
         .onChange(of: FocusPagePolicy.availablePages(for: vm.phase), initial: true) { _, pages in
@@ -56,58 +49,6 @@ struct FocusSessionScreen: View {
         }
     }
 
-    private var isShowingSaveError: Binding<Bool> {
-        Binding(
-            get: { vm.saveErrorMessage != nil },
-            set: { if !$0 { vm.dismissSaveError() } }
-        )
-    }
-	/// Ticks only while the focus gradient can actually move: a running session with a target.
-	/// Paused or target-less progress cannot change, so there is nothing to redraw.
-    @ViewBuilder
-    private func ticking<Content: View>(@ViewBuilder _ content: @escaping (Date) -> Content) -> some View {
-		if vm.phase == .running && vm.hasFocusTarget {
-			TimelineView(.periodic(from: .now, by: 0.5)) { context in
-				content(context.date)
-			}
-		} else {
-			content(.now)
-		}
-    }
-
-    // MARK: - Pager
-
-    private var pager: some View {
-        @Bindable var screenState = screenState
-        return ScrollView(.horizontal) {
-            HStack(spacing: 0) {
-                ForEach(screenState.pages) { page in
-                    pageContent(for: page)
-                        .containerRelativeFrame(.horizontal)
-                        .id(page)
-                }
-            }
-            .scrollTargetLayout()
-        }
-        .scrollPosition(id: $screenState.scrolledPage)
-        .scrollTargetBehavior(.paging)
-        .scrollIndicators(.never)
-        .scrollBounceBehavior(.basedOnSize)
-        .scrollDisabled(screenState.isLocked)
-        .onScrollGeometryChange(for: CGFloat?.self) { geometry in
-            FocusPagerMath.rawPosition(
-                contentOffset: geometry.contentOffset.x,
-                leadingInset: geometry.contentInsets.leading,
-                viewportWidth: geometry.containerSize.width
-            )
-        } action: { _, raw in
-            screenState.updatePosition(raw: raw)
-        }
-        .onScrollPhaseChange { _, new in
-            if new == .idle { screenState.scrollDidSettle() }
-        }
-    }
-
     @ViewBuilder
     private func pageContent(for page: FocusPage) -> some View {
         switch page {
@@ -118,95 +59,12 @@ struct FocusSessionScreen: View {
         }
     }
 
-    // MARK: - Background Layer
-
-    private func backgroundLayer(at date: Date) -> some View {
-        ZStack {
-            trackingGradient
-                .opacity(screenState.weight(of: .tracking, reduceMotion: reduceMotion))
-
-            TimerGradientBackground(progress: vm.focusProgress(at: date), isTimerActive: vm.phase == .running)
-                .opacity(screenState.weight(of: .focus, reduceMotion: reduceMotion))
-        }
-        .ignoresSafeArea()
+    private var isShowingSaveError: Binding<Bool> {
+        Binding(
+            get: { vm.saveErrorMessage != nil },
+            set: { if !$0 { vm.dismissSaveError() } }
+        )
     }
-
-    private var trackingGradient: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color.pink.opacity(0.35),
-                    Color.purple.opacity(0.35),
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-
-            LinearGradient(
-                colors: [
-                    Color.white.opacity(0.35),
-                    Color.blue.opacity(0.35),
-                ],
-                startPoint: .topTrailing,
-                endPoint: .bottomLeading
-            )
-        }
-    }
-
-    // MARK: - Pinned Timer Layer
-
-    // This layer is the authoritative position of the timer: the slot top sits exactly
-    // FocusPagerLayout.headerSlotHeight below the content top, and each page's
-    // PinnedTimerSlot has to land there. Hit testing is off because otherwise a drag
-    // starting over the timer never reaches the pager, and the screen refuses to swipe
-    // from the middle.
-    private var pinnedTimerLayer: some View {
-        VStack(spacing: 0) {
-            Color.clear
-                .frame(height: FocusPagerLayout.headerSlotHeight)
-
-            PinnedTimerSlot()
-                .overlay { timerDigits }
-
-            Spacer()
-        }
-		.overlay(alignment: .top) {
-			pageIndicator
-		}
-        .allowsHitTesting(false)
-    }
-
-	private var timerDigits: some View {
-		SessionTimerText(display: vm.timerDisplay)
-		.font(
-			.system(
-				size: timerFontSize,
-				weight: .semibold,
-				design: .monospaced
-			)
-		)
-		// Auto-contrast against whatever's underneath, instead of thresholding
-		// focusProgress by hand: difference(white, background) flips black/white.
-		.foregroundStyle(.white)
-		.blendMode(.difference)
-	}
-
-    // Concentric with the digits because it lives in this fixed layer, but only means
-    // anything on the focus page, so it fades in with the swipe.
-
-    private var pageIndicator: some View {
-        HStack(spacing: 6) {
-            if screenState.pages.count > 1 {
-                ForEach(screenState.pages) { page in
-                    Circle()
-                        .fill(.white)
-                        .opacity(0.35 + 0.65 * screenState.weight(of: page, reduceMotion: reduceMotion))
-                        .frame(width: 6, height: 6)
-                }
-            }
-        }
-    }
-
 }
 
 #Preview {
