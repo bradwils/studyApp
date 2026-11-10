@@ -16,7 +16,11 @@ final class StudyItemDebugVM {
     }
 
     func deleteAll(context: ModelContext) {
-        try? context.delete(model: StudyItem.self)
+        guard let items = try? context.fetch(FetchDescriptor<StudyItem>()) else { return }
+        // Batch deletion rejects FieldValue's inverse relationship; normal deletes apply the cascade.
+        for item in items {
+            context.delete(item)
+        }
         try? context.save()
     }
 
