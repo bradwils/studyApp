@@ -4,8 +4,7 @@ How code moves from a feature branch to the App Store, and what you have to do
 at each hop.
 
 App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
-`claude.yml` (the `@claude` mention bot) and `promotion-source.yml` (guards
-what can merge into `master`). If an app build runs, Xcode Cloud ran it.
+`claude.yml` (the `@claude` mention bot). If an app build runs, Xcode Cloud ran it.
 
 ---
 
@@ -32,7 +31,7 @@ wait. Add testers in App Store Connect → TestFlight when testing starts.
 |---|---|---|---|---|
 | `dev` | ✅ | no | any | no force-push, no deletion |
 | `UAT-testflight` | ❌ | yes, from any branch | merge commit only | no force-push, no deletion |
-| `master` | ❌ | yes, from `UAT-testflight` or `hotfix/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
+| `master` | ❌ | yes | merge commit only | no force-push, no deletion |
 | `v*` tags | — | — | — | can't be moved or deleted once created |
 
 Approvals required: 0 (you can't approve your own PR). Head branches are
@@ -99,8 +98,8 @@ here builds, so merge once, deliberately.
 ## `UAT-testflight` → `master`
 
 Open a PR from `UAT-testflight` targeting `master`, and merge it with **Create
-a merge commit**. The `source-branch` check rejects a PR from anything other
-than `UAT-testflight` or `hotfix/*`.
+a merge commit**. By convention only `UAT-testflight` and `hotfix/*` go into
+`master`; nothing enforces it.
 
 **Merging does not build anything.** `master` only builds on a version tag.
 That's deliberate: merging and releasing are separate decisions.
@@ -128,7 +127,7 @@ points at, so a tag on `dev` would ship unreleased work.
 ## Hotfixes
 
 A production bug shouldn't have to travel the whole chain. Branch off `master`
-with a `hotfix/` name (the `source-branch` check only accepts that prefix), fix,
+with a `hotfix/` name, fix,
 PR into `master`, then release:
 
 ```sh
@@ -202,6 +201,11 @@ APIs with `if #available(iOS 26, *)`.
 ---
 
 ## Gotchas
+
+**Removing a workflow does not remove a required check.** When retiring the
+promotion source check (#164), remove only `source-branch` from the required
+status checks in the `master` ruleset. Otherwise PRs can remain blocked waiting
+for a check that no longer runs. Keep the PR and merge-commit requirements.
 
 **`ci_scripts/` must exist on every branch that builds.** Xcode Cloud reads it
 from the branch being built, not from `master`.

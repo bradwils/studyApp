@@ -192,7 +192,7 @@ Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full detai
 
 - Branch features off `dev`; `dev` accepts direct pushes
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
-- `master` only accepts PRs from `UAT-testflight` or `hotfix/*` (enforced by the `source-branch` check)
+- `master` only takes PRs from `UAT-testflight` or `hotfix/*` by convention (no automated check)
 - Land a change once, in `dev`, and promote it — never open matching PRs into several branches
 - Branches are `type/short-slug` (`feat/sub-timer`, `fix/crash-on-launch`), using the Conventional Commits types; `hotfix/*` stays as is
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`. PR titles matter because merge commits take the PR title
