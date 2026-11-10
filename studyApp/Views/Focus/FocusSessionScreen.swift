@@ -10,7 +10,7 @@ struct FocusSessionScreen: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var vm: StudyTrackingViewModel
+    let vm: StudyTrackingViewModel
 
     @State private var isFocusLocked = false
 
@@ -18,12 +18,6 @@ struct FocusSessionScreen: View {
     @State private var pageOffset: CGFloat = 0
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerFontSize: CGFloat = 90
-
-    // Defaulted so every real call site (MainTabView) is unaffected; the preview below
-    // injects a pre-seeded vm so the animated gradient has something to show.
-    init(vm: StudyTrackingViewModel = StudyTrackingViewModel()) {
-        _vm = State(initialValue: vm)
-    }
 
     var body: some View {
         ZStack {
