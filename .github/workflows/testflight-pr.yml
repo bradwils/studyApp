@@ -47,7 +47,12 @@ jobs:
             exit 0
           fi
 
-          BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName --jq .headRefName)
+          BRANCH=$(gh pr view "$PR_NUMBER" --json headRefName,isCrossRepository,state \
+            --jq 'select(.state == "OPEN" and .isCrossRepository == false) | .headRefName')
+          if [[ -z "$BRANCH" ]]; then
+            echo "PR is closed or comes from a fork; nothing to do."
+            exit 0
+          fi
           export BRANCH
 
           pip install --quiet pyjwt cryptography
