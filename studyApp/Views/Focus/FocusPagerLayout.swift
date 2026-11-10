@@ -14,10 +14,6 @@ enum FocusPagerLayout {
 
     static let ringDiameter: CGFloat = 250
     static let ringLineWidth: CGFloat = 8
-
-    // Page index within the horizontal pager.
-    static let trackingPage = 0
-    static let focusPage = 1
 }
 
 /// The gap both pages leave where the pinned timer is drawn. Sized off the same

@@ -12,10 +12,7 @@ struct FocusSessionScreen: View {
 
     let vm: StudyTrackingViewModel
 
-    @State private var isFocusLocked = false
-
-    /// 0 on the tracking page, 1 on the focus page, provides continious scale for opacity functions
-    @State private var pageOffset: CGFloat = 0
+    @State private var screenState = FocusScreenState()
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerFontSize: CGFloat = 90
 
@@ -39,9 +36,18 @@ struct FocusSessionScreen: View {
             }
             pager
         }
-        .toolbar(isFocusLocked ? .hidden : .visible, for: .tabBar)
+        .toolbar(screenState.isLocked ? .hidden : .visible, for: .tabBar)
+        .onChange(of: FocusPagePolicy.availablePages(for: vm.phase), initial: true) { _, pages in
+            var transaction = Transaction()
+            if let scrolled = screenState.scrolledPage, !pages.contains(scrolled) {
+                transaction.disablesAnimations = true
+            }
+            withTransaction(transaction) {
+                screenState.reconcile(availablePages: pages)
+            }
+        }
         .onChange(of: vm.activeSession?.id) {
-            isFocusLocked = false
+            screenState.sessionIdentityDidChange()
         }
         .alert("Couldn't Save", isPresented: isShowingSaveError) {
             Button("OK") { vm.dismissSaveError() }
@@ -69,42 +75,46 @@ struct FocusSessionScreen: View {
 		}
     }
 
-    // Reduce Motion gets the destination state rather than a crossfade travelling with the drag.
-    private var pageBlend: Double {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return Double(pageOffset)
-    }
-
     // MARK: - Pager
 
     private var pager: some View {
-        ScrollView(.horizontal) {
+        @Bindable var screenState = screenState
+        return ScrollView(.horizontal) {
             HStack(spacing: 0) {
-                TrackingPageContent(vm: vm)
-                    .containerRelativeFrame(.horizontal)
-
-				if vm.hasActiveSession {
-					FocusPageContent(vm: vm, isLocked: isFocusLocked) { isFocusLocked = $0 }
-						.containerRelativeFrame(.horizontal)
-				}
+                ForEach(screenState.pages) { page in
+                    pageContent(for: page)
+                        .containerRelativeFrame(.horizontal)
+                        .id(page)
+                }
             }
-			.scrollTargetLayout()
+            .scrollTargetLayout()
         }
-		
-		.scrollTargetBehavior(.paging)
-		.scrollIndicators(.never)
-		.scrollBounceBehavior(.basedOnSize)
-        .scrollDisabled(isFocusLocked)
-		
-		///Track how far we've moved between screen1 and screen2. Needed to animate the gradual opacity of the bg & the pager dots
-        .onScrollGeometryChange(for: CGFloat.self) { geometry in
-            let width = geometry.containerSize.width
-            guard width > 0 else { return 0 }
-            // contentOffset is measured from the inset edge, so it starts at -leading.
-            let travelled = geometry.contentOffset.x + geometry.contentInsets.leading
-            return min(max(travelled / width, 0), 1)
-        } action: { _, offset in
-            pageOffset = offset
+        .scrollPosition(id: $screenState.scrolledPage)
+        .scrollTargetBehavior(.paging)
+        .scrollIndicators(.never)
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDisabled(screenState.isLocked)
+        .onScrollGeometryChange(for: CGFloat?.self) { geometry in
+            FocusPagerMath.rawPosition(
+                contentOffset: geometry.contentOffset.x,
+                leadingInset: geometry.contentInsets.leading,
+                viewportWidth: geometry.containerSize.width
+            )
+        } action: { _, raw in
+            screenState.updatePosition(raw: raw)
+        }
+        .onScrollPhaseChange { _, new in
+            if new == .idle { screenState.scrollDidSettle() }
+        }
+    }
+
+    @ViewBuilder
+    private func pageContent(for page: FocusPage) -> some View {
+        switch page {
+        case .tracking:
+            TrackingPageContent(vm: vm)
+        case .focus:
+            FocusPageContent(vm: vm, isLocked: screenState.isLocked) { screenState.setLocked($0) }
         }
     }
 
@@ -113,10 +123,10 @@ struct FocusSessionScreen: View {
     private func backgroundLayer(at date: Date) -> some View {
         ZStack {
             trackingGradient
-                .opacity(1 - pageBlend)
+                .opacity(screenState.weight(of: .tracking, reduceMotion: reduceMotion))
 
             TimerGradientBackground(progress: vm.focusProgress(at: date), isTimerActive: vm.phase == .running)
-                .opacity(pageBlend)
+                .opacity(screenState.weight(of: .focus, reduceMotion: reduceMotion))
         }
         .ignoresSafeArea()
     }
@@ -161,7 +171,7 @@ struct FocusSessionScreen: View {
             Spacer()
         }
 		.overlay(alignment: .top) {
-			if vm.hasActiveSession { pageIndicator }
+			pageIndicator
 		}
         .allowsHitTesting(false)
     }
@@ -186,12 +196,13 @@ struct FocusSessionScreen: View {
 
     private var pageIndicator: some View {
         HStack(spacing: 6) {
-            ForEach(0..<2, id: \.self) { page in
-                let isActive = page == FocusPagerLayout.trackingPage ? 1 - pageBlend : pageBlend
-                Circle()
-                    .fill(.white)
-                    .opacity(0.35 + 0.65 * isActive)
-                    .frame(width: 6, height: 6)
+            if screenState.pages.count > 1 {
+                ForEach(screenState.pages) { page in
+                    Circle()
+                        .fill(.white)
+                        .opacity(0.35 + 0.65 * screenState.weight(of: page, reduceMotion: reduceMotion))
+                        .frame(width: 6, height: 6)
+                }
             }
         }
     }
