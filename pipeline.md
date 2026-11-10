@@ -44,6 +44,10 @@ the build time in Sydney time, and the usual version (build).
 - Triggers: PR opened/reopened, PR description edited (only if the body
   changed), or a new comment. Pushes do not rebuild; comment `/testflight`
   again.
+- **Comment activation:** GitHub runs `issue_comment` workflows from the default
+  branch (`master`). Having this workflow on `dev` alone does not activate
+  `/testflight` comments; promote it to `master` before relying on comment
+  triggers.
 - Fork PRs and closed PRs are skipped; only open PRs from this repository can build.
 - Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
   and `APP_STORE_CONNECT_PRIVATE_KEY`.
