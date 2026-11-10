@@ -1,0 +1,71 @@
+name: StudyItems unit tests
+
+on:
+  push:
+    branches: [test/study-items-v2, Study-items-V2]
+    paths: ['studyApp/**', 'studyAppTests/**', 'studyApp.xcodeproj/**', 'studyApp.xctestplan', '.github/workflows/studyitems-tests.yml']
+  pull_request:
+    branches: [Study-items-V2]
+    paths: ['studyApp/**', 'studyAppTests/**', 'studyApp.xcodeproj/**', 'studyApp.xctestplan', '.github/workflows/studyitems-tests.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: studyitems-tests-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Select an available iPhone simulator
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices available --json > "$RUNNER_TEMP/simulators.json"
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          devices = json.loads((Path(os.environ['RUNNER_TEMP']) / 'simulators.json').read_text())['devices']
+          for runtime, candidates in sorted(devices.items(), reverse=True):
+              if '.iOS-' not in runtime:
+                  continue
+              version = int(runtime.split('.iOS-')[1].split('-')[0])
+              if version < 26:
+                  continue
+              for device in candidates:
+                  if device.get('isAvailable') and device['name'].startswith('iPhone'):
+                      with open(os.environ['GITHUB_ENV'], 'a') as output:
+                          output.write(f"TEST_DESTINATION=platform=iOS Simulator,id={device['udid']}\n")
+                      print(f"Selected {device['name']} ({runtime})")
+                      raise SystemExit(0)
+          raise SystemExit('No available iPhone simulator with iOS 26 or newer')
+          PY
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project studyApp.xcodeproj \
+            -scheme studyApp \
+            -destination "$TEST_DESTINATION" \
+            -only-testing:studyAppTests \
+            -parallel-testing-enabled NO \
+            -resultBundlePath "$RUNNER_TEMP/StudyItems.xcresult" \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee "$RUNNER_TEMP/studyitems-tests.log"
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: studyitems-test-results
+          path: |
+            ${{ runner.temp }}/StudyItems.xcresult
+            ${{ runner.temp }}/studyitems-tests.log
+          if-no-files-found: ignore
+          retention-days: 7
