@@ -1,10 +1,5 @@
 import Foundation
 
-protocol FieldConfig: Codable {
-    var systemImage: String { get }
-    var defaultContent: FieldContent { get }
-    var isValid: Bool { get }
-}
 
 extension FieldConfig {
     var isValid: Bool { true }
