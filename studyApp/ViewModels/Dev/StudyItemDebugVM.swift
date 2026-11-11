@@ -37,7 +37,7 @@ final class StudyItemDebugVM {
     }
 
     func addValue(for definition: FieldDefinition, to item: StudyItem, context: ModelContext) {
-        let value = FieldValue(content: definition.kind.defaultContent)
+        let value = FieldValue(content: definition.kind.config.defaultContent)
         context.insert(value)
         value.definition = definition
         value.item = item

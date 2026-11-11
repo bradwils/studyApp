@@ -20,7 +20,7 @@ struct DebugFieldDefinitionRow: View {
 
     private var summary: String {
         var parts = [FieldKindChoice(definition.kind).rawValue]
-        if case .dropdown(let options) = definition.kind { parts.append(options.joined(separator: " / ")) }
+        if case .dropdown(let config) = definition.kind { parts.append(config.options.joined(separator: " / ")) }
         parts.append("\(definition.values.count) value(s)")
         return parts.joined(separator: " · ")
     }

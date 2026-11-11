@@ -1,6 +1,6 @@
 import Foundation
 
-protocol FieldConfig: Codable, Hashable {
+protocol FieldConfig: Codable {
     var systemImage: String { get }
     var defaultContent: FieldContent { get }
     var isValid: Bool { get }

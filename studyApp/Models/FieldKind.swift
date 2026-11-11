@@ -1,16 +1,20 @@
 import Foundation
 
+// Codable needs one concrete stored type, so this enum names which config struct a definition holds.
 enum FieldKind: Codable {
-    case text, number, date, time
-    case dropdown(options: [String])
+    case text(TextFieldConfig)
+    case number(NumberFieldConfig)
+    case date(DateFieldConfig)
+    case time(TimeFieldConfig)
+    case dropdown(DropdownFieldConfig)
 
-    var defaultContent: FieldContent {
+    var config: any FieldConfig {
         switch self {
-        case .text: .text("")
-        case .number: .number(0)
-        case .date: .date(.now)
-        case .time: .time(0)
-        case .dropdown(let options): .dropdown(options.first ?? "")
+        case .text(let config): config
+        case .number(let config): config
+        case .date(let config): config
+        case .time(let config): config
+        case .dropdown(let config): config
         }
     }
 }

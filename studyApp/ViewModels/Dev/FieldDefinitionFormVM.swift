@@ -52,11 +52,11 @@ final class FieldDefinitionFormVM {
 
     private var kind: FieldKind {
         switch choice {
-        case .text: .text
-        case .number: .number
-        case .date: .date
-        case .time: .time
-        case .dropdown: .dropdown(options: options)
+        case .text: .text(TextFieldConfig())
+        case .number: .number(NumberFieldConfig())
+        case .date: .date(DateFieldConfig())
+        case .time: .time(TimeFieldConfig())
+        case .dropdown: .dropdown(DropdownFieldConfig(options: options))
         }
     }
 
@@ -65,8 +65,8 @@ final class FieldDefinitionFormVM {
         name = definition.name
         choice = FieldKindChoice(definition.kind)
         isEnabled = definition.isEnabled
-        if case .dropdown(let options) = definition.kind {
-            optionsText = options.joined(separator: ", ")
+        if case .dropdown(let config) = definition.kind {
+            optionsText = config.options.joined(separator: ", ")
         }
     }
 

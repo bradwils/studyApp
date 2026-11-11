@@ -173,7 +173,7 @@ private struct DebugFieldValueRow: View {
 
     // Keeps a stale selection visible if its option was later removed from the definition
     private func options(including selection: String) -> [String] {
-        guard case .dropdown(let options) = value.definition?.kind else { return [selection] }
-        return options.contains(selection) ? options : [selection] + options
+        guard case .dropdown(let config) = value.definition?.kind else { return [selection] }
+        return config.options.contains(selection) ? config.options : [selection] + config.options
     }
 }
