@@ -1,6 +1,17 @@
 import Foundation
 
-// Codable needs one concrete stored type, so this enum names which config struct a definition holds.
+/// The kind and configuration stored for a custom field definition.
+///
+/// ## Declaration
+///
+/// ```swift
+/// enum FieldKind: Codable
+/// ```
+/// Keeps each concrete configuration in an associated value so Codable can
+/// encode and decode it, while callers access shared behavior through ``config``.
+///
+/// > Important: The associated configuration payloads change the encoded shape.
+/// > Previously saved field kinds require migration or a data reset before loading.
 enum FieldKind: Codable {
     case text(TextFieldConfig)
     case number(NumberFieldConfig)
