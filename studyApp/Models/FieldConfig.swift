@@ -2,6 +2,7 @@ import Foundation
 
 
 extension FieldConfig {
+    /// Accepts configurations by default; conforming types provide their own checks when needed.
     var isValid: Bool { true }
 }
 
@@ -68,5 +69,6 @@ struct DropdownFieldConfig: FieldConfig {
 
     var systemImage: String { "list.bullet" }
     var defaultContent: FieldContent { .dropdown(options.first ?? "") }
+    /// Rechecks that at least one option exists on each access; it does not validate the selected value.
     var isValid: Bool { !options.isEmpty }
 }
