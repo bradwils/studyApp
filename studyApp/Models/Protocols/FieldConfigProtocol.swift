@@ -57,8 +57,10 @@
 /// view or model container: assert `isValid` for good and bad settings, and that
 /// `defaultContent` is the expected case.
 ///
-/// > Important: Configs are stored through `Codable` inside
-/// > ``FieldDefinition/kind``, so adding a stored property changes the saved shape.
+/// > Important: Configs are never persisted. ``FieldDefinition`` stores `type` and
+/// > plain per-kind columns such as `options`, then rebuilds the config through
+/// > ``FieldKind/init(type:options:)``. A new config property needs a matching
+/// > column on ``FieldDefinition`` and must be passed through that initializer.
 protocol FieldConfig: Codable {
 	/// SF Symbol name shown beside the field.
 	var systemImage: String { get }
