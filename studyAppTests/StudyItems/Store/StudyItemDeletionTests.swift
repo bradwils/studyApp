@@ -16,7 +16,7 @@ import SwiftData
 /// nullify rules. Shared definitions and tags are retained when items are removed,
 /// and the copied subject name survives subject deletion.
 ///
-/// > Note: Assertions use the deleting context and its existing model objects.
+/// > Note: Most assertions use the deleting context; X7 also refetches after the VM saves.
 @Suite("StudyItem deletion rules")
 @MainActor
 struct StudyItemDeletionTests {
@@ -118,6 +118,9 @@ struct StudyItemDeletionTests {
 		let definition = Fixtures.definition(in: context)
 		let doomed = Fixtures.value(item: item, definition: definition, in: context)
 		let kept = Fixtures.value(item: item, definition: definition, in: context)
+		let tag = Fixtures.tag(in: context)
+		doomed.tags.append(tag)
+		kept.tags.append(tag)
 		try context.save()
 		let doomedID = doomed.persistentModelID
 
@@ -130,11 +133,14 @@ struct StudyItemDeletionTests {
 		#expect(item.values.modelIDs == [kept.persistentModelID])
 		#expect(definition.values.modelIDs == [kept.persistentModelID])
 		#expect(!item.values.modelIDs.contains(doomedID))
+		#expect(try context.count(Tag.self) == 1)
+		#expect(tag.fieldValues.modelIDs == [kept.persistentModelID])
 	}
 
 	@Test("X7 deleting every item leaves no values but keeps definitions and tags")
 	func deletingAllItemsClearsValues() throws {
-		let context = try TestContainer.make()
+		let container = try TestContainer.makeContainer()
+		let context = container.mainContext
 		let definitions = [
 			Fixtures.definition("Pages", type: .number, order: 0, in: context),
 			Fixtures.definition("Outline", order: 1, in: context)
@@ -151,12 +157,13 @@ struct StudyItemDeletionTests {
 		try context.save()
 		#expect(try context.count(FieldValue.self) == 6)
 
-		for item in items { context.delete(item) }
-		try context.save()
+		StudyItemDebugVM().deleteAll(context: context)
 
-		#expect(try context.count(StudyItem.self) == 0)
-		#expect(try context.count(FieldValue.self) == 0)
-		#expect(try context.count(FieldDefinition.self) == 2)
-		#expect(try context.count(Tag.self) == 2)
+		let reader = ModelContext(container)
+		#expect(try reader.count(StudyItem.self) == 0)
+		#expect(try reader.count(FieldValue.self) == 0)
+		#expect(try reader.count(FieldDefinition.self) == 2)
+		#expect(try reader.count(Tag.self) == 2)
+		#expect(!context.hasChanges)
 	}
 }

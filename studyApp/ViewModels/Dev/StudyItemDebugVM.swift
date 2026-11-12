@@ -16,7 +16,9 @@ final class StudyItemDebugVM {
     }
 
     func deleteAll(context: ModelContext) {
-        try? context.delete(model: StudyItem.self)
+        // Batch deletion can fail on the values' inverse relationships instead of applying cascades.
+        guard let items = try? context.fetch(FetchDescriptor<StudyItem>()) else { return }
+        for item in items { context.delete(item) }
         try? context.save()
     }
 
@@ -25,8 +27,9 @@ final class StudyItemDebugVM {
     }
 
     func setStatus(_ status: StudyItemStatus, on item: StudyItem) {
+        guard item.status != status else { return }
         item.status = status
-        // TODO(human): decide how completedAt follows status changes
+        item.completedAt = status == .completed ? .now : nil
         touch(item)
     }
 
@@ -37,12 +40,18 @@ final class StudyItemDebugVM {
     }
 
     func addValue(for definition: FieldDefinition, to item: StudyItem, context: ModelContext) {
+        guard !item.values.contains(where: { $0.definition?.persistentModelID == definition.persistentModelID }) else { return }
         let value = FieldValue(content: definition.kind.config.defaultContent)
         context.insert(value)
         value.definition = definition
         value.item = item
         touch(item)
         try? context.save()
+    }
+
+    func setContent(_ content: FieldContent, on value: FieldValue) {
+        value.content = content
+        if let item = value.item { touch(item) }
     }
 
     func delete(_ value: FieldValue, from item: StudyItem, context: ModelContext) {

@@ -51,7 +51,7 @@ struct DebugFieldDefinitionListView: View {
             }
         }
         .sheet(isPresented: $isShowingForm) {
-            DebugFieldDefinitionForm(vm: vm, nextOrder: definitions.count)
+            DebugFieldDefinitionForm(vm: vm, nextOrder: (definitions.map(\.order).max() ?? -1) + 1)
                 .presentationDetents([.medium, .large])
         }
     }
