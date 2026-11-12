@@ -16,6 +16,22 @@ private func sameContent(_ lhs: FieldContent, _ rhs: FieldContent) -> Bool {
 	}
 }
 
+/// Checks stored field content, model graphs, tag reuse and ordering.
+///
+/// ## Declaration
+///
+/// ```swift
+/// @Suite("StudyItem persistence")
+/// @MainActor
+/// struct StudyItemPersistenceTests
+/// ```
+///
+/// Round-trip checks save through one context and fetch through a fresh context
+/// using the same container. Other checks cover duplicate-tag reuse and explicit
+/// ordering of definitions and item values.
+///
+/// > Note: Containers use the app's model list with an in-memory store; these
+/// > checks do not cover disk-store reopening or schema migrations.
 @Suite("StudyItem persistence")
 @MainActor
 struct StudyItemPersistenceTests {

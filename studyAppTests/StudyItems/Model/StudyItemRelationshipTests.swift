@@ -2,6 +2,21 @@ import Testing
 import SwiftData
 @testable import studyApp
 
+/// Checks inverse relationships among items, values, definitions, subjects and tags.
+///
+/// ## Declaration
+///
+/// ```swift
+/// @Suite("StudyItem relationships")
+/// @MainActor
+/// struct StudyItemRelationshipTests
+/// ```
+///
+/// Saves linked fixtures in isolated in-memory containers and checks both sides
+/// of their relationships, including shared tags across multiple items.
+///
+/// > Note: R6 also refetches the field value and tag in a fresh context to verify
+/// > their inverse survives a save and reload.
 @Suite("StudyItem relationships")
 @MainActor
 struct StudyItemRelationshipTests {

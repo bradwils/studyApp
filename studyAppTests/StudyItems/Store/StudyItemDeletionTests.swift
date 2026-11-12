@@ -2,6 +2,21 @@ import Testing
 import SwiftData
 @testable import studyApp
 
+/// Checks which records and relationships survive deletion from a study-item graph.
+///
+/// ## Declaration
+///
+/// ```swift
+/// @Suite("StudyItem deletion rules")
+/// @MainActor
+/// struct StudyItemDeletionTests
+/// ```
+///
+/// Builds isolated in-memory graphs, saves deletions, then checks cascade and
+/// nullify rules. Shared definitions and tags are retained when items are removed,
+/// and the copied subject name survives subject deletion.
+///
+/// > Note: Assertions use the deleting context and its existing model objects.
 @Suite("StudyItem deletion rules")
 @MainActor
 struct StudyItemDeletionTests {

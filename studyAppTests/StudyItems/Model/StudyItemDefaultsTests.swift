@@ -5,6 +5,19 @@ import Testing
 // Explicit list: allCases may be main-actor isolated (the app module defaults to MainActor), so keep it out of the nonisolated arguments expression
 private let allFieldTypes: [FieldType] = [.text, .number, .date, .time, .dropdown]
 
+/// Checks initial model values, field defaults and tag-name normalization.
+///
+/// ## Declaration
+///
+/// ```swift
+/// @Suite("StudyItem defaults")
+/// @MainActor
+/// struct StudyItemDefaultsTests
+/// ```
+///
+/// Exercises models and field configurations without a persistence container.
+/// A separate exhaustiveness check keeps the parameterized field-type list in sync
+/// with the available cases.
 @Suite("StudyItem defaults")
 @MainActor
 struct StudyItemDefaultsTests {

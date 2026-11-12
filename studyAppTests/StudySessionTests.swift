@@ -10,6 +10,19 @@ import SwiftData
 
 import Foundation
 
+/// Checks study-session creation, completion and timer-state cleanup.
+///
+/// ## Declaration
+///
+/// ```swift
+/// struct StudySessionTests
+/// ```
+///
+/// Calls the tracking view model on the main actor with an in-memory SwiftData
+/// container. Completion tests wait for real elapsed time before ending a session.
+///
+/// > Note: Fetches use the original context; these checks do not verify a save
+/// > followed by a reload from a fresh context.
 struct StudySessionTests {
 	
 	@MainActor
