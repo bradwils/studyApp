@@ -1,11 +1,6 @@
 import Foundation
 
 
-extension FieldConfig {
-    /// Accepts configurations by default; conforming types provide their own checks when needed.
-    var isValid: Bool { true }
-}
-
 /// Configuration for a custom text field, initially empty.
 ///
 /// ## Declaration
