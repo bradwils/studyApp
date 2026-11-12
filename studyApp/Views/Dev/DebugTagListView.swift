@@ -74,6 +74,7 @@ private extension TagColor {
         case .mango: .yellow
         case .hazel: .brown
         case .white: .white
+        case .gray: .gray
         }
     }
 }

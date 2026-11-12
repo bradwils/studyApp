@@ -4,7 +4,7 @@ import SwiftData
 @Observable
 final class TagDebugVM {
     var newName = ""
-    var newColor: TagColor = .blue
+    var newColor: TagColor = .gray
 
     func canAdd(existing: [Tag]) -> Bool {
         let key = Tag.key(for: newName.trimmingCharacters(in: .whitespacesAndNewlines))
