@@ -7,7 +7,7 @@ final class TagDebugVM {
     var newColor: TagColor = .gray
 
     func canAdd(existing: [Tag]) -> Bool {
-        let key = Tag.key(for: newName.trimmingCharacters(in: .whitespacesAndNewlines))
+        let key = Tag.key(for: newName)
         return !key.isEmpty && !existing.contains { $0.key == key }
     }
 

@@ -15,15 +15,14 @@ final class Tag {
 
 
     init(name: String, color: TagColor = .gray) {
-        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.key = Tag.key(for: trimmed)
+        self.key = Tag.key(for: name)
         self.color = color
     }
 
     static let defaultName = "default"
 
     static func key(for name: String) -> String {
-        name.lowercased()
+        name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
     }
 }
 
