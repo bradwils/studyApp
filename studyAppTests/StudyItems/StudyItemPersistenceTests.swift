@@ -134,7 +134,7 @@ struct StudyItemPersistenceTests {
 		for definition in try fresh.fetch(FetchDescriptor<FieldDefinition>()) {
 			#expect(definition.values.count == 2)
 		}
-		for tag in try fresh.fetch(FetchDescriptor<Tag>()) {
+		for tag in try fresh.fetch(FetchDescriptor<studyApp.Tag>()) {
 			#expect(tag.items.count == 2)
 		}
 	}
