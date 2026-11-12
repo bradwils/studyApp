@@ -39,7 +39,7 @@ struct DebugStudyItemEditorView: View {
         .onChange(of: item.taskName) { vm.touch(item) }
         .onChange(of: item.notes) { vm.touch(item) }
         .onChange(of: item.priority) { vm.touch(item) }
-        .onChange(of: item.tag) { vm.touch(item) }
+        .onChange(of: item.tags) { vm.touch(item) }
         .onChange(of: item.dueDate) { vm.touch(item) }
     }
 
@@ -67,9 +67,21 @@ struct DebugStudyItemEditorView: View {
                 }
             }
             BuiltInFieldGate(.tag) {
-                Picker("Tag", selection: $item.tag) {
-                    Text("None").tag(Tag?.none)
-                    ForEach(tags) { Text($0.key).tag(Tag?.some($0)) }
+                DisclosureGroup("Tags (\(item.tags.count))") {
+                    ForEach(tags) { tag in
+                        Button {
+                            toggle(tag)
+                        } label: {
+                            HStack {
+                                Text(tag.key)
+                                Spacer()
+                                if item.tags.contains(where: { $0.persistentModelID == tag.persistentModelID }) {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                        .foregroundStyle(.primary)
+                    }
                 }
             }
             Picker("Subject", selection: subjectBinding) {
@@ -82,6 +94,14 @@ struct DebugStudyItemEditorView: View {
                     DatePicker("Due", selection: Binding(get: { due }, set: { item.dueDate = $0 }))
                 }
             }
+        }
+    }
+
+    private func toggle(_ tag: Tag) {
+        if let index = item.tags.firstIndex(where: { $0.persistentModelID == tag.persistentModelID }) {
+            item.tags.remove(at: index)
+        } else {
+            item.tags.append(tag)
         }
     }
 
