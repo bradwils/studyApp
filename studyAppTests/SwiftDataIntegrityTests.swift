@@ -3,6 +3,20 @@ import SwiftData
 import Testing
 @testable import studyApp
 
+/// Tests persistence and relationship integrity independently of the app's shared store and autosave.
+///
+/// ## Declaration
+///
+/// ```swift
+/// @MainActor struct SwiftDataIntegrityTests
+/// ```
+///
+/// Each test owns its SwiftData container. Deletion, cancellation, and completion
+/// checks read saved records through a fresh context; disk coverage releases the
+/// writer before reopening a temporary store.
+///
+/// > Important: Autosave and CloudKit are disabled so missing explicit saves are
+/// > exposed without touching app data. Temporary disk files are removed afterward.
 @MainActor
 struct SwiftDataIntegrityTests {
     @Test("Deleting a subject preserves its sessions and their owned records")
@@ -231,6 +245,7 @@ struct SwiftDataIntegrityTests {
         }
     }
 
+    /// Creates an isolated store in memory, or on disk when a URL is supplied, with CloudKit disabled.
     private func makeContainer(at storeURL: URL? = nil) throws -> ModelContainer {
         let schema = Schema([Subject.self, StudySession.self, StudyBreak.self,
                              StudySection.self, SessionLocation.self])
@@ -243,6 +258,7 @@ struct SwiftDataIntegrityTests {
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 
+    /// Disables autosave so persistence assertions require an explicit save.
     private func makeContext(_ container: ModelContainer) -> ModelContext {
         let context = ModelContext(container)
         context.autosaveEnabled = false
