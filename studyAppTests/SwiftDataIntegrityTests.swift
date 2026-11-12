@@ -3,20 +3,7 @@ import SwiftData
 import Testing
 @testable import studyApp
 
-/// Tests persistence and relationship integrity independently of the app's shared store and autosave.
-///
-/// ## Declaration
-///
-/// ```swift
-/// @MainActor struct SwiftDataIntegrityTests
-/// ```
-///
-/// Each test owns its SwiftData container. Deletion, cancellation, and completion
-/// checks read saved records through a fresh context; disk coverage releases the
-/// writer before reopening a temporary store.
-///
-/// > Important: Autosave and CloudKit are disabled so missing explicit saves are
-/// > exposed without touching app data. Temporary disk files are removed afterward.
+// Isolated stores with autosave and CloudKit disabled expose missing saves without touching app data.
 @MainActor
 struct SwiftDataIntegrityTests {
     @Test("Deleting a subject preserves its sessions and their owned records")
@@ -30,7 +17,7 @@ struct SwiftDataIntegrityTests {
         let other = insertSession(subject: otherSubject, label: "Other", context: context)
         let deletedIDs = Set([first.id, second.id])
         let otherID = other.id
-        let subjectID = otherSubject.id
+        let otherSubjectID = otherSubject.id
         try context.save()
         try expectGraphCounts(makeContext(container), sessions: 3, children: 3)
 
@@ -39,7 +26,7 @@ struct SwiftDataIntegrityTests {
 
         let reader = makeContext(container)
         let subjects = try reader.fetch(FetchDescriptor<Subject>())
-        #expect(subjects.map(\.id) == [subjectID])
+        #expect(subjects.map(\.id) == [otherSubjectID])
         let sessions = try reader.fetch(FetchDescriptor<StudySession>())
         #expect(Set(sessions.map(\.id)) == deletedIDs.union([otherID]))
         for session in sessions where deletedIDs.contains(session.id) {
@@ -50,7 +37,7 @@ struct SwiftDataIntegrityTests {
             #expect(session.location != nil)
         }
         let retained = try #require(sessions.first { $0.id == otherID })
-        #expect(retained.subject?.id == subjectID)
+        #expect(retained.subject?.id == otherSubjectID)
         #expect(Set(subjects.first?.sessions.map(\.id) ?? []) == [otherID])
         try expectGraphCounts(reader, sessions: 3, children: 3)
     }
@@ -149,6 +136,7 @@ struct SwiftDataIntegrityTests {
         vm.selectedSubject = subject
         vm.startSession(ctx: context)
         let session = try #require(vm.activeSession)
+        #expect(session.endedAt == nil)
         let sessionID = session.id
         let startedAt = Date(timeIntervalSince1970: 1_700_000_000)
         session.startedAt = startedAt
@@ -180,6 +168,7 @@ struct SwiftDataIntegrityTests {
         #expect(stored.friends == ["friend"])
         #expect(stored.interruptionCount == 1)
         #expect(stored.totalBreakDuration == 30)
+        #expect(stored.totalActiveDuration == endedAt.timeIntervalSince(startedAt) - 30)
         #expect(stored.breaks?.first?.duration == 30)
         #expect(stored.sections?.first?.duration == 60)
         #expect(stored.location?.locationLabel == "Library")
@@ -191,8 +180,30 @@ struct SwiftDataIntegrityTests {
         #expect(!vm.focusLockEnabled)
     }
 
-    @Test("Subjects and completed session graphs survive reopening a disk store")
-    func savedGraphSurvivesReopeningStore() throws {
+    @Test("Finishing without an active session preserves existing history")
+    func finishingWithoutActiveSessionPreservesHistory() throws {
+        let container = try makeContainer()
+        let context = makeContext(container)
+        let subject = Subject(name: "Physics", code: "PHYS")
+        let previous = insertSession(subject: subject, label: "Previous", context: context)
+        let previousID = previous.id
+        try context.save()
+        previous.notes = "Unsaved edit"
+        let vm = StudyTrackingViewModel()
+
+        vm.endSession(context: context)
+        vm.cancelActiveSession(ctx: context)
+
+        let reader = makeContext(container)
+        let sessions = try reader.fetch(FetchDescriptor<StudySession>())
+        #expect(sessions.map(\.id) == [previousID])
+        #expect(sessions.first?.notes == "Previous")
+        #expect(context.hasChanges)
+        try expectGraphCounts(reader, sessions: 1, children: 1)
+    }
+
+    @Test("Session graphs and their deletion survive reopening a disk store")
+    func savedGraphAndDeletionSurviveReopeningStore() throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         defer { try? FileManager.default.removeItem(at: directory) }
@@ -206,8 +217,7 @@ struct SwiftDataIntegrityTests {
             let container = try makeContainer(at: storeURL)
             let context = makeContext(container)
             let subject = Subject(id: subjectID, name: "Physics", code: "PHYS", createdAt: startedAt)
-            let session = insertSession(subject: subject, label: "Persisted", context: context)
-            session.id = sessionID
+            insertSession(id: sessionID, subject: subject, label: "Persisted", context: context)
             try context.save()
         }
 
@@ -242,10 +252,19 @@ struct SwiftDataIntegrityTests {
             #expect(session.location?.latitude == -33.86)
             #expect(session.location?.longitude == 151.21)
             try expectGraphCounts(reader, sessions: 1, children: 1)
+            SessionViewerViewModel().deleteSessions([session], context: reader)
+        }
+
+        try autoreleasepool {
+            let reopened = try makeContainer(at: storeURL)
+            let reader = makeContext(reopened)
+            let subjects = try reader.fetch(FetchDescriptor<Subject>())
+            #expect(subjects.map(\.id) == [subjectID])
+            #expect(subjects.first?.sessions.isEmpty == true)
+            try expectGraphCounts(reader, sessions: 0, children: 0)
         }
     }
 
-    /// Creates an isolated store in memory, or on disk when a URL is supplied, with CloudKit disabled.
     private func makeContainer(at storeURL: URL? = nil) throws -> ModelContainer {
         let schema = Schema([Subject.self, StudySession.self, StudyBreak.self,
                              StudySection.self, SessionLocation.self])
@@ -258,16 +277,17 @@ struct SwiftDataIntegrityTests {
         return try ModelContainer(for: schema, configurations: [configuration])
     }
 
-    /// Disables autosave so persistence assertions require an explicit save.
     private func makeContext(_ container: ModelContainer) -> ModelContext {
         let context = ModelContext(container)
         context.autosaveEnabled = false
         return context
     }
 
-    private func insertSession(subject: Subject, label: String, context: ModelContext) -> StudySession {
+    @discardableResult
+    private func insertSession(id: UUID = UUID(), subject: Subject, label: String,
+                               context: ModelContext) -> StudySession {
         let start = Date(timeIntervalSince1970: 1_700_000_000)
-        let session = StudySession(subject: subject, subjectName: subject.name, startedAt: start,
+        let session = StudySession(id: id, subject: subject, subjectName: subject.name, startedAt: start,
                                    endedAt: start.addingTimeInterval(120), totalBreakDuration: 30,
                                    breaks: [StudyBreak(startedAt: start.addingTimeInterval(60),
                                                        endedAt: start.addingTimeInterval(90))],
