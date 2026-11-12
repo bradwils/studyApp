@@ -14,6 +14,7 @@ final class FieldValue {
     var item: StudyItem?
     @Relationship(deleteRule: .nullify)
     var definition: FieldDefinition?
+    @Relationship(deleteRule: .nullify)
     var tags: [Tag] = []
 
     init(content: FieldContent) {

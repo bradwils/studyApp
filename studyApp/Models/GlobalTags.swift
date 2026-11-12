@@ -13,6 +13,10 @@ final class Tag {
     @Relationship(deleteRule: .nullify, inverse: \StudyItem.tags)
     var items: [StudyItem] = []
 
+    // Same as `items`, for tags attached to a single field value; inverse declared here only
+    @Relationship(deleteRule: .nullify, inverse: \FieldValue.tags)
+    var fieldValues: [FieldValue] = []
+
 
     init(name: String, color: TagColor = .gray) {
         self.key = Tag.key(for: name)
