@@ -4,8 +4,11 @@ How code moves from a feature branch to the App Store, and what you have to do
 at each hop.
 
 App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
-`claude.yml` (the `@claude` mention bot) and `promotion-source.yml` (guards
-what can merge into `master`). If an app build runs, Xcode Cloud ran it.
+`claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint),
+`pr-title.yml` (Conventional Commits PR titles), `promotion-source.yml` (guards
+what can merge into `master`) and `testflight-pr.yml` (asks
+Xcode Cloud to build a PR on request, see [PR builds](#pr-builds)). If an app build runs, Xcode
+Cloud ran it.
 
 ---
 
@@ -19,10 +22,43 @@ what can merge into `master`). If an app build runs, Xcode Cloud ran it.
 | `master` | shipped | `v*` tag only | TestFlight external → **Stable**, then App Store review | pinned (26.6) |
 
 Direction is always `feature/*` → `dev` → `UAT-testflight` → `master`. Nothing
-skips a step except a hotfix (see below).
+skips a step except a hotfix or CI maintenance (see below).
 
 The **UAT** and **Stable** groups have no testers yet — builds land there and
 wait. Add testers in App Store Connect → TestFlight when testing starts.
+
+---
+
+## PR builds
+
+Feature branches don't build on their own. To get one onto your phone, put
+`/testflight` on its own line (any case) in the PR description, or in a comment on the PR
+(owner, members and collaborators only).
+
+`testflight-pr.yml` then calls the App Store Connect API and starts a build of
+the PR's head branch on the Xcode Cloud workflow named **PR TestFlight**
+(override with the repo variable `XCODE_CLOUD_PR_WORKFLOW`). That workflow
+archives and distributes to the internal TestFlight group. Because the build is
+started on the branch itself, the Settings footer shows the real branch name,
+the build time in Sydney time, and the usual version (build).
+
+- Triggers: PR opened/reopened, PR description edited (only if the body
+  changed), or a new comment. Pushes do not rebuild; comment `/testflight`
+  again.
+- **Comment activation:** GitHub runs `issue_comment` workflows from the default
+  branch (`master`). Having this workflow on `dev` alone does not activate
+  `/testflight` comments; promote it to `master` before relying on comment
+  triggers.
+- Fork PRs and closed PRs are skipped; only open PRs from this repository can build.
+- Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
+  and `APP_STORE_CONNECT_PRIVATE_KEY`.
+- **One-off setup in Xcode:** create a workflow called `PR TestFlight` whose only
+  start condition is **Manual Start** for *all branches* (Apple refuses an
+  API-started build on a branch the workflow doesn't list, and a Branch Changes
+  condition would build every push), a TestFlight Internal
+  Testing post-action (distribute to **Self**), and the same environment as
+  `dev`. The workflow must run `ci_scripts/`, so the PR's branch has to include
+  that folder.
 
 ---
 
@@ -31,8 +67,8 @@ wait. Add testers in App Store Connect → TestFlight when testing starts.
 | Branch | Direct push | PR required | Merge method | Other |
 |---|---|---|---|---|
 | `dev` | ✅ | no | any | no force-push, no deletion |
-| `UAT-testflight` | ❌ | yes, from any branch | merge commit only | no force-push, no deletion |
-| `master` | ❌ | yes, from `UAT-testflight` or `hotfix/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
+| `UAT-testflight` | ❌ | yes | merge commit only | no force-push, no deletion |
+| `master` | ❌ | yes, from `UAT-testflight`, `hotfix/*` or `ci/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
 | `v*` tags | — | — | — | can't be moved or deleted once created |
 
 Approvals required: 0 (you can't approve your own PR). Head branches are
@@ -43,14 +79,14 @@ must carry `dev`'s actual commits. Squashing creates a new commit with the same
 content but different history, so the branches drift apart and the next
 promotion conflicts.
 
-**Land a change once.** Make it on `dev` and promote it. Opening matching PRs
+**Land an app change once.** Make it on `dev` and promote it. Opening matching PRs
 into `dev` and `master` is what caused the earlier drift.
 
 ---
 
 ## Starting work
 
-Branch off `dev`, never off `master`:
+Branch app work off `dev`. Hotfixes and CI maintenance branch off `master`:
 
 ```sh
 git checkout dev
@@ -69,8 +105,13 @@ Open a PR targeting `dev` (or push straight to `dev` for small changes).
 
 Before you merge:
 
-- Build locally at least once. There is no test or validation workflow yet, so
-  a compile error reaches TestFlight before anyone notices.
+- Build locally at least once. SwiftLint runs on PRs into every long-lived
+  branch (and on pushes to `dev`) — errors fail it, warnings are only
+  annotated — but nothing builds or runs tests, so a compile error reaches
+  TestFlight before anyone notices.
+- PR titles into `dev` must follow Conventional Commits (`type(scope):
+  description`); the `PR title` check enforces it, because merge commits take
+  the PR title.
 - If this is the first change of a new release cycle, bump `MARKETING_VERSION`
   and the build number offset in the same commit. See [Versions](#versions).
 
@@ -100,7 +141,8 @@ here builds, so merge once, deliberately.
 
 Open a PR from `UAT-testflight` targeting `master`, and merge it with **Create
 a merge commit**. The `source-branch` check rejects a PR from anything other
-than `UAT-testflight` or `hotfix/*`.
+than `UAT-testflight`, `hotfix/*` or `ci/*`. The latter two are exceptions for
+production fixes and CI maintenance, respectively.
 
 **Merging does not build anything.** `master` only builds on a version tag.
 That's deliberate: merging and releasing are separate decisions.
@@ -128,7 +170,7 @@ points at, so a tag on `dev` would ship unreleased work.
 ## Hotfixes
 
 A production bug shouldn't have to travel the whole chain. Branch off `master`
-with a `hotfix/` name (the `source-branch` check only accepts that prefix), fix,
+with a `hotfix/` name, fix,
 PR into `master`, then release:
 
 ```sh
@@ -145,6 +187,25 @@ git checkout dev && git pull
 git merge origin/master
 git push
 ```
+
+---
+
+## CI maintenance
+
+For CI, tooling or documentation changes that need to reach the default branch
+without promoting app work, cut a `ci/*` branch from `master` and open a PR into
+`master`. Merge with **Create a merge commit**. The `source-branch` check accepts
+the prefix; keeping the change limited to maintenance is a review convention,
+not a changed-file restriction.
+
+After merging, merge `master` into `UAT-testflight` through a merge-commit PR
+and back into `dev`, preserving each target's current changes. This carries the
+same commits through all lanes. UAT and dev still build on push; no release tag
+is needed for a CI-only change.
+
+The `source-branch` workflow remains required by the master ruleset. Full
+retirement is tracked separately in #164 and requires removing that live status
+requirement before deleting the workflow.
 
 ---
 
@@ -223,11 +284,11 @@ console. Reload, sign in, and redo the edit.
 
 Known gaps, in rough priority order:
 
-1. **No tests run anywhere.** The unit test target doesn't compile (it targets
-   the removed `UserProfileStore`). Once it does, add an Xcode Cloud workflow
-   that starts on pull requests into `dev`, `UAT-testflight` and `master`,
-   builds and runs unit tests (no archive, no distribution), and make it a
-   required check in the rulesets.
+1. **No tests run anywhere.** The unit tests were rewritten against SwiftData
+   (`AppSessionTests`, `StudySessionTests`), but no workflow runs them. Add an
+   Xcode Cloud workflow that starts on pull requests into `dev`,
+   `UAT-testflight` and `master`, builds and runs unit tests (no archive, no
+   distribution), and make it a required check in the rulesets.
 2. UI tests are slow and flaky per PR. Run them on a nightly schedule against
    `UAT-testflight` instead.
 3. TestFlight "What to Test" notes are written by hand. A `ci_post_clone.sh`

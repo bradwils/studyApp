@@ -29,13 +29,14 @@ struct SettingsView: View {
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
 
-    // StudyAppLane is stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
+    // StudyAppLane and StudyAppBuildTime are stamped by ci_scripts/ci_pre_xcodebuild.sh; absent in local builds.
     private var buildFooterText: String {
         let info = Bundle.main.infoDictionary
         let lane = info?["StudyAppLane"] as? String ?? "local"
         let version = info?["CFBundleShortVersionString"] as? String ?? "?"
         let build = info?["CFBundleVersion"] as? String ?? "?"
-        return "\(lane) · \(version) (\(build))"
+        let stamp = (info?["StudyAppBuildTime"] as? String).map { " · \($0)" } ?? ""
+        return "\(lane)\(stamp) · \(version) (\(build))"
     }
 
     var body: some View {
@@ -58,6 +59,7 @@ struct SettingsView: View {
                     }
                 }
 
+                #if DEBUG
                 Section("Debug") {
                     Button {
                         insertFakeSession()
@@ -65,6 +67,7 @@ struct SettingsView: View {
                         Label("Generate Fake Study Session", systemImage: "wand.and.stars")
                     }
                 }
+                #endif
 
                 Section(footer: Text(buildFooterText)) {
                     Button(role: .destructive) {
@@ -74,6 +77,7 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            #if DEBUG
             .toolbar {
                 // DEV ONLY — see CLAUDE.md "Developer-Only Views"
                 ToolbarItem(placement: .topBarTrailing) {
@@ -84,6 +88,7 @@ struct SettingsView: View {
                     }
                 }
             }
+            #endif
         }
     }
     
@@ -91,6 +96,7 @@ struct SettingsView: View {
 
     }
 
+    #if DEBUG
     func insertFakeSession() {
         let startedAt = Date().addingTimeInterval(-3600)
         let session = StudySession(
@@ -107,6 +113,7 @@ struct SettingsView: View {
             logger.log("Failed to insert: \(error)")
         }
     }
+    #endif
 }
 
 #Preview {
