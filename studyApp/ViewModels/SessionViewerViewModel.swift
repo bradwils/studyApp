@@ -12,8 +12,10 @@ import SwiftData
 final class SessionViewerViewModel {
     //ask for a context with your function
     func removeAllSessions(context: ModelContext) {
-        try? context.delete(model: StudySession.self)
-        try? context.save()
+        // Batch delete(model:) bypasses relationship delete rules and can fail on inverse constraints,
+        // so delete each fetched session to get the cascade to breaks/sections/location.
+        let sessions = (try? context.fetch(FetchDescriptor<StudySession>())) ?? []
+        deleteSessions(sessions, context: context)
     }
 
     func deleteSessions(_ sessions: [StudySession], context: ModelContext) {
