@@ -7,6 +7,7 @@
 import Testing
 @testable import studyApp
 
+///AppSession are based on general behaviour - not logic based, but thinks like the TabView behaviour.
 struct AppSessionTests {
 
 	@Test("AppSession starts on the Focus tab")
