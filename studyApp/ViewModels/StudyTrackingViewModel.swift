@@ -235,6 +235,7 @@ final class StudyTrackingViewModel {
         session.breaks = studyBreaks
         session.sections = studySections
         session.totalBreakDuration = totalBreakTime
+        try? context.save()
 
         ssw?.end()
         ssw = nil
