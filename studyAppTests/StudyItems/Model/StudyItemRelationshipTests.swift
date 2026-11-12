@@ -77,9 +77,10 @@ struct StudyItemRelationshipTests {
 		#expect(subject.items.modelIDs.contains(item.persistentModelID))
 	}
 
-	@Test("R6 fieldValue and tag see each other")
+	@Test("R6 fieldValue and tag see each other after a fresh context")
 	func fieldValueTagIsBidirectional() throws {
-		let context = try TestContainer.make()
+		let container = try TestContainer.makeContainer()
+		let context = container.mainContext
 		let value = Fixtures.value(in: context)
 		let tag = Fixtures.tag(in: context)
 
@@ -88,5 +89,14 @@ struct StudyItemRelationshipTests {
 
 		#expect(tag.fieldValues.modelIDs.contains(value.persistentModelID))
 		#expect(value.tags.modelIDs.contains(tag.persistentModelID))
+
+		let fresh = ModelContext(container)
+		let storedValue = try #require(fresh.fetch(FetchDescriptor<FieldValue>()).first)
+		let storedTag = try #require(fresh.fetch(FetchDescriptor<studyApp.Tag>()).first)
+
+		#expect(storedValue.persistentModelID == value.persistentModelID)
+		#expect(storedTag.persistentModelID == tag.persistentModelID)
+		#expect(storedTag.fieldValues.modelIDs == [storedValue.persistentModelID])
+		#expect(storedValue.tags.modelIDs == [storedTag.persistentModelID])
 	}
 }
