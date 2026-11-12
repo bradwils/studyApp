@@ -60,6 +60,7 @@ struct TimeFieldConfig: FieldConfig {
 /// The first option supplies the initial selection. An empty options array is
 /// invalid, but still produces an empty-string selection if its default is read.
 struct DropdownFieldConfig: FieldConfig {
+    /// The choices in display order; the first is the default selection.
     var options: [String]
 
     var systemImage: String { "list.bullet" }
