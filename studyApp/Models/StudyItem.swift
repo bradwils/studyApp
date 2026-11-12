@@ -18,7 +18,7 @@ final class StudyItem {
     var subjectName: String?
 
     @Relationship(deleteRule: .nullify)
-    var tag: Tag?
+    var tags: [Tag] = []
 
     @Relationship(deleteRule: .cascade, inverse: \FieldValue.item)
     var values: [FieldValue] = []

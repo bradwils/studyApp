@@ -2,15 +2,15 @@ import Foundation
 import SwiftData
 
 
-// Tags are global labels a studyItem can carry (see `StudyItem.tag`).
+// Tags are global labels a studyItem can carry (see `StudyItem.tags`).
 @Model
 final class Tag {
     // Lowercased + trimmed name; unique so "Maths" and "maths" can't both exist
     @Attribute(.unique) var key: String
     var color: TagColor = TagColor.blue
 
-    // Nullify so deleting a tag clears it from the items that used it
-    @Relationship(deleteRule: .nullify, inverse: \StudyItem.tag)
+    // Many-to-many; nullify so deleting a tag clears it from the items that used it
+    @Relationship(deleteRule: .nullify, inverse: \StudyItem.tags)
     var items: [StudyItem] = []
 
 
