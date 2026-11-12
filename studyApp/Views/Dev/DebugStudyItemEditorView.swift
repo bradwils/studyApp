@@ -96,7 +96,7 @@ struct DebugStudyItemEditorView: View {
             }
             Menu("Add field", systemImage: "plus.circle") {
                 ForEach(unusedDefinitions) { definition in
-                    Button(definition.name, systemImage: FieldKindChoice(definition.kind).systemImage) {
+                    Button(definition.name, systemImage: definition.type.systemImage) {
                         vm.addValue(for: definition, to: item, context: modelContext)
                     }
                 }

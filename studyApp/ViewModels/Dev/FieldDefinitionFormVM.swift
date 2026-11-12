@@ -1,36 +1,10 @@
 import Foundation
 import SwiftData
 
-enum FieldKindChoice: String, CaseIterable, Identifiable {
-    case text, number, date, time, dropdown
-
-    var id: String { rawValue }
-
-    init(_ kind: FieldKind) {
-        switch kind {
-        case .text: self = .text
-        case .number: self = .number
-        case .date: self = .date
-        case .time: self = .time
-        case .dropdown: self = .dropdown
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .text: "textformat"
-        case .number: "number"
-        case .date: "calendar"
-        case .time: "clock"
-        case .dropdown: "list.bullet"
-        }
-    }
-}
-
 @Observable
 final class FieldDefinitionFormVM {
     var name = ""
-    var choice: FieldKindChoice = .text
+    var choice: FieldType = .text
     var optionsText = ""
     var isEnabled = true
 
@@ -50,24 +24,12 @@ final class FieldDefinitionFormVM {
             .filter { !$0.isEmpty }
     }
 
-    private var kind: FieldKind {
-        switch choice {
-        case .text: .text(TextFieldConfig())
-        case .number: .number(NumberFieldConfig())
-        case .date: .date(DateFieldConfig())
-        case .time: .time(TimeFieldConfig())
-        case .dropdown: .dropdown(DropdownFieldConfig(options: options))
-        }
-    }
-
     func load(_ definition: FieldDefinition) {
         editing = definition
         name = definition.name
-        choice = FieldKindChoice(definition.kind)
+        choice = definition.type
         isEnabled = definition.isEnabled
-        if case .dropdown(let config) = definition.kind {
-            optionsText = config.options.joined(separator: ", ")
-        }
+        optionsText = definition.options.joined(separator: ", ")
     }
 
     func save(nextOrder: Int, context: ModelContext) {
@@ -77,9 +39,9 @@ final class FieldDefinitionFormVM {
             editing.name = trimmed
             editing.isEnabled = isEnabled
             // Kind is locked after creation so existing values can't mismatch their definition
-            if choice == .dropdown { editing.kind = kind }
+            if choice == .dropdown { editing.options = options }
         } else {
-            context.insert(FieldDefinition(name: trimmed, kind: kind, order: nextOrder, isEnabled: isEnabled))
+            context.insert(FieldDefinition(name: trimmed, type: choice, options: choice == .dropdown ? options : [], order: nextOrder, isEnabled: isEnabled))
         }
         try? context.save()
     }
