@@ -17,11 +17,13 @@ final class SubjectsEditorVM {
     func addSubject(context: ModelContext) {
         guard canAddSubject else { return }
         context.insert(Subject(name: newSubjectName, code: newSubjectCode.uppercased()))
+        try? context.save()
         newSubjectName = ""
         newSubjectCode = ""
     }
 
     func removeSubject(_ subject: Subject, context: ModelContext) {
         context.delete(subject)
+        try? context.save()
     }
 }
