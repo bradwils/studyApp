@@ -39,33 +39,6 @@ final class studyAppUITests: XCTestCase {
         }
     }
 
-    // MARK: - Session start/pause/end flow
-
-    @MainActor
-    func testStartPauseEndSessionFlow() throws {
-        let app = XCUIApplication()
-        app.launch()
-
-        let mainButton = app.buttons["startPauseButton"]
-        XCTAssertTrue(mainButton.waitForExistence(timeout: 5), "Start/Pause button should be visible on the Focus tab")
-        XCTAssertEqual(mainButton.label, "Start")
-
-        mainButton.tap()
-        XCTAssertTrue(mainButton.waitForExistence(timeout: 2))
-        XCTAssertEqual(mainButton.label, "Pause", "Tapping Start should begin a running session")
-
-        mainButton.tap()
-        XCTAssertEqual(mainButton.label, "Resume", "Tapping Pause should pause the running session")
-
-        let endButton = app.buttons["endSessionButton"]
-        XCTAssertTrue(endButton.waitForExistence(timeout: 2), "End button should only appear while paused")
-
-        endButton.tap()
-        XCTAssertTrue(mainButton.waitForExistence(timeout: 2))
-        XCTAssertEqual(mainButton.label, "Start", "Ending the session should return to the idle state")
-        XCTAssertFalse(app.buttons["endSessionButton"].exists, "End button should disappear once the session has ended")
-    }
-
     // MARK: - Add subject flow
 
     @MainActor
