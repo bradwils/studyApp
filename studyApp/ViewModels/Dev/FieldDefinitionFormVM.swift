@@ -13,15 +13,16 @@ final class FieldDefinitionFormVM {
     var isEditing: Bool { editing != nil }
 
     var canSave: Bool {
-        !name.trimmingCharacters(in: .whitespaces).isEmpty
-            && (choice != .dropdown || !options.isEmpty)
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && FieldKind(type: editing?.type ?? choice, options: options).config.isValid
     }
 
     private var options: [String] {
-        optionsText
+        var seen: Set<String> = []
+        return optionsText
             .split(separator: ",")
-            .map { $0.trimmingCharacters(in: .whitespaces) }
-            .filter { !$0.isEmpty }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
     }
 
     func load(_ definition: FieldDefinition) {
@@ -34,12 +35,12 @@ final class FieldDefinitionFormVM {
 
     func save(nextOrder: Int, context: ModelContext) {
         guard canSave else { return }
-        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         if let editing {
             editing.name = trimmed
             editing.isEnabled = isEnabled
             // Kind is locked after creation so existing values can't mismatch their definition
-            if choice == .dropdown { editing.options = options }
+            if editing.type == .dropdown { editing.options = options }
         } else {
             context.insert(FieldDefinition(name: trimmed, type: choice, options: choice == .dropdown ? options : [], order: nextOrder, isEnabled: isEnabled))
         }

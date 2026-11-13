@@ -17,9 +17,8 @@ import SwiftData
 /// context.insert(item)
 /// ```
 ///
-/// > Important: `completedAt` is set only in the initializer, and only when the
-/// > status is `.completed`. Changing `status` later does not update it, and
-/// > `updatedAt` is not touched automatically either.
+/// > Important: Callers maintain `completedAt` and `updatedAt` when editing.
+/// > The developer editor routes status and content changes through `StudyItemDebugVM`.
 @Model
 final class StudyItem {
     @Attribute(.unique) var id: UUID

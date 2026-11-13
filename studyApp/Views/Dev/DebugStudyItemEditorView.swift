@@ -108,7 +108,7 @@ struct DebugStudyItemEditorView: View {
     private var fieldsSection: some View {
         Section {
             ForEach(sortedValues) { value in
-                DebugFieldValueRow(value: value)
+                DebugFieldValueRow(value: value) { vm.setContent($0, on: value) }
             }
             .onDelete { offsets in
                 let values = sortedValues
@@ -159,6 +159,7 @@ struct DebugStudyItemEditorView: View {
 
 private struct DebugFieldValueRow: View {
     let value: FieldValue
+    let setContent: (FieldContent) -> Void
 
     private var title: String { value.definition?.name ?? "Orphaned field" }
 
@@ -166,26 +167,26 @@ private struct DebugFieldValueRow: View {
         switch value.content {
         case .text(let text):
             LabeledContent(title) {
-                TextField("Text", text: Binding(get: { text }, set: { value.content = .text($0) }))
+                TextField("Text", text: Binding(get: { text }, set: { setContent(.text($0)) }))
                     .multilineTextAlignment(.trailing)
             }
         case .number(let number):
             LabeledContent(title) {
-                TextField("0", value: Binding(get: { number }, set: { value.content = .number($0) }), format: .number)
+                TextField("0", value: Binding(get: { number }, set: { setContent(.number($0)) }), format: .number)
                     .keyboardType(.decimalPad)
                     .multilineTextAlignment(.trailing)
             }
         case .date(let date):
-            DatePicker(title, selection: Binding(get: { date }, set: { value.content = .date($0) }))
+            DatePicker(title, selection: Binding(get: { date }, set: { setContent(.date($0)) }))
         case .time(let seconds):
             Stepper(
                 "\(title): \(Duration.seconds(seconds).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated)))",
-                value: Binding(get: { seconds }, set: { value.content = .time($0) }),
+                value: Binding(get: { seconds }, set: { setContent(.time($0)) }),
                 in: 0...36_000,
                 step: 300
             )
         case .dropdown(let selection):
-            Picker(title, selection: Binding(get: { selection }, set: { value.content = .dropdown($0) })) {
+            Picker(title, selection: Binding(get: { selection }, set: { setContent(.dropdown($0)) })) {
                 ForEach(options(including: selection), id: \.self) { Text($0.isEmpty ? "—" : $0).tag($0) }
             }
         }

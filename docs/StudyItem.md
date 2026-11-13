@@ -1,178 +1,59 @@
-# StudyItem
+# StudyItems
 
-## Goal
-A `StudyItem` is a task belonging to a Subject. It tracks:
-- Baseline status (Not Started / In Progress / Completed / On Hold)
-- Due date, priority, notes
-- Subject-specific tracking fields (slider, text, number, tags, dropdown, date, time) — *which fields are enabled* and *what they're named* is per-Subject configuration, not per-item
+StudyItems provide the SwiftData foundation for tasks, custom fields and shared
+tags. The current UI is developer tooling under Debug Data; production task
+screens and StudyItems integration with the Focus screen remain separate work.
 
-Items persist their values for every possible field type; the UI shows only the fields the Subject has enabled via `SubjectFieldConfig`.
+## Stored data
 
----
+- `StudyItem` stores its name, notes, status, due date, priority, timestamps and
+  optional subject. `subjectName` preserves the name copied when assigning the
+  subject if that subject is later deleted.
+- `FieldDefinition` stores a name, plain `FieldType`, dropdown options, display
+  order and enabled flag. Definitions are global, not subject-specific.
+- `FieldValue` links one item to one definition and stores a `FieldContent`
+  payload: text, number, date, duration in seconds or dropdown selection text.
+- `Tag` is shared by items and field values. Its unique key is trimmed and
+  lowercased; the developer VM reuses existing keys without replacing their colour.
+- `AppSchema.models` registers these types alongside the existing app models.
 
-## Core Models
+`FieldKind` and its per-kind `FieldConfig` structs are reconstructed at runtime
+from the definition's columns. They are not stored in SwiftData: persisting the
+struct-bearing enum previously crashed when saving or loading field definitions.
+`FieldContent` remains the persisted enum holding primitive values.
 
-### StudyItem
-```swift
-@Model
-final class StudyItem {
-  id: UUID                      // unique id, @Unique constraint
-  createdAt: Date               // set at init
-  updatedAt: Date               // touches on any mutation
-  completedAt: Date?            // set when status → Completed
-  subject: Subject?             // reference (nullify on subject delete)
-  
-  // Configurable fields
-  taskName: String              // task name
-  notes: String?                // user notes
-  
-  // Array of typed field instances
-  fields: [StudyItemField]       // values for fields configured on the subject
-}
-```
+## Ownership
 
----
+Deleting an item or definition cascades to its field values. Deleting a value
+keeps its item, definition and tags. Deleting a subject or tag nullifies references
+without deleting items. The inverse of each relationship is explicit on its
+owning side.
 
-### StudyItemField
-Container for one typed field instance. Each field holds a `FieldKind` enum that carries both the field's type and its value.
+The developer Delete All action fetches items and deletes them individually.
+Batch deletion previously failed on the field-value inverse relationships.
 
-```swift
-@Model
-final class StudyItemField {
-  var type: FieldKind
-  
-  init(type: FieldKind) {
-    self.type = type
-  }
-}
-```
+## Editing behaviour
 
----
+- Definition type is locked after creation. Dropdown options can be edited;
+  comma-separated options are trimmed and deduplicated in first-seen order.
+- Renaming or removing a dropdown option keeps existing selections visible in
+  the editor so stored content is not silently discarded.
+- Adding an already attached definition preserves the original value.
+- The developer VM updates the item's `updatedAt` when built-in fields, custom
+  values, subjects or status change. Models do not maintain timestamps themselves.
+- Entering Completed sets `completedAt`; choosing Completed again preserves it.
+  Reopening clears it, and completing again records a new date.
+- Built-in visibility toggles use per-device `AppStorage`; disabling a built-in
+  or custom field hides it without deleting data.
 
-## FieldKind Enum
+## Validation and migration
 
-`FieldKind` is an enum where each case wraps a struct containing exactly the properties that variant needs. One field = one case at a time.
+See [StudyItemTesting.md](StudyItemTesting.md) for the retained tests and review
+status. The final feature combines the newer field-configuration work from #188
+with the persistence tests and tag fixes from #190. The older V2 slot-based model
+and its API-specific tests in #170 are an alternative implementation, not an
+additional schema to combine with this one.
 
-```swift
-enum FieldKind: Codable {
-  case text(TextField)
-  case number(NumberField)
-  case slider(SliderField)
-  case tag(TagField)
-  case date(DateField)
-  case time(TimeField)
-  case dropdown(DropdownField)
-
-  // ─── Nested Structs (one per case) ───
-  
-  struct TextField: Codable {
-    var label: String
-    var value: String
-  }
-
-  struct NumberField: Codable {
-    var label: String
-    var value: Double
-  }
-
-  struct SliderField: Codable {
-    var label: String
-    var value: Int
-    var min: Int                // TODO: decide if required, optional, or default-valued
-    var max: Int
-    var step: Int
-  }
-
-  struct TagField: Codable {
-    var label: String
-    var selected: [String]      // user's selected tags (options from app-wide @Query)
-  }
-
-  struct DateField: Codable {
-    var label: String
-    var value: Date
-  }
-
-  struct TimeField: Codable {
-    var label: String
-    var value: TimeInterval
-  }
-
-  struct DropdownField: Codable {
-    var label: String
-    var selected: String        // user's chosen option (options from Subject config)
-  }
-}
-```
-
----
-
-## Subject Relationship
-
-```swift
-Subject (@Model) {
-  @Relationship(deleteRule: .cascade)
-  var fieldConfigs: [SubjectFieldConfig]    // defines which fields exist for this subject
-  
-  // ... existing properties ...
-}
-```
-
-`SubjectFieldConfig` describes *which fields this subject has* and their configuration. When a `StudyItem` under that Subject needs a field instance, it stores its value in the corresponding `FieldKind` case.
-
----
-
-## Data Flow & Ownership
-
-```
-StudyItem
-  ├─ fields: [StudyItemField]
-  │   └─ field.type: FieldKind  ← enum case (holds the typed struct with value)
-  │       ├─ .text(TextField { label, value })
-  │       ├─ .slider(SliderField { label, value, min, max, step })
-  │       ├─ .tag(TagField { label, selected: [String] })
-  │       ├─ .dropdown(DropdownField { label, selected })
-  │       ├─ .date(DateField { label, value })
-  │       ├─ .time(TimeField { label, value })
-  │       └─ .number(NumberField { label, value })
-  │
-  └─ subject: Subject?
-      └─ fieldConfigs: [SubjectFieldConfig]
-          └─ defines *which* fields exist and their defaults
-```
-
-**Reading the flow:**
-- `StudyItem.fields` is an array of `StudyItemField` instances — one per configured field on that item.
-- Each instance's `type` is a `FieldKind` enum case that **carries its own typed struct** — `.slider(SliderField { ... })` holds exactly and only the data a slider needs.
-- The pool of *available* field types for a Subject lives once on `Subject.fieldConfigs`, not duplicated per item.
-- The `value`/`selected` inside each struct is the **instance-specific** data (e.g., the user set this particular slider to 42).
-
----
-
-## Why Enums with Nested Structs
-
-**Old approach** (antipattern):
-```swift
-var intValue: Int?
-var doubleValue: Double?
-var stringValue: String?
-var selectedStrings: [String?]
-var intMaxValue: Int?
-var intStepValue: Int?
-```
-Problems: wasteful storage, no type safety, can accidentally access `intMaxValue` on a text field.
-
-**New approach** (enum with associated structs):
-```swift
-case slider(SliderField)  // holds exactly a SliderField
-case text(TextField)       // holds exactly a TextField
-```
-Benefits: only relevant properties per type, compiler type-safety, clean and obvious code.
-
----
-
-## Design Notes
-
-- **Tag options** are app-wide (fetched at render time via `@Query`)
-- **Dropdown options** are subject-specific (stored on Subject, fetched at render time)
-- **Slider min/max/step**: currently required per-field; can be optimized to defaults if Subject-wide defaults are added
+No versioned SwiftData schema or migration plan exists. Development installations
+must be reinstalled/reseeded after adopting this schema. Versioning is deferred
+to #163, before the first UAT release; `AppSchema` is only a shared model list.

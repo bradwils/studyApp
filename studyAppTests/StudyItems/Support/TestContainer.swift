@@ -9,8 +9,9 @@ enum TestContainer {
 	static func makeContainer() throws -> ModelContainer {
 		let container = try ModelContainer(
 			for: Schema(AppSchema.models),
-			configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+			configurations: ModelConfiguration(isStoredInMemoryOnly: true, cloudKitDatabase: .none)
 		)
+		container.mainContext.autosaveEnabled = false
 		retained.append(container)
 		return container
 	}
