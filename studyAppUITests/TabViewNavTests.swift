@@ -7,6 +7,20 @@
 
 import XCTest
 
+/// Checks that tapping each tab displays its expected destination.
+///
+/// ## Declaration
+///
+/// ```swift
+/// final class TabViewNavTests: XCTestCase
+/// ```
+///
+/// Launches a fresh app for each destination and switches away before selecting
+/// the tab under test, so the initial Focus screen cannot satisfy its own check.
+///
+/// > Note: Destination detection relies on navigation titles except for Focus,
+/// > which uses the start/pause button's accessibility identifier. This suite is
+/// > disabled in the shared test plan.
 final class TabViewNavTests: XCTestCase {
 
 	//case xyz = <TabView button label>

@@ -188,8 +188,9 @@ If you have made changes, then we might need to add a migration schema. Check if
 
 ## Current Maintenance Notes
 
-- Unit tests are `AppSessionTests.swift`, `StudySessionTests.swift`, `SessionTimingTests.swift` and `FocusPagerTests.swift`; the session tests use an in-memory SwiftData container and an injected clock. They passed locally on 2026-11-10; no automated unit-test workflow is configured.
-- `StudyTrackingViewModel` is created once in `StudyAppApp` and passed down explicitly. It is the only writer of session transitions; every transition saves explicitly.
+- Unit tests cover app navigation state, session timing, the Focus pager, StudyItems and SwiftData integrity. Session tests use isolated containers and an injected clock; persistence tests also refetch through fresh contexts and reopen a disk store.
+- `StudyTrackingViewModel` is created once in `StudyAppApp` and passed down explicitly. It owns session transitions and saves explicitly; `finishSession(context:)` replaces the previous completion API.
+- Session deletion fetches and deletes ended sessions individually, preserving active sessions and applying cascade rules.
 
 See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decisions and [todos/ui-design-ideas.md](todos/ui-design-ideas.md) for UX/design ideas.
 

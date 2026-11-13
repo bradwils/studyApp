@@ -11,8 +11,10 @@ import SwiftData
 final class SessionViewerViewModel {
     //ask for a context with your function
     func removeAllSessions(context: ModelContext) {
-        try? context.delete(model: StudySession.self, where: #Predicate { $0.endedAt != nil })
-        try? context.save()
+        // Fetch/delete individually so cascades apply; active sessions must survive Clear All.
+        let descriptor = FetchDescriptor<StudySession>(predicate: #Predicate { $0.endedAt != nil })
+        let sessions = (try? context.fetch(descriptor)) ?? []
+        deleteSessions(sessions, context: context)
     }
 
     func deleteSessions(_ sessions: [StudySession], context: ModelContext) {
