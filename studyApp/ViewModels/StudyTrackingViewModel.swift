@@ -193,7 +193,6 @@ final class StudyTrackingViewModel {
     //      - End the study Break
     //      - Resume stopwatch & update resume timing
     func pauseSession() {
-        let now = Date()
         studyTrackingLogger.log("pauseSession() called")
         guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
         ssw?.startBreak()
