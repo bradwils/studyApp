@@ -22,7 +22,7 @@ struct DebugTagListView: View {
                     colorMenu(selection: $vm.newColor)
                     Button("Add", action: add)
                         .buttonStyle(.borderedProminent)
-                        .disabled(!vm.canAdd(existing: tags))
+                        .disabled(!vm.canAdd)
                 }
             }
             Section("Tags (\(tags.count))") {
@@ -49,7 +49,7 @@ struct DebugTagListView: View {
     }
 
     private func add() {
-        vm.addTag(existing: tags, context: modelContext)
+        vm.addTag(context: modelContext)
     }
 
     private func colorMenu(selection: Binding<TagColor>) -> some View {
@@ -74,6 +74,7 @@ private extension TagColor {
         case .mango: .yellow
         case .hazel: .brown
         case .white: .white
+        case .gray: .gray
         }
     }
 }

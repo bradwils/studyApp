@@ -7,6 +7,16 @@
 import Testing
 @testable import studyApp
 
+/// Checks the default tab and changes to shared navigation state.
+///
+/// ## Declaration
+///
+/// ```swift
+/// struct AppSessionTests
+/// ```
+///
+/// Exercises the session directly with Swift Testing; visible tab navigation is
+/// covered separately by the UI tests.
 struct AppSessionTests {
 
 	@Test("AppSession starts on the Focus tab")

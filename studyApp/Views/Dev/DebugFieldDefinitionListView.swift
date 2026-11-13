@@ -79,7 +79,7 @@ private struct DebugFieldDefinitionForm: View {
                 }
                 Section {
                     Picker("Kind", selection: $vm.choice) {
-                        ForEach(FieldKindChoice.allCases) { Label($0.rawValue.capitalized, systemImage: $0.systemImage).tag($0) }
+                        ForEach(FieldType.allCases) { Label($0.rawValue.capitalized, systemImage: $0.systemImage).tag($0) }
                     }
                     .disabled(vm.isEditing)
                     if vm.choice == .dropdown {

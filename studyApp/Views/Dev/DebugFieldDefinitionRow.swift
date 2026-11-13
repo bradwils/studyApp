@@ -13,14 +13,14 @@ struct DebugFieldDefinitionRow: View {
                     Text(summary).font(.caption).foregroundStyle(.secondary)
                 }
             } icon: {
-                Image(systemName: FieldKindChoice(definition.kind).systemImage)
+                Image(systemName: definition.type.systemImage)
             }
         }
     }
 
     private var summary: String {
-        var parts = [FieldKindChoice(definition.kind).rawValue]
-        if case .dropdown(let options) = definition.kind { parts.append(options.joined(separator: " / ")) }
+        var parts = [definition.type.rawValue]
+        if definition.type == .dropdown { parts.append(definition.options.joined(separator: " / ")) }
         parts.append("\(definition.values.count) value(s)")
         return parts.joined(separator: " · ")
     }

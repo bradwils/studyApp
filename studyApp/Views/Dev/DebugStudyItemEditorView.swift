@@ -39,7 +39,7 @@ struct DebugStudyItemEditorView: View {
         .onChange(of: item.taskName) { vm.touch(item) }
         .onChange(of: item.notes) { vm.touch(item) }
         .onChange(of: item.priority) { vm.touch(item) }
-        .onChange(of: item.tag) { vm.touch(item) }
+        .onChange(of: item.tags) { vm.touch(item) }
         .onChange(of: item.dueDate) { vm.touch(item) }
     }
 
@@ -67,9 +67,21 @@ struct DebugStudyItemEditorView: View {
                 }
             }
             BuiltInFieldGate(.tag) {
-                Picker("Tag", selection: $item.tag) {
-                    Text("None").tag(Tag?.none)
-                    ForEach(tags) { Text($0.key).tag(Tag?.some($0)) }
+                DisclosureGroup("Tags (\(item.tags.count))") {
+                    ForEach(tags) { tag in
+                        Button {
+                            toggle(tag)
+                        } label: {
+                            HStack {
+                                Text(tag.key)
+                                Spacer()
+                                if item.tags.contains(where: { $0.persistentModelID == tag.persistentModelID }) {
+                                    Image(systemName: "checkmark")
+                                }
+                            }
+                        }
+                        .foregroundStyle(.primary)
+                    }
                 }
             }
             Picker("Subject", selection: subjectBinding) {
@@ -85,6 +97,14 @@ struct DebugStudyItemEditorView: View {
         }
     }
 
+    private func toggle(_ tag: Tag) {
+        if let index = item.tags.firstIndex(where: { $0.persistentModelID == tag.persistentModelID }) {
+            item.tags.remove(at: index)
+        } else {
+            item.tags.append(tag)
+        }
+    }
+
     private var fieldsSection: some View {
         Section {
             ForEach(sortedValues) { value in
@@ -96,7 +116,7 @@ struct DebugStudyItemEditorView: View {
             }
             Menu("Add field", systemImage: "plus.circle") {
                 ForEach(unusedDefinitions) { definition in
-                    Button(definition.name, systemImage: FieldKindChoice(definition.kind).systemImage) {
+                    Button(definition.name, systemImage: definition.type.systemImage) {
                         vm.addValue(for: definition, to: item, context: modelContext)
                     }
                 }
@@ -173,7 +193,7 @@ private struct DebugFieldValueRow: View {
 
     // Keeps a stale selection visible if its option was later removed from the definition
     private func options(including selection: String) -> [String] {
-        guard case .dropdown(let options) = value.definition?.kind else { return [selection] }
-        return options.contains(selection) ? options : [selection] + options
+        guard case .dropdown(let config) = value.definition?.kind else { return [selection] }
+        return config.options.contains(selection) ? config.options : [selection] + config.options
     }
 }
