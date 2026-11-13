@@ -73,5 +73,6 @@ protocol FieldConfig: Codable {
 
 
 extension FieldConfig {
+	/// Treats the configuration as valid; a config with constraints overrides this.
 	var isValid: Bool { true }
 }

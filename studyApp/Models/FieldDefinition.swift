@@ -17,11 +17,17 @@ import SwiftData
 @Model
 final class FieldDefinition {
     var name: String
+    /// The persisted kind of the field; use ``kind`` for its configuration.
     var type: FieldType
+    /// The choices for a dropdown field; ignored by other types.
     var options: [String] = []
-    // SwiftData to-many arrays are unordered
+    /// Display position among all definitions.
+    ///
+    /// Stored explicitly because SwiftData to-many arrays are unordered.
     var order: Int
+    /// Whether the field is enabled; disabling it does not delete its stored values.
     var isEnabled: Bool = true
+    /// Every value entered for this field. Deleting the definition deletes these values.
     @Relationship(deleteRule: .cascade, inverse: \FieldValue.definition)
     var values: [FieldValue] = []
 
