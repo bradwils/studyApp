@@ -42,13 +42,14 @@ struct SwiftDataIntegrityTests {
         try expectGraphCounts(reader, sessions: 3, children: 3)
     }
 
-    @Test("Session deletion cascades only to owned records", arguments: [false, true])
+    @Test("Without an active ID, unfinished session deletion cascades only to owned records", arguments: [false, true])
     func deletingSessionsPreservesUnrelatedRecords(deleteAll: Bool) throws {
         let container = try makeContainer()
         let context = makeContext(container)
         let subject = Subject(name: "Physics", code: "PHYS")
         let first = insertSession(subject: subject, label: "Delete", context: context)
         let second = insertSession(subject: subject, label: "Keep", context: context)
+        first.endedAt = nil
         let retainedID = second.id
         let subjectID = subject.id
         let timestamp = Date(timeIntervalSince1970: 1_700_000_000)
@@ -60,9 +61,9 @@ struct SwiftDataIntegrityTests {
 
         let viewer = SessionViewerViewModel()
         if deleteAll {
-            viewer.removeAllSessions(context: context)
+            viewer.removeAllSessions(activeSessionID: nil, context: context)
         } else {
-            viewer.deleteSessions([first], context: context)
+            viewer.deleteSessions([first], activeSessionID: nil, context: context)
         }
 
         let reader = makeContext(container)
@@ -89,32 +90,41 @@ struct SwiftDataIntegrityTests {
         }
     }
 
-    @Test("Session deletion preserves active sessions", arguments: [false, true])
+    @Test("Session deletion protects only the owned ID regardless of completion", arguments: [false, true])
     func deletingSessionsPreservesActiveGraph(deleteAll: Bool) throws {
-        let container = try makeContainer()
-        let context = makeContext(container)
-        let subject = Subject(name: "Physics", code: "PHYS")
-        let active = insertSession(subject: subject, label: "Active", context: context)
-        active.endedAt = nil
-        let ended = insertSession(subject: subject, label: "Ended", context: context)
-        let activeID = active.id
-        try context.save()
+        for ownedIsEnded in [false, true] {
+            let container = try makeContainer()
+            let context = makeContext(container)
+            let subject = Subject(name: "Physics", code: "PHYS")
+            let active = insertSession(subject: subject, label: "Active", context: context)
+            if !ownedIsEnded {
+                active.endedAt = nil
+            }
+            let abandoned = insertSession(subject: subject, label: "Abandoned", context: context)
+            abandoned.endedAt = nil
+            let ended = insertSession(subject: subject, label: "Ended", context: context)
+            let activeID = active.id
+            let subjectID = subject.id
+            try context.save()
 
-        let viewer = SessionViewerViewModel()
-        if deleteAll {
-            viewer.removeAllSessions(context: context)
-        } else {
-            viewer.deleteSessions([active, ended], context: context)
+            let viewer = SessionViewerViewModel()
+            if deleteAll {
+                viewer.removeAllSessions(activeSessionID: activeID, context: context)
+            } else {
+                viewer.deleteSessions([active, abandoned, ended], activeSessionID: activeID, context: context)
+            }
+
+            let reader = makeContext(container)
+            let stored = try reader.fetch(FetchDescriptor<StudySession>())
+            #expect(stored.map(\.id) == [activeID])
+            #expect((stored.first?.endedAt != nil) == ownedIsEnded)
+            #expect(stored.first?.subject?.id == subjectID)
+            #expect(stored.first?.breaks?.count == 1)
+            #expect(stored.first?.sections?.count == 1)
+            #expect(stored.first?.location?.locationLabel == "Active")
+            try expectGraphCounts(reader, sessions: 1, children: 1)
+            #expect(!context.hasChanges)
         }
-
-        let reader = makeContext(container)
-        let stored = try reader.fetch(FetchDescriptor<StudySession>())
-        #expect(stored.map(\.id) == [activeID])
-        #expect(stored.first?.endedAt == nil)
-        #expect(stored.first?.subject?.id == subject.id)
-        #expect(stored.first?.location?.locationLabel == "Active")
-        try expectGraphCounts(reader, sessions: 1, children: 1)
-        #expect(!context.hasChanges)
     }
 
     @Test("Cancellation removes the active graph and preserves existing history")
@@ -129,7 +139,10 @@ struct SwiftDataIntegrityTests {
         let vm = StudyTrackingViewModel()
         vm.selectSubject(subject)
         vm.startSession(context: context)
-        let active = try #require(vm.activeSession)
+        let activeID = try #require(vm.activeSessionID)
+        let active = try #require(try context.fetch(FetchDescriptor<StudySession>(
+            predicate: #Predicate { $0.id == activeID }
+        )).first)
         active.breaks = [StudyBreak(startedAt: active.startedAt, endedAt: active.startedAt)]
         active.location = SessionLocation(locationLabel: "Cancelled")
         #expect(vm.startFocusTarget(duration: 300))
@@ -145,7 +158,7 @@ struct SwiftDataIntegrityTests {
         #expect(sessions.first?.location?.locationLabel == "Previous")
         #expect(try reader.fetch(FetchDescriptor<Subject>()).map(\.id) == [subjectID])
         try expectGraphCounts(reader, sessions: 1, children: 1)
-        #expect(vm.activeSession == nil)
+        #expect(vm.activeSessionID == nil)
         #expect(vm.focusTarget == nil)
         #expect(vm.phase == .idle)
     }
@@ -162,9 +175,11 @@ struct SwiftDataIntegrityTests {
         let vm = StudyTrackingViewModel(now: { current })
         vm.selectSubject(subject)
         vm.startSession(context: context)
-        let session = try #require(vm.activeSession)
+        let sessionID = try #require(vm.activeSessionID)
+        let session = try #require(try context.fetch(FetchDescriptor<StudySession>(
+            predicate: #Predicate { $0.id == sessionID }
+        )).first)
         #expect(session.endedAt == nil)
-        let sessionID = session.id
         session.notes = "Revision"
         session.studyScore = 8
         session.friends = ["friend"]
@@ -201,7 +216,7 @@ struct SwiftDataIntegrityTests {
         #expect(try reader.fetchCount(FetchDescriptor<StudySection>()) == 2)
         #expect(try reader.fetchCount(FetchDescriptor<SessionLocation>()) == 1)
         #expect(!context.hasChanges)
-        #expect(vm.activeSession == nil)
+        #expect(vm.activeSessionID == nil)
         #expect(vm.focusTarget == nil)
         #expect(vm.phase == .idle)
     }
@@ -278,7 +293,7 @@ struct SwiftDataIntegrityTests {
             #expect(session.location?.latitude == -33.86)
             #expect(session.location?.longitude == 151.21)
             try expectGraphCounts(reader, sessions: 1, children: 1)
-            SessionViewerViewModel().deleteSessions([session], context: reader)
+            SessionViewerViewModel().deleteSessions([session], activeSessionID: nil, context: reader)
         }
 
         try autoreleasepool {

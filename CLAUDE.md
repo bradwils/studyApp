@@ -190,7 +190,7 @@ If you have made changes, then we might need to add a migration schema. Check if
 
 - Unit tests cover app navigation state, session timing, the Focus pager, StudyItems and SwiftData integrity. Session tests use isolated containers and an injected clock; persistence tests also refetch through fresh contexts and reopen a disk store.
 - `StudyTrackingViewModel` is created once in `StudyAppApp` and passed down explicitly. It owns session transitions and saves explicitly; `finishSession(context:)` replaces the previous completion API.
-- Session deletion fetches and deletes ended sessions individually, preserving active sessions and applying cascade rules.
+- Session deletion excludes the currently owned active session ID and deletes other sessions individually, including abandoned unfinished records, so cascade rules apply.
 
 See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decisions and [todos/ui-design-ideas.md](todos/ui-design-ideas.md) for UX/design ideas.
 

@@ -29,7 +29,7 @@ import os
 /// > wrong phase return without effect.
 @Observable
 final class StudyTrackingViewModel {
-    private(set) var activeSession: StudySession?
+    private var activeSession: StudySession?
     private(set) var focusTarget: FocusTarget?
     private(set) var selectedSubject: Subject?
     /// Set when a transition's save throws; clear it with ``dismissSaveError()``.
@@ -52,6 +52,8 @@ final class StudyTrackingViewModel {
         case .paused?: .paused
         }
     }
+
+    var activeSessionID: UUID? { activeSession?.id }
 
     var hasActiveSession: Bool { activeSession != nil }
 

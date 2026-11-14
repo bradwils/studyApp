@@ -43,7 +43,7 @@ struct MainTabView: View {
             
             Tab("Sessions", systemImage: "clock.arrow.circlepath", value: AppTab.sessions) {
                 NavigationStack {
-                    SessionsView()
+                    SessionsView(activeSessionID: tracking.activeSessionID)
                 }
             }
         }

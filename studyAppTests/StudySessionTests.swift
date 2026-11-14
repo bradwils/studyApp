@@ -53,7 +53,7 @@ struct StudySessionTests {
 		#expect(stored.count == 1)
 
 		let session = try #require(stored.first)
-		#expect(session.id == vm.activeSession?.id)
+		#expect(session.id == vm.activeSessionID)
 		#expect(session.subject?.id == subject.id)
 		#expect(session.subjectName == "testing_subject")
 		#expect(session.endedAt == nil)
@@ -143,7 +143,7 @@ struct StudySessionTests {
 		vm.finishSession(context: context)
 
 		#expect(try context.fetch(FetchDescriptor<StudySession>()).count == 1)
-		#expect(vm.activeSession == nil)
+		#expect(vm.activeSessionID == nil)
 		#expect(vm.focusTarget == nil)
 		#expect(vm.phase == .idle)
 		#expect(vm.timerDisplay == .idle)
