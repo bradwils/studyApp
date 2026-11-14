@@ -39,6 +39,7 @@ struct PinnedTimerView: View {
 }
 
 #Preview {
-	PinnedTimerView(display: .elapsed(since: .now.addingTimeInterval(-754)))
+	let start = Date.now.addingTimeInterval(-754)
+	PinnedTimerView(display: .elapsed(timing: .started(at: start), tickOrigin: start))
 		.background(TimerGradientBackground(progress: 0.3, isTimerActive: false).ignoresSafeArea())
 }

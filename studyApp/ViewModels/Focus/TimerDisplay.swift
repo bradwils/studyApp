@@ -1,10 +1,9 @@
 import Foundation
 
-// Date-based cases let the timer tick without consulting the session owner.
+// Value snapshots let the timer tick without consulting the session owner.
 enum TimerDisplay: Equatable {
     case idle
-    case elapsed(since: Date)
+    case elapsed(timing: SessionTiming, tickOrigin: Date)
     case breakElapsed(since: Date)
-    // total anchors the tick grid to the target start (until - total).
-    case countdown(until: Date, total: TimeInterval)
+    case countdown(timing: SessionTiming, target: FocusTarget, tickOrigin: Date)
 }
