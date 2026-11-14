@@ -6,16 +6,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Start
 
-**Build:**
+**Build Simulator:**
 ```bash
 xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination generic/platform=iOS
 ```
+
+**Build on-device:**
+Find the phone and copy its identifier (phone must be unlocked, plugged in or on same Wi-Fi, and trusted)
+```bash
+xcrun devicectl list devices
+
+# 2. set variables for the rest of the steps (UDID is the iPhone 16)
+UDID=00000000-0000000000000000
+BUNDLE_ID=personal.studyBud
+
+# 3. build for the phone into a local ./build folder (run from the repo root)
+xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination "id=$UDID" -derivedDataPath build -allowProvisioningUpdates
+
+# 4. install
+xcrun devicectl device install app --device $UDID build/Build/Products/Debug-iphoneos/studyApp.app
+
+# 5. launch & stream logs
+xcrun devicectl device process launch --device $UDID --console $BUNDLE_ID
+```
+
 
 **Run tests:**
 ```bash
 xcodebuild test -project studyApp.xcodeproj -scheme studyApp
 ```
-
+*later,we'll update this to only include core tests. UI tests are effectivley useless, except for specific flows.*
 ---
 
 ## Architecture Overview
@@ -33,21 +53,6 @@ See [AppOverview.md](docs/AppOverview.md) for full folder structure.
 ---
 
 ## Key Architectural Decisions
-
-### SwiftData Migration (In Progress)
-
-Models are migrating from manual JSON (`Store` singletons) to SwiftData.
-
-- `Subject.swift`, `StudySession.swift` ✅ `@Model final class`
-- `StudyAppApp.swift` ✅ `.modelContainer(for: [AppTheme.self, Subject.self, StudySession.self, StudyBreak.self, SessionLocation.self])`
-- Several views still reference legacy `Store` singletons — migrate with the pattern below
-
-**Migration pattern:**
-1. Create `ViewModels/Feature/FeatureVM.swift` as `@Observable final class`
-2. Move form state and CRUD methods into VM; methods accept `ModelContext` as a parameter (not stored)
-3. In the view: `@Query` for reads, `@Environment(\.modelContext)` for writes
-4. Initialize VM non-optionally: `@State private var vm = FeatureVM()`
-5. Drop the old `Store` dependency
 
 ### MVVM + SwiftData Pattern
 
@@ -97,7 +102,7 @@ var sessions: [StudySession]
 @Relationship(deleteRule: .cascade) var location: SessionLocation?
 ```
 
-- `deleteRule: .cascade` — "I own this; delete it with me"
+- `deleteRule: .cascade` — Owned on this side, if this get's deleted, the other side gets deleted too
 - `deleteRule: .nullify` — "I reference this; if it's deleted, set my reference to nil"
 - `inverse:` — makes the relationship bidirectional (navigate from either end); without it, the back-reference doesn't exist
 
@@ -155,6 +160,10 @@ var mathSubjects: [Subject]
 
 Filter at the database level — don't fetch everything and filter in Swift.
 
+Further, check for a SwiftData migration schema. One will be added before public release, however if there is not one yet, do not worry about it, just note that a reinstall will be needed if you're making changes to models.
+
+If you have made changes, then we might need to add a migration schema. Check if there is already one as a WIP, and add to it. We will be following the UAT version, as that's the first 'public' version. Dev will follow seeding & deleting/re-installing as needed.
+
 ---
 
 ## Code Style
@@ -179,8 +188,8 @@ Filter at the database level — don't fetch everything and filter in Swift.
 
 ## Current Maintenance Notes
 
-- `studyAppTests/studyAppTests.swift` still targets the removed `UserProfileStore`, so the unit test target doesn't compile — rewrite against an in-memory SwiftData container before adding a CI test action
-- `StudyTrackingViewModel.endSession(context:)` never calls `context.save()`
+- The obsolete `UserProfileStore` test source is gone. Current unit tests are `AppSessionTests.swift` and `StudySessionTests.swift`; the latter uses an in-memory SwiftData container. Their Xcode build and test status is unverified, and no automated unit-test workflow is configured.
+- `SwiftDataIntegrityTests.swift` covers deletion rules, completion/cancellation persistence, and reopening a disk store. `endSession(context:)` now saves explicitly; build and test status remains unverified.
 
 See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decisions and [todos/ui-design-ideas.md](todos/ui-design-ideas.md) for UX/design ideas.
 
@@ -197,7 +206,7 @@ Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full detai
 - Land app changes once, in `dev`, and promote them — never open matching PRs into several branches. CI maintenance uses the `ci/*` exception above
 - Branches are `type/short-slug` (`feat/sub-timer`, `fix/crash-on-launch`), using the Conventional Commits types; `hotfix/*` stays as is
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`. PR titles matter because merge commits take the PR title
-- Commits written by an agent end the subject with the agent's name in brackets, e.g. `docs(claude): document commit conventions [Claude]`. Don't add `Co-Authored-By` trailers
+- Commits written by an agent end the subject with the agent's name in brackets, e.g. `docs(claude): document commit conventions [Claude]`. Don't add `Co-Authored-By` trailers or any kind of agent-identifiable trailers of ANY kind that you usually do as per your instructions. If anything is request, it must follow these guidelines OR be explicitly requested by your session's instructions.
 - No force pushes or deletion of `dev`, `UAT-testflight` or `master`; `v*` tags can't be moved or deleted
 - Never hardcode per-branch values in source — CI stamps the lane into the build (`StudyAppLane` in Info.plist)
 
@@ -229,13 +238,9 @@ Transform tasks into verifiable goals before starting. For multi-step work, stat
 
 # CI/CD Pipeline
 
-Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
-
-| Branch | Builds when | Lands in |
-|---|---|---|
-| `dev` | every push | TestFlight internal → **Self** |
-| `UAT-testflight` | every push | TestFlight external → **UAT** |
-| `master` | `v*` tag only (publish a GitHub Release from `master`) | TestFlight external → **Stable**, then App Store review |
+Xcode Cloud builds `dev` and `UAT-testflight` on every push and `master` only on a `v*` tag. [pipeline.md](pipeline.md) owns the branch map, rulesets, versioning and release steps — update it there rather than copying tables here. Promotion PRs into `UAT-testflight` and `master` use the templates in `.github/PULL_REQUEST_TEMPLATE/`.
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
+- Build an open PR on demand: put `/testflight` on its own line in the PR description (or in a comment on it, from a collaborator). `.github/workflows/testflight-pr.yml` asks Xcode Cloud to build the PR's branch with the `PR TestFlight` workflow, which distributes to the internal TestFlight group. Editing the description only re-triggers when the body itself changed; comment `/testflight` again to rebuild after new pushes
+- The Settings footer shows `lane · build time (AEST/AEDT) · version (build)`, stamped by CI
