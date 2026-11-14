@@ -1,5 +1,6 @@
 import SwiftUI
 import OSLog
+import SwiftData
 
 enum AppTab: Hashable {
     case focus, debug, social, groups, sessions
@@ -9,6 +10,8 @@ struct MainTabView: View {
 //	let tabViewLogger = Logger(subsystem: "com.studyApp", category: "tabView")
     @Environment(AppSession.self) private var appSession
 
+    let tracking: StudyTrackingViewModel
+
     var body: some View {
 		//Bindable allows for us to create a reference that we can use below to talk to selectedTab within the appSession.
         @Bindable var session = appSession
@@ -16,7 +19,7 @@ struct MainTabView: View {
 
             Tab("Focus", systemImage: "book.badge.plus", value: AppTab.focus, role: .search) {
                 NavigationStack {
-                    FocusSessionScreen()
+                    FocusSessionScreen(vm: tracking)
                 }
             }
             
@@ -51,6 +54,10 @@ struct MainTabView: View {
 }
 
 #Preview {
-	MainTabView()
+	MainTabView(tracking: StudyTrackingViewModel())
 		.environment(AppSession())
+		.modelContainer(
+			for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self],
+			inMemory: true
+		)
 }

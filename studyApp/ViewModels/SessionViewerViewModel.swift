@@ -4,7 +4,6 @@
 //
 //  Created by brad wils on 20/7/26.
 //
-import Combine
 import Foundation
 import SwiftData
 
@@ -12,20 +11,16 @@ import SwiftData
 final class SessionViewerViewModel {
     //ask for a context with your function
     func removeAllSessions(context: ModelContext) {
-        // Batch delete(model:) bypasses relationship delete rules and can fail on inverse constraints,
-        // so delete each fetched session to get the cascade to breaks/sections/location.
-        let sessions = (try? context.fetch(FetchDescriptor<StudySession>())) ?? []
+        // Fetch/delete individually so cascades apply; active sessions must survive Clear All.
+        let descriptor = FetchDescriptor<StudySession>(predicate: #Predicate { $0.endedAt != nil })
+        let sessions = (try? context.fetch(descriptor)) ?? []
         deleteSessions(sessions, context: context)
     }
 
     func deleteSessions(_ sessions: [StudySession], context: ModelContext) {
-        for session in sessions {
+        for session in sessions where session.endedAt != nil {
             context.delete(session)
         }
         try? context.save()
-    }
-    
-    
-    init() {
     }
 }

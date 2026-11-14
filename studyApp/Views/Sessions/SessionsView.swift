@@ -21,6 +21,7 @@ struct SessionsView: View {
                         } label: {
                             sessionRow(session)
                         }
+                        .deleteDisabled(session.endedAt == nil)
                     }
                     .onDelete { offsets in
                         vm.deleteSessions(offsets.map { sessions[$0] }, context: context)
@@ -45,6 +46,11 @@ struct SessionsView: View {
             Text("\(session.startedAt.formatted(date: .abbreviated, time: .shortened)) · \(formattedDuration(session.totalDuration))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if session.endedAt == nil {
+                Text("In progress")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 

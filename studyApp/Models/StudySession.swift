@@ -39,15 +39,9 @@ final class StudyBreak {
         return endedAt.timeIntervalSince(startedAt)
     }
 
-    init(startedAt: Date, endedAt: Date) {
+    init(startedAt: Date, endedAt: Date? = nil) {
         self.startedAt = startedAt
         self.endedAt = endedAt
-    }
-
-    //quick write, start at set time and finished at time of call.
-    init(startedAt: Date) {
-        self.startedAt = startedAt
-        self.endedAt = Date.now
     }
 }
 
@@ -68,14 +62,9 @@ final class StudySection {
         return endedAt.timeIntervalSince(startedAt)
     }
 
-    init(startedAt: Date, endedAt: Date) {
+    init(startedAt: Date, endedAt: Date? = nil) {
         self.startedAt = startedAt
         self.endedAt = endedAt
-    }
-
-    //quick write, start at set time and finished at time of call.
-    init(startedAt: Date) {
-        self.startedAt = startedAt
     }
 }
 
