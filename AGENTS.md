@@ -199,7 +199,8 @@ See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decis
 
 Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full details, release steps and hotfixes: [pipeline.md](pipeline.md).
 
-- Branch features off `dev`; `dev` accepts direct pushes
+- Feature work always goes on a branch off `dev` and merges back through a PR. Only one-line, straightforward fixes (text replacement, low-importance edits) go straight into `dev`
+- `CLAUDE.md` and `AGENTS.md` are always updated in parallel: a change to one goes into the other in the same commit
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
 - `master` only accepts PRs from `UAT-testflight`, `hotfix/*` or `ci/*` (enforced by the `source-branch` check)
 - `ci/*` is reserved for CI/tooling/docs maintenance: cut it from `master`, then merge master history back into `UAT-testflight` and `dev`. The check validates the branch name; CI-only scope is a review convention, not a changed-file restriction
