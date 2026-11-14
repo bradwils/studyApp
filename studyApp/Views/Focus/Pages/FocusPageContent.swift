@@ -9,7 +9,6 @@ import SwiftData
 // The focus page of FocusSessionScreen's pager. Transparent and timer-less: the
 // container draws the gradient and the pinned timer, and `FocusPageScaffold` leaves
 // the gap for it.
-//need to use white UI elements exclusively.
 struct FocusPageContent: View {
 
     let vm: StudyTrackingViewModel
@@ -17,12 +16,12 @@ struct FocusPageContent: View {
     let isLocked: Bool
     let onLockChange: (Bool) -> Void
 
-	@State private var selectedDuration: TimeInterval = 0
+    @State private var selectedDuration: TimeInterval = 0
 
     var body: some View {
         // TODO: CustomBottomSheet — in a wider orientation move it to the side and re-align PureFocusView (VStack vs HStack by horizontalSizeClass).
         FocusPageScaffold(horizontalPadding: 24) {
-            topScreenCode
+            subjectCodeHeader
         } content: {
             VStack {
                 timerControlsSection
@@ -44,10 +43,8 @@ struct FocusPageContent: View {
             HStack(spacing: 20) {
                 FocusLockControl(isLocked: isLocked, onLockChange: onLockChange)
 
-                // Reset button (only show when a target exists) — drops the target only,
-                // the session itself keeps running.
-                // Uses the same .glass style so it visually matches the other controls.
-				if vm.hasFocusTarget {
+                // Resetting the target leaves the study session running.
+                if vm.hasFocusTarget {
                     Button(action: {
                         withAnimation {
                             vm.resetFocusTarget()
@@ -61,19 +58,17 @@ struct FocusPageContent: View {
                     .buttonStyle(.glass)
                     .accessibilityLabel("Reset focus target")
                 }
-                //UIEND
             }
             .padding(.top, 10)
         }
     }
 
-    private var topScreenCode: some View {
+    private var subjectCodeHeader: some View {
         Text(vm.displayedSubjectCode ?? "—")
             .font(.system(size: 35))
             .lineLimit(1)
     }
 }
-
 
 #Preview {
     // swiftlint:disable:next force_try
