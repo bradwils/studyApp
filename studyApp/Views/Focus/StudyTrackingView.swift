@@ -79,10 +79,21 @@ struct TrackingPageContent: View {
 					.font(.caption)
 					.foregroundColor(.secondary)
 
-				Text("00:00:00")
+				totalTimerText
 					.font(.title3.monospacedDigit())
 					.fontWeight(.medium)
 			}
+		}
+	}
+
+	// Plain system timer, not ElapsedTimerText: no TimelineView or numeric transition, so it
+	// ticks without the per-second animation the pinned timer uses.
+	@ViewBuilder
+	private var totalTimerText: some View {
+		if vm.isFocusSessionRunning, case .sessionRunning(let anchor) = vm.currentSessionState {
+			Text(anchor, style: .timer)
+		} else {
+			Text("00:00:00")
 		}
 	}
 
