@@ -1,15 +1,5 @@
 import SwiftUI
 
-/// The shared frame every focus page sits in: header band, timer gap, then page content.
-///
-/// ## Declaration
-///
-/// ```swift
-/// struct FocusPageScaffold<Header: View, Content: View>: View
-/// ```
-///
-/// The only place that knows the header band and the pinned timer's slot exist, so pages
-/// cannot drift out of alignment with the timer drawn by the shell.
 struct FocusPageScaffold<Header: View, Content: View>: View {
 	let horizontalPadding: CGFloat
 	let header: Header

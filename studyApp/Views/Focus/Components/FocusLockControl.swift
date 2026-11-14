@@ -1,22 +1,11 @@
 import SwiftUI
 
-/// The focus lock button; locking takes one tap, unlocking takes ten.
-///
-/// ## Declaration
-///
-/// ```swift
-/// struct FocusLockControl: View
-/// ```
-///
-/// Each counted unlock tap is acknowledged with a shake and a haptic. The count restarts
-/// whenever the lock engages.
 struct FocusLockControl: View {
 	let isLocked: Bool
 	let onLockChange: (Bool) -> Void
 
-	/// Taps required on the lock button, while locked, before focus lock releases.
 	private let unlockTapsRequired = 10
-	/// Minimum gap between taps that count — filters out accidental double-taps/mashing.
+	// Ignore accidental double-taps when counting unlock confirmations.
 	private let unlockTapMinInterval: TimeInterval = 0.15
 
 	@State private var unlockTapCount = 0

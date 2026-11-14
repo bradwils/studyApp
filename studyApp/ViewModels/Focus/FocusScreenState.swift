@@ -1,28 +1,13 @@
-import Foundation
 import CoreGraphics
 import Observation
 
-/// Scroll, position and lock state for the focus session pager.
-///
-/// ## Declaration
-///
-/// ```swift
-/// @Observable final class FocusScreenState
-/// ```
-///
-/// Separates the requested destination (`scrolledPage`), the last committed page
-/// (`settledPage`) and the continuous `position`. Use `settledPage` for discrete policy and
-/// `position` only for drawing.
-///
-/// > Important: `position` changes every scroll frame. Read it only in views that draw from it.
+// Keep continuous position reads in drawing views to avoid rebuilding page content.
 @Observable
 final class FocusScreenState {
-    /// Bound to `.scrollPosition(id:)`; assigning it requests a destination.
+    // Assigning this binding requests a destination; settledPage commits when scrolling stops.
     var scrolledPage: FocusPage?
     private(set) var pages: [FocusPage]
-    /// The page committed when scrolling last went idle.
     private(set) var settledPage: FocusPage
-    /// Clamped fractional page index.
     private(set) var position: CGFloat
     private(set) var isLocked = false
 
@@ -34,7 +19,6 @@ final class FocusScreenState {
         self.position = 0
     }
 
-    /// Visual weight of a page; with Reduce Motion, 1 for the nearest page and 0 otherwise.
     func weight(of page: FocusPage, reduceMotion: Bool) -> Double {
         guard let index = pages.firstIndex(of: page) else { return 0 }
         if reduceMotion {
@@ -48,7 +32,6 @@ final class FocusScreenState {
         scrolledPage = page
     }
 
-    /// Adopts a new page list, keeping the current page when it survives and falling back otherwise.
     func reconcile(availablePages: [FocusPage]) {
         let normalized = Self.normalized(availablePages)
         guard normalized != pages else { return }
@@ -67,7 +50,7 @@ final class FocusScreenState {
         position = CGFloat(normalized.firstIndex(of: target) ?? 0)
     }
 
-    /// A late callback from the old layout is harmless: it is clamped to the current page count.
+    // Late geometry from the previous layout is clamped to the current page count.
     func updatePosition(raw: CGFloat?) {
         guard let raw else {
             position = CGFloat(pages.firstIndex(of: settledPage) ?? 0)

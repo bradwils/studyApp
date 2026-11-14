@@ -22,8 +22,6 @@ enum FocusPagerLayout {
     static let ringLineWidth: CGFloat = 8
 }
 
-/// The gap both pages leave where the pinned timer is drawn. Sized off the same
-/// @ScaledMetric base as the timer text so the gap tracks Dynamic Type with it.
 struct PinnedTimerSlot: View {
     @ScaledMetric(relativeTo: .largeTitle) private var slotHeight: CGFloat = FocusPagerLayout.timerSlotBaseHeight
 

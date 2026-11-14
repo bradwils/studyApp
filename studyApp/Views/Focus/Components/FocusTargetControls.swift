@@ -1,14 +1,5 @@
 import SwiftUI
 
-/// The focus duration picker and the button that starts a focus target.
-///
-/// ## Declaration
-///
-/// ```swift
-/// struct FocusTargetControls: View
-/// ```
-///
-/// The picker rolls up once a target exists; the start button is shown only until then.
 struct FocusTargetControls: View {
 	@Binding var duration: TimeInterval
 	let hasTarget: Bool

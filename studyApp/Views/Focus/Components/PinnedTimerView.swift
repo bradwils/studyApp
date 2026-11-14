@@ -1,14 +1,5 @@
 import SwiftUI
 
-/// The session timer drawn above the pager at a fixed position.
-///
-/// ## Declaration
-///
-/// ```swift
-/// struct PinnedTimerView: View
-/// ```
-///
-/// Hit testing is off, so drags starting over the digits still reach the pager.
 struct PinnedTimerView: View {
 	let display: TimerDisplay
 
