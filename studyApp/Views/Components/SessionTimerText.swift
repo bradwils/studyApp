@@ -7,6 +7,17 @@
 
 import SwiftUI
 
+/// Text that renders a ``TimerDisplay`` as a self-updating clock.
+///
+/// ## Declaration
+///
+/// ```swift
+/// struct SessionTimerText: View
+/// ```
+///
+/// Each case drives its own `TimelineView`, so the view model is not consulted on every
+/// tick. Counting down uses a countdown numeric transition, and the animation is skipped
+/// under Reduce Motion.
 struct SessionTimerText: View {
     var display: TimerDisplay
 

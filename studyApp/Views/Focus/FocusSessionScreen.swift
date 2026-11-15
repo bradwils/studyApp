@@ -1,9 +1,14 @@
 import SwiftUI
 import SwiftData
 
-// Keep the timer outside the pager so it stays pinned, and backgrounds outside to avoid
-// seams during drags. Each page reserves the same timer slot; hit testing passes through
-// the timer to the pager. Independent timelines keep ticks out of the pager's observation.
+// Three layers, back to front: the background (FocusBackgroundLayer), the pinned timer
+// (PinnedTimerView, with the page dots on top), and the pager (FocusPager) holding the
+// pages. Each ticks or scrolls on its own: the background owns its 0.5 s timeline, the
+// timer digits own theirs, and the pager redraws only for page changes. The timer is a
+// sibling of the pager, never a child of a page, so drift is structurally impossible; the
+// backgrounds sit outside for the same reason — a background per page drags a hard
+// vertical seam across the screen on every drag. The pager is drawn last because the
+// timer layer disables hit testing, and every page leaves the same gap the digits sit in.
 struct FocusSessionScreen: View {
 
     let vm: StudyTrackingViewModel

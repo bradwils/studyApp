@@ -5,12 +5,34 @@ import Foundation
 import SwiftData
 import os
 
-// Failed saves leave the in-memory transition pending and expose a save error.
+/// Owns the active study session and every transition it can make.
+///
+/// ## Declaration
+///
+/// ```swift
+/// @Observable final class StudyTrackingViewModel
+/// ```
+///
+/// Views read facts such as ``phase`` and ``timerDisplay`` and issue commands; the
+/// study and break intervals are written to the ``StudySession`` record as they happen,
+/// so the record is the durable history. Each command reads the injected clock once and
+/// ends with an explicit save.
+///
+/// ```swift
+/// let tracking = StudyTrackingViewModel()
+/// tracking.startSession(context: modelContext)
+/// tracking.pauseSession(context: modelContext)
+/// ```
+///
+/// > Important: A failed save still applies the in-memory transition; the change stays
+/// > pending in the context and ``saveErrorMessage`` is set. Commands called from the
+/// > wrong phase return without effect.
 @Observable
 final class StudyTrackingViewModel {
     private var activeSession: StudySession?
     private(set) var focusTarget: FocusTarget?
     private(set) var selectedSubject: Subject?
+    /// Set when a transition's save throws; clear it with ``dismissSaveError()``.
     private(set) var saveErrorMessage: String?
 
     private var timing: SessionTiming?

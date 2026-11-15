@@ -1,5 +1,15 @@
 import SwiftUI
 
+/// The start, pause and resume button, plus End Session while paused.
+///
+/// ## Declaration
+///
+/// ```swift
+/// struct SessionControls: View
+/// ```
+///
+/// Owns the glass morph between the two buttons; the callbacks run inside that animation,
+/// which is skipped under Reduce Motion.
 struct SessionControls: View {
     let phase: SessionPhase
     let onPrimary: () -> Void
@@ -11,12 +21,17 @@ struct SessionControls: View {
 
     var body: some View {
         GlassEffectContainer(spacing: 16) {
-            // Adjacent buttons let the container blend glass as the end button appears.
+            // Both buttons sit directly next to each other (no stretching
+            // spacer between them) so the container's fluid glass blend can
+            // actually reach across the gap while the end button inserts/removes —
+            // that adjacency is what sells the morph, not a manual transition.
             HStack(spacing: 16) {
                 Button {
                     withMorphAnimation(onPrimary)
                 } label: {
-                    // Style the content before assigning its glass ID so the surface is tracked.
+                    // Sizing/font applied to the content BEFORE the button style,
+                    // with .glassEffectID chained immediately after it — that order is
+                    // what lets the container track this as the actual glass surface.
                     Text(mainButtonLabel)
                         .id(mainButtonLabel)
                         .transition(.blurReplace)

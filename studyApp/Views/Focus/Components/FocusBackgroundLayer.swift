@@ -1,6 +1,16 @@
 import SwiftUI
+import SwiftData
 
-// Observe page weights here so continuous scrolling redraws only the backdrop.
+/// The full-screen backdrop that cross-fades between page styles as the pager scrolls.
+///
+/// ## Declaration
+///
+/// ```swift
+/// struct FocusBackgroundLayer: View
+/// ```
+///
+/// Reads page weights in its own body so only the backdrop redraws per scroll frame. Ticks every
+/// 0.5 s only while a running session has a focus target.
 struct FocusBackgroundLayer: View {
 	let screenState: FocusScreenState
 	let tracking: StudyTrackingViewModel

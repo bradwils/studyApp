@@ -1,6 +1,15 @@
 import SwiftUI
 
-// Keep continuous position reads out of this body so scrolling does not rebuild pages.
+/// The horizontal paging container for the focus session pages.
+///
+/// ## Declaration
+///
+/// ```swift
+/// struct FocusPager<Page: View>: View
+/// ```
+///
+/// Renders `screenState.pages` and reports scroll geometry and settlement back to the
+/// state. It never reads `position`, so scrolling does not rebuild page content.
 struct FocusPager<Page: View>: View {
 	let screenState: FocusScreenState
 	let page: (FocusPage) -> Page
