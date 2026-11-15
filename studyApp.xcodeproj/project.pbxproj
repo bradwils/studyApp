@@ -45,7 +45,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				studyApp.entitlements,
 			);
 			target = 984C5A4F2EAF2CD20048EB4D /* studyApp */;
 		};
