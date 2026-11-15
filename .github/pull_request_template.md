@@ -15,6 +15,15 @@
 
 <!-- outline changes in the codebase appropriately -->
 
+## TestFlight notes
+
+<!-- Add/update TestFlight/entries/<unique-name>.json for this change.
+Record the real branch origin and starting commit. For visible changes, give
+an action and expected visual/behavioral result. Mark internal-only changes
+user_visible: false. Promotion PRs add a promotion record instead of copying
+change entries. See pipeline.md, "TestFlight notes". -->
+- Note entry:
+
 ## Tested
 
 <!-- Tick everything you ran -->
