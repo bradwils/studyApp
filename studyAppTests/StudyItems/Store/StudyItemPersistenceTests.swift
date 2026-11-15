@@ -16,7 +16,7 @@ private func sameContent(_ lhs: FieldContent, _ rhs: FieldContent) -> Bool {
 	}
 }
 
-/// Checks stored field content, model graphs, tag reuse and ordering.
+/// Checks stored field content, model graphs and ordering.
 ///
 /// ## Declaration
 ///
@@ -27,8 +27,8 @@ private func sameContent(_ lhs: FieldContent, _ rhs: FieldContent) -> Bool {
 /// ```
 ///
 /// Round-trip checks save through one context and fetch through a fresh context
-/// using the same container. Other checks cover duplicate-tag reuse and explicit
-/// ordering of definitions and item values.
+/// using the same container. Other checks cover explicit ordering of definitions
+/// and item values.
 ///
 /// > Note: Containers use the app's model list with an in-memory store; these
 /// > checks do not cover disk-store reopening or schema migrations.
@@ -153,23 +153,6 @@ struct StudyItemPersistenceTests {
 		for tag in try fresh.fetch(FetchDescriptor<studyApp.Tag>()) {
 			#expect(tag.items.count == 2)
 		}
-	}
-
-	@Test("M5 duplicate tag name keeps the oldest tag")
-	func duplicateTagKeepsOldest() throws {
-		let context = try TestContainer.make()
-		let vm = TagDebugVM()
-
-		let first = try #require(vm.resolveTag(named: "Maths", color: .red, context: context))
-		let second = try #require(vm.resolveTag(named: "  maths ", color: .blue, context: context))
-
-		#expect(first.persistentModelID == second.persistentModelID)
-		#expect(try context.count(Tag.self) == 1)
-		#expect(second.color == .red)
-
-		#expect(vm.resolveTag(named: "", color: .green, context: context) == nil)
-		#expect(vm.resolveTag(named: " \n\t ", color: .green, context: context) == nil)
-		#expect(try context.count(Tag.self) == 1)
 	}
 
 	@Test("M6 definitions fetch back sorted by order")

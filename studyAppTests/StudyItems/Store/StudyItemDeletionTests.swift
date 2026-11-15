@@ -16,7 +16,7 @@ import SwiftData
 /// nullify rules. Shared definitions and tags are retained when items are removed,
 /// and the copied subject name survives subject deletion.
 ///
-/// > Note: Most assertions use the deleting context; X7 also refetches after the VM saves.
+/// > Note: Most assertions use the deleting context; X7 also refetches after saving.
 @Suite("StudyItem deletion rules")
 @MainActor
 struct StudyItemDeletionTests {
@@ -157,7 +157,10 @@ struct StudyItemDeletionTests {
 		try context.save()
 		#expect(try context.count(FieldValue.self) == 6)
 
-		StudyItemDebugVM().deleteAll(context: context)
+		for item in try context.fetch(FetchDescriptor<StudyItem>()) {
+			context.delete(item)
+		}
+		try context.save()
 
 		let reader = ModelContext(container)
 		#expect(try reader.count(StudyItem.self) == 0)
