@@ -306,6 +306,67 @@ struct SwiftDataIntegrityTests {
         }
     }
 
+    @Test("Clear All with the tracking model's ID spares the live session until it finishes or is cancelled",
+          arguments: [false, true])
+    func clearAllFollowsTrackingOwnership(cancel: Bool) throws {
+        let container = try makeContainer()
+        let context = makeContext(container)
+        let subject = Subject(name: "Physics", code: "PHYS")
+        insertSession(subject: subject, label: "Ended", context: context)
+        let abandoned = insertSession(subject: subject, label: "Abandoned", context: context)
+        abandoned.endedAt = nil
+        try context.save()
+
+        let vm = StudyTrackingViewModel()
+        vm.selectSubject(subject)
+        vm.startSession(context: context)
+        let liveID = try #require(vm.activeSessionID)
+        let viewer = SessionViewerViewModel()
+
+        viewer.removeAllSessions(activeSessionID: vm.activeSessionID, context: context)
+
+        #expect(try makeContext(container).fetch(FetchDescriptor<StudySession>()).map(\.id) == [liveID])
+
+        if cancel {
+            vm.cancelSession(context: context)
+        } else {
+            vm.finishSession(context: context)
+        }
+        #expect(vm.activeSessionID == nil)
+
+        viewer.removeAllSessions(activeSessionID: vm.activeSessionID, context: context)
+
+        try expectGraphCounts(makeContext(container), sessions: 0, children: 0)
+    }
+
+    @Test("Clear All with an ID matching no record deletes everything without crashing")
+    func clearAllWithUnknownIDDeletesEverything() throws {
+        let container = try makeContainer()
+        let context = makeContext(container)
+        let subject = Subject(name: "Physics", code: "PHYS")
+        insertSession(subject: subject, label: "One", context: context)
+        insertSession(subject: subject, label: "Two", context: context)
+        try context.save()
+
+        SessionViewerViewModel().removeAllSessions(activeSessionID: UUID(), context: context)
+
+        try expectGraphCounts(makeContext(container), sessions: 0, children: 0)
+    }
+
+    @Test("Deleting an empty selection is a no-op")
+    func deletingEmptySelectionPreservesHistory() throws {
+        let container = try makeContainer()
+        let context = makeContext(container)
+        let subject = Subject(name: "Physics", code: "PHYS")
+        let session = insertSession(subject: subject, label: "Kept", context: context)
+        let sessionID = session.id
+        try context.save()
+
+        SessionViewerViewModel().deleteSessions([], activeSessionID: sessionID, context: context)
+
+        try expectGraphCounts(makeContext(container), sessions: 1, children: 1)
+    }
+
     private func makeContainer(at storeURL: URL? = nil) throws -> ModelContainer {
         let schema = Schema([Subject.self, StudySession.self, StudyBreak.self,
                              StudySection.self, SessionLocation.self])
