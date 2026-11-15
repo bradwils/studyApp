@@ -1,22 +1,63 @@
 name: Claude Code
 
+# What starts a run (all need "@claude" unless noted, and a trusted author):
+#   issue_comment / pull_request_review_comment  created, edited  - comment on an issue, PR or diff line
+#   pull_request_review                          submitted, edited - review body
+#   pull_request                                 opened, edited    - PR title or body
+#   issues                                       opened            - issue title or body
+#   issues                                       labeled "claude"  - no mention needed
+#
+# Deliberately not triggers:
+#   issues edited / assigned  - the action ignores them (it only reads issue text on "opened")
+#   pull_request synchronize  - would run on every push; ask with a comment instead
+#   push, schedule, workflow_run, pull_request_target - cost or security risk, nothing to react to
+#     (app builds run on Xcode Cloud, not GitHub Actions)
+#
+# Comment and issue events run this file from the default branch (master), so
+# changes here only take effect once they reach master.
+
 on:
   issue_comment:
-    types: [created]
+    types: [created, edited]
   pull_request_review_comment:
-    types: [created]
-  issues:
-    types: [opened, assigned]
+    types: [created, edited]
   pull_request_review:
-    types: [submitted]
+    types: [submitted, edited]
+  pull_request:
+    types: [opened, edited]
+  issues:
+    types: [opened, labeled]
+
+# One run per issue/PR at a time; a newer one queues instead of killing a run
+# that is already pushing commits. Bot events (Claude's own comments) get their
+# own group so they can't displace a queued human request.
+concurrency:
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}-${{ github.event.sender.type == 'Bot' && 'bot' || 'human' }}
+  cancel-in-progress: false
 
 jobs:
   claude:
+    # Bots (including Claude's own comment and description edits) never start a run,
+    # and on this public repo only the owner, members and collaborators can.
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-      (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      github.event.sender.type != 'Bot' && (
+        (github.event_name == 'issue_comment' &&
+          contains(github.event.comment.body, '@claude') &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+        (github.event_name == 'pull_request_review_comment' &&
+          contains(github.event.comment.body, '@claude') &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association)) ||
+        (github.event_name == 'pull_request_review' &&
+          contains(github.event.review.body, '@claude') &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.review.author_association)) ||
+        (github.event_name == 'pull_request' &&
+          (contains(github.event.pull_request.body, '@claude') || contains(github.event.pull_request.title, '@claude')) &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)) ||
+        (github.event_name == 'issues' && github.event.action == 'opened' &&
+          (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')) &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)) ||
+        (github.event_name == 'issues' && github.event.action == 'labeled' && github.event.label.name == 'claude')
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -36,6 +77,9 @@ jobs:
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
 
+          # Labeling an issue "claude" starts a run without a mention
+          label_trigger: claude
+
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
             actions: read
@@ -49,4 +93,3 @@ jobs:
           claude_args: |
             --allowed-tools "Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr edit:*)"
             --append-system-prompt "When you change a PR or are asked to, keep its description current by editing only the sections of .github/pull_request_template.md. Keep the template headings, never remove human-written text, and only tick Tested boxes for checks you actually ran."
-
