@@ -7,19 +7,11 @@ import SwiftUI
 
 struct DaylightTrackingPage: View {
     let session: FocusLabSession
-    let geometry: DaylightGeometry
 
-    @ScaledMetric(relativeTo: .title3) private var nameSize: CGFloat = 20
     @ScaledMetric(relativeTo: .footnote) private var captionSize: CGFloat = 14
 
     var body: some View {
         VStack(spacing: 0) {
-            header
-                .frame(height: DaylightGeometry.headerHeight)
-
-            Color.clear.frame(height: geometry.slotLeadHeight)
-            Color.clear.frame(height: geometry.timerSlotHeight)
-
             statusLine
                 .padding(.top, 6)
 
@@ -34,36 +26,6 @@ struct DaylightTrackingPage: View {
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .sensoryFeedback(.impact(weight: .light), trigger: session.phase)
-    }
-
-    // MARK: - Header
-
-    @ViewBuilder
-    private var header: some View {
-        if session.hasSession {
-            subjectLabel
-        } else {
-            Menu {
-                ForEach(session.subjects) { subject in
-                    Button(subject.name) { session.selectedSubject = subject }
-                }
-            } label: {
-                subjectLabel
-            }
-        }
-    }
-
-    private var subjectLabel: some View {
-        HStack(spacing: 6) {
-            Text(session.selectedSubject.name)
-                .font(DaylightFont.name(nameSize))
-            if !session.hasSession {
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 12, weight: .semibold))
-            }
-        }
-        .foregroundStyle(DaylightPalette.plum)
-        .frame(minHeight: 44)
     }
 
     // MARK: - Status
@@ -130,5 +92,43 @@ struct DaylightTrackingPage: View {
             .font(DaylightFont.caption(captionSize))
             .foregroundStyle(DaylightPalette.plum.opacity(0.7))
             .multilineTextAlignment(.center)
+    }
+}
+
+struct DaylightTrackingHeader: View {
+    let session: FocusLabSession
+
+    @ScaledMetric(relativeTo: .title3) private var nameSize: CGFloat = 20
+
+    var body: some View {
+        header
+    }
+
+    @ViewBuilder
+    private var header: some View {
+        if session.hasSession {
+            subjectLabel
+        } else {
+            Menu {
+                ForEach(session.subjects) { subject in
+                    Button(subject.name) { session.selectedSubject = subject }
+                }
+            } label: {
+                subjectLabel
+            }
+        }
+    }
+
+    private var subjectLabel: some View {
+        HStack(spacing: 6) {
+            Text(session.selectedSubject.name)
+                .font(DaylightFont.name(nameSize))
+            if !session.hasSession {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 12, weight: .semibold))
+            }
+        }
+        .foregroundStyle(DaylightPalette.plum)
+        .frame(minHeight: 44)
     }
 }

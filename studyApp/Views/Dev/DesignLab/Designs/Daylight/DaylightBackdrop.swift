@@ -1,7 +1,7 @@
 //  DaylightBackdrop.swift
 //  studyApp
 //
-//  DEV ONLY — the full-bleed layer of the Daylight design: sky, arc, sun, ground and the pinned timer.
+//  DEV ONLY — the full-bleed layer of the Daylight design: sky, arc, sun and ground.
 
 import SwiftUI
 
@@ -9,16 +9,8 @@ struct DaylightBackdrop: View {
     let session: FocusLabSession
     let geometry: DaylightGeometry
     let blend: CGFloat
-    let timerSize: CGFloat
 
     var body: some View {
-        ZStack {
-            scene
-            clock
-        }
-    }
-
-    private var scene: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
             DaylightScene(
                 geometry: geometry,
@@ -36,21 +28,6 @@ struct DaylightBackdrop: View {
     private func dayValue(at date: Date) -> CGFloat {
         let total: TimeInterval = session.todayTotal(at: date)
         return CGFloat(min(total / (4 * 3600), 1))
-    }
-
-    private var digitWidth: CGFloat {
-        timerSize * 0.6
-    }
-
-    private var timerPoint: CGPoint {
-        geometry.toBackdrop(CGPoint(x: geometry.width / 2, y: geometry.timerCenterY))
-    }
-
-    private var clock: some View {
-        FocusLabClock(session: session, idleText: "0:00", digitWidth: digitWidth)
-            .font(Font.custom("AvenirNext-Medium", size: 84, relativeTo: .largeTitle))
-            .foregroundStyle(DaylightPalette.plum)
-            .position(timerPoint)
     }
 }
 

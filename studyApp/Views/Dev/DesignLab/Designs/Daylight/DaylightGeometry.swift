@@ -8,7 +8,6 @@ import SwiftUI
 
 struct DaylightGeometry {
 
-    static let headerHeight: CGFloat = 56
     static let arcSagitta: CGFloat = 84
     static let trackingSunDiameter: CGFloat = 22
     static let focusSunDiameter: CGFloat = 168
@@ -18,46 +17,40 @@ struct DaylightGeometry {
     let insetTop: CGFloat
     let fullWidth: CGFloat
     let fullHeight: CGFloat
-    let timerSlotHeight: CGFloat
     let arcCenterX: CGFloat
     let arcCenterY: CGFloat
     let arcRadius: CGFloat
     let arcTheta: Double
-    let timerTop: CGFloat
     let timerCenterY: CGFloat
+    let timerBottom: CGFloat
     let horizonY: CGFloat
 
-    init(metrics: FocusLabStageMetrics, timerSlotHeight: CGFloat) {
+    init(context: FocusLabContext) {
+        let metrics: FocusLabStageMetrics = context.metrics
         let safe: CGSize = metrics.safeSize
         let full: CGSize = metrics.fullSize
-        let apex: CGFloat = DaylightGeometry.headerHeight + 28
+        let apex: CGFloat = context.timerRect.minY - 20
         let sagitta: CGFloat = DaylightGeometry.arcSagitta
         let half: CGFloat = max((safe.width - 64) / 2, 1)
         let radius: CGFloat = (half * half + sagitta * sagitta) / (2 * sagitta)
         let ratio: Double = min(Double(half / radius), 1)
-        let top: CGFloat = apex + 34
 
         self.width = safe.width
         self.insetLeading = metrics.insets.leading
         self.insetTop = metrics.insets.top
         self.fullWidth = full.width
         self.fullHeight = full.height
-        self.timerSlotHeight = timerSlotHeight
         self.arcCenterX = safe.width / 2
         self.arcCenterY = apex + radius
         self.arcRadius = radius
         self.arcTheta = asin(ratio)
-        self.timerTop = top
-        self.timerCenterY = top + timerSlotHeight / 2
+        self.timerCenterY = context.timerRect.midY
+        self.timerBottom = context.timerRect.maxY
         self.horizonY = safe.height * 0.60
     }
 
-    var slotLeadHeight: CGFloat {
-        timerTop - DaylightGeometry.headerHeight
-    }
-
-    var controlsTop: CGFloat {
-        horizonY + 40
+    var controlsOffset: CGFloat {
+        max(horizonY + 40 - timerBottom, 0)
     }
 
     func toBackdrop(_ point: CGPoint) -> CGPoint {

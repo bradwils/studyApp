@@ -9,40 +9,22 @@ struct DaylightFocusPage: View {
     let session: FocusLabSession
     let geometry: DaylightGeometry
 
-    @ScaledMetric(relativeTo: .title3) private var nameSize: CGFloat = 20
     @ScaledMetric(relativeTo: .footnote) private var captionSize: CGFloat = 14
     @ScaledMetric(relativeTo: .title3) private var presetSize: CGFloat = 20
     @ScaledMetric(relativeTo: .subheadline) private var lockSize: CGFloat = 15
 
     var body: some View {
         ZStack(alignment: .top) {
-            upperPart
+            statusLine
+                .padding(.top, 6)
             controls
-                .padding(.top, geometry.controlsTop)
+                .padding(.top, geometry.controlsOffset)
         }
         .padding(.horizontal, 24)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - Above the horizon
-
-    private var upperPart: some View {
-        VStack(spacing: 0) {
-            Text(session.selectedSubject.code)
-                .font(DaylightFont.name(nameSize))
-                .foregroundStyle(DaylightPalette.plum)
-                .frame(height: DaylightGeometry.headerHeight)
-
-            Color.clear.frame(height: geometry.slotLeadHeight)
-            Color.clear.frame(height: geometry.timerSlotHeight)
-
-            statusLine
-                .padding(.top, 6)
-
-            Spacer(minLength: 0)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
 
     private var statusLine: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
@@ -150,5 +132,17 @@ struct DaylightFocusPage: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(DaylightPressStyle())
+    }
+}
+
+struct DaylightFocusHeader: View {
+    let session: FocusLabSession
+
+    @ScaledMetric(relativeTo: .title3) private var nameSize: CGFloat = 20
+
+    var body: some View {
+        Text(session.selectedSubject.code)
+            .font(DaylightFont.name(nameSize))
+            .foregroundStyle(DaylightPalette.plum)
     }
 }
