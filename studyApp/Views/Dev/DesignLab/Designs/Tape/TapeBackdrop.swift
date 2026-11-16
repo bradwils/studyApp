@@ -1,30 +1,26 @@
 //  TapeBackdrop.swift
 //  studyApp
 //
-//  DEV ONLY — Tape's fixed band: background, tape, needle, pinned timer and status line.
+//  DEV ONLY — Tape's fixed band: background, tape, needle and status line.
 //  Nothing here slides with the pages; it all reads blend.
 
 import SwiftUI
 
 struct TapeBackdrop: View {
 
-    let session: FocusLabSession
-    let metrics: FocusLabStageMetrics
-    let blend: CGFloat
+    let context: FocusLabContext
     let reduceMotion: Bool
-    let timerSize: CGFloat
 
-    private var bandTop: CGFloat {
-        TapeLayout.bandTop(height: metrics.safeSize.height)
-    }
+    private var session: FocusLabSession { context.session }
+    private var metrics: FocusLabStageMetrics { context.metrics }
+    private var blend: CGFloat { context.blend }
 
     private var centerX: CGFloat {
         metrics.fullSize.width / 2
     }
 
     private var tapeCenterY: CGFloat {
-        let pageY: CGFloat = bandTop + TapeLayout.tapeTopY + TapeLayout.tapeHeight / 2
-        return metrics.backdropY(pageY)
+        context.timerBackdropRect.maxY + TapeLayout.tapeTopInset + TapeLayout.tapeHeight / 2
     }
 
     var body: some View {
@@ -35,9 +31,8 @@ struct TapeBackdrop: View {
             ribbon
             TapeNeedle()
                 .position(x: metrics.backdropX(metrics.safeSize.width / 2), y: tapeCenterY)
-            timer
             TapeStatus(session: session, blend: blend)
-                .position(x: centerX, y: metrics.backdropY(bandTop + TapeLayout.statusCenterY))
+                .position(x: centerX, y: context.timerBackdropRect.maxY + TapeLayout.statusCenterInset)
         }
         .frame(width: full.width, height: full.height, alignment: .topLeading)
     }
@@ -52,18 +47,6 @@ struct TapeBackdrop: View {
             reduceMotion: reduceMotion
         )
         .position(x: centerX, y: tapeCenterY)
-    }
-
-    private var timer: some View {
-        let size: CGFloat = min(timerSize, 88)
-        let color: Color = TapePalette.ink.labBlend(TapePalette.tape, FocusLabMath.window(blend, 0.4, 0.7))
-        let font: Font = Font.system(size: size, weight: .semibold).width(.condensed)
-        return FocusLabClock(session: session, idleText: "0:00")
-            .font(font)
-            .foregroundStyle(color)
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-            .position(x: centerX, y: metrics.backdropY(bandTop + TapeLayout.timerCenterY))
     }
 }
 
