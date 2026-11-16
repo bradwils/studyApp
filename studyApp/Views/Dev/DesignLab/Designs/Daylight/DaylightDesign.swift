@@ -7,51 +7,37 @@
 
 import SwiftUI
 
-struct DaylightDesign: View {
-
-    let session: FocusLabSession
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var pageOffset: CGFloat = 0
-    @State private var page: Int? = 0
+struct DaylightDesign: FocusLabScreen {
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 84
-    @ScaledMetric(relativeTo: .largeTitle) private var timerSlotHeight: CGFloat = 110
 
-    private var blend: CGFloat {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return pageOffset
+    func backdrop(_ context: FocusLabContext) -> some View {
+        DaylightBackdrop(session: context.session, geometry: DaylightGeometry(context: context), blend: context.blend)
     }
 
-    var body: some View {
-        FocusLabStage { metrics in
-            backdropLayer(metrics)
-        } content: { metrics in
-            pagerLayer(metrics)
-        }
+    func timer(_ context: FocusLabContext) -> some View {
+        FocusLabClock(session: context.session, idleText: "0:00", digitWidth: timerSize * 0.6)
+            .font(Font.custom("AvenirNext-Medium", size: 84, relativeTo: .largeTitle))
+            .foregroundStyle(DaylightPalette.plum)
     }
 
-    private func backdropLayer(_ metrics: FocusLabStageMetrics) -> some View {
-        let layout = DaylightGeometry(metrics: metrics, timerSlotHeight: timerSlotHeight)
-        return DaylightBackdrop(session: session, geometry: layout, blend: blend, timerSize: timerSize)
+    func trackingHeader(_ context: FocusLabContext) -> some View {
+        DaylightTrackingHeader(session: context.session)
     }
 
-    private func pagerLayer(_ metrics: FocusLabStageMetrics) -> some View {
-        let layout = DaylightGeometry(metrics: metrics, timerSlotHeight: timerSlotHeight)
-        return FocusLabPager(
-            pageOffset: $pageOffset,
-            page: $page,
-            showsFocusPage: session.hasSession,
-            isLocked: session.isLocked
-        ) {
-            DaylightTrackingPage(session: session, geometry: layout)
-        } focus: {
-            DaylightFocusPage(session: session, geometry: layout)
-        }
+    func trackingBody(_ context: FocusLabContext) -> some View {
+        DaylightTrackingPage(session: context.session)
+    }
+
+    func focusHeader(_ context: FocusLabContext) -> some View {
+        DaylightFocusHeader(session: context.session)
+    }
+
+    func focusBody(_ context: FocusLabContext) -> some View {
+        DaylightFocusPage(session: context.session, geometry: DaylightGeometry(context: context))
     }
 }
 
 #Preview {
-    DaylightDesign(session: FocusLabSession())
+    FocusLabScaffold(session: FocusLabSession(), design: DaylightDesign())
 }
