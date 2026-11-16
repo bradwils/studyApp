@@ -17,6 +17,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
     case poster
     case strata
     case vellum
+    case tape
 
     var id: String { rawValue }
 
@@ -32,6 +33,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .poster: return "Poster"
         case .strata: return "Strata"
         case .vellum: return "Vellum"
+        case .tape: return "Tape"
         }
     }
 
@@ -47,6 +49,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .poster: return "Flat colour and heavy type. The numerals travel and grow to fill the screen, then fill with orange."
         case .strata: return "The session settles in flat bands of colour. Focus zooms into the band being laid now."
         case .vellum: return "Five translucent sheets. Fanned while tracking, they stack behind the timer and bloom as you focus."
+        case .tape: return "A measuring tape slides under a needle. Swipe up: it zooms out to show the whole focus block."
         }
     }
 
@@ -63,6 +66,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .poster: return .light
         case .strata: return .light
         case .vellum: return .light
+        case .tape: return .light
         }
     }
 
@@ -79,6 +83,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .poster: PosterDesign(session: session)
         case .strata: StrataDesign(session: session)
         case .vellum: VellumDesign(session: session)
+        case .tape: TapeDesign(session: session)
         }
     }
 }
