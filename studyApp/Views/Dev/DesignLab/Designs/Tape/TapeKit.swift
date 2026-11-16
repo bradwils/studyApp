@@ -17,16 +17,13 @@ enum TapePalette {
 }
 
 enum TapeLayout {
-    static let bandHeight: CGFloat = 216
-    static let timerCenterY: CGFloat = 62
-    static let statusCenterY: CGFloat = 116
-    static let tapeTopY: CGFloat = 140
+    // Offsets below the timer slot's bottom edge.
+    static let statusCenterInset: CGFloat = 12
+    static let tapeTopInset: CGFloat = 36
     static let tapeHeight: CGFloat = 64
     static let ribbonPad: CGFloat = 12
 
-    static func bandTop(height: CGFloat) -> CGFloat {
-        max(0, (height - bandHeight) * 0.42)
-    }
+    static var bodyTopInset: CGFloat { tapeTopInset + tapeHeight }
 }
 
 enum TapeFont {

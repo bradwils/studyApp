@@ -2,58 +2,53 @@
 //  studyApp
 //
 //  DEV ONLY — "Tape": time as a measuring tape. A white tape slides under a fixed needle,
-//  study time inked on it; swiping up zooms it out until the whole focus block fits.
-//  The only design that pages vertically.
+//  study time inked on it; swiping to the focus page zooms it out until the whole focus
+//  block fits.
 
 import SwiftUI
 
-struct TapeDesign: View {
-
-    let session: FocusLabSession
+struct TapeDesign: FocusLabScreen {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var pageOffset: CGFloat = 0
-    @State private var page: Int? = 0
-
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 76
 
-    private var blend: CGFloat {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return pageOffset
+    func backdrop(_ context: FocusLabContext) -> some View {
+        TapeBackdrop(context: context, reduceMotion: reduceMotion)
     }
 
-    var body: some View {
-        FocusLabStage { metrics in
-            TapeBackdrop(
-                session: session,
-                metrics: metrics,
-                blend: blend,
-                reduceMotion: reduceMotion,
-                timerSize: timerSize
-            )
-        } content: { metrics in
-            pager(metrics)
-        }
-        .focusLabChrome(blend < 0.5 ? .light : .dark)
+    func timer(_ context: FocusLabContext) -> some View {
+        let size: CGFloat = min(timerSize, 88)
+        let color: Color = TapePalette.ink.labBlend(TapePalette.tape, FocusLabMath.window(context.blend, 0.4, 0.7))
+        return FocusLabClock(session: context.session, idleText: "0:00")
+            .font(Font.system(size: size, weight: .semibold).width(.condensed))
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .frame(maxWidth: .infinity)
     }
 
-    private func pager(_ metrics: FocusLabStageMetrics) -> some View {
-        let bandTop: CGFloat = TapeLayout.bandTop(height: metrics.safeSize.height)
-        return FocusLabPager(
-            pageOffset: $pageOffset,
-            page: $page,
-            axis: .vertical,
-            showsFocusPage: session.hasSession,
-            isLocked: session.isLocked
-        ) {
-            TapeTrackingPage(session: session, bandTop: bandTop)
-        } focus: {
-            TapeFocusPage(session: session, bandTop: bandTop)
-        }
+    func trackingHeader(_ context: FocusLabContext) -> some View {
+        TapeTrackingHeader(session: context.session)
+    }
+
+    func trackingBody(_ context: FocusLabContext) -> some View {
+        TapeTrackingBody(session: context.session)
+    }
+
+    func focusHeader(_ context: FocusLabContext) -> some View {
+        TapeFocusHeader(session: context.session)
+    }
+
+    func focusBody(_ context: FocusLabContext) -> some View {
+        TapeFocusBody(session: context.session)
+    }
+
+    func chromeScheme(blend: CGFloat) -> ColorScheme? {
+        blend < 0.5 ? .light : .dark
     }
 }
 
 #Preview {
-    TapeDesign(session: FocusLabSession())
+    FocusLabScaffold(session: FocusLabSession(), design: TapeDesign())
 }

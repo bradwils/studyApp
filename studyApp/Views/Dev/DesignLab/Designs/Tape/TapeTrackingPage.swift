@@ -1,34 +1,19 @@
 //  TapeTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Tape's tracking page. Transparent; the band slot is left empty.
+//  DEV ONLY — Tape's tracking page, as a header and a body. Transparent; the body leaves room for the status line and tape.
 
 import SwiftUI
 
-struct TapeTrackingPage: View {
+struct TapeTrackingHeader: View {
 
     let session: FocusLabSession
-    let bandTop: CGFloat
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-                .frame(height: bandTop, alignment: .top)
-            Color.clear
-                .frame(height: TapeLayout.bandHeight)
-            bottom
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
         VStack(spacing: 0) {
             subject
             caption
         }
-        .padding(.top, 12)
         .frame(maxWidth: .infinity)
     }
 
@@ -80,17 +65,23 @@ struct TapeTrackingPage: View {
         return "Today \(today), \(breaks) \(noun)"
     }
 
-    // MARK: - Bottom
+}
 
-    private var bottom: some View {
+struct TapeTrackingBody: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
         VStack(spacing: 0) {
+            Color.clear
+                .frame(height: TapeLayout.bodyTopInset)
             buttons
                 .padding(.top, 24)
             friendsLine
                 .padding(.top, 20)
             Spacer(minLength: 0)
             if session.hasSession {
-                Text("Swipe up for focus")
+                Text("Swipe left for focus")
                     .font(TapeFont.text(13, .regular))
                     .foregroundStyle(TapePalette.haze.opacity(0.7))
                     .padding(.bottom, 16)

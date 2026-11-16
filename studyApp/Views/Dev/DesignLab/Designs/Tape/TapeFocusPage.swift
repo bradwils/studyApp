@@ -1,37 +1,31 @@
 //  TapeFocusPage.swift
 //  studyApp
 //
-//  DEV ONLY — Tape's focus page. Transparent, light text; the band slot is left empty.
+//  DEV ONLY — Tape's focus page, as a header and a body. Transparent, light text; the body leaves room for the status line and tape.
 
 import SwiftUI
 
-struct TapeFocusPage: View {
+struct TapeFocusHeader: View {
 
     let session: FocusLabSession
-    let bandTop: CGFloat
 
     var body: some View {
-        VStack(spacing: 0) {
-            header
-                .frame(height: bandTop, alignment: .top)
-            Color.clear
-                .frame(height: TapeLayout.bandHeight)
-            bottom
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-
-    private var header: some View {
         Text(session.selectedSubject.code)
             .font(TapeFont.text(20, .semibold))
             .foregroundStyle(TapePalette.tape)
-            .padding(.top, 12)
             .frame(maxWidth: .infinity)
     }
+}
 
-    private var bottom: some View {
+struct TapeFocusBody: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
         let blockGap: CGFloat = session.hasFocusBlock ? 24 : 12
         return VStack(spacing: 0) {
+            Color.clear
+                .frame(height: TapeLayout.bodyTopInset)
             if !session.hasFocusBlock {
                 presets
                     .padding(.top, 24)
