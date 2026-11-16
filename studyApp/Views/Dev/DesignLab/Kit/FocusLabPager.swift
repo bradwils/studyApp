@@ -47,15 +47,24 @@ struct FocusLabPager<Tracking: View, Focus: View>: View {
         }
     }
 
+    // Only the paging axis is pinned to the container, exactly as FocusSessionScreen does it;
+    // the cross axis fills whatever the scroll view proposes, so a page is never taller
+    // (or wider) than the safe area the designs measure their fixed layers against.
+    private var pagingAxis: Axis.Set {
+        axis == .horizontal ? .horizontal : .vertical
+    }
+
     @ViewBuilder
     private var pages: some View {
         tracking
-            .containerRelativeFrame([.horizontal, .vertical])
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .containerRelativeFrame(pagingAxis)
             .id(0)
 
         if showsFocusPage {
             focus
-                .containerRelativeFrame([.horizontal, .vertical])
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .containerRelativeFrame(pagingAxis)
                 .id(1)
         }
     }
