@@ -15,16 +15,9 @@ enum StarsPalette {
 }
 
 enum StarsLayout {
-    static let headerHeight: CGFloat = 56
-    static let slotGap: CGFloat = 70
-    static let slotHeight: CGFloat = 110
     static let statusRowHeight: CGFloat = 40
     static let statusOffset: CGFloat = 44
     static let sidePadding: CGFloat = 24
-
-    static var timerCenterY: CGFloat {
-        headerHeight + slotGap + slotHeight / 2
-    }
 }
 
 enum StarsFont {

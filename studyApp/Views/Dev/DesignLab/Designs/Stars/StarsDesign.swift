@@ -7,49 +7,38 @@
 
 import SwiftUI
 
-struct StarsDesign: View {
-
-    let session: FocusLabSession
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var pageOffset: CGFloat = 0
-    @State private var page: Int? = 0
+struct StarsDesign: FocusLabScreen {
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 80
 
-    private var blend: CGFloat {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return pageOffset
+    func backdrop(_ context: FocusLabContext) -> some View {
+        StarsBackdrop(context: context)
     }
 
-    var body: some View {
-        FocusLabStage { metrics in
-            StarsBackdrop(
-                session: session,
-                metrics: metrics,
-                blend: blend,
-                timerSize: timerSize
-            )
-        } content: { _ in
-            pager
-        }
+    func timer(_ context: FocusLabContext) -> some View {
+        FocusLabClock(session: context.session, idleText: "0:00", digitWidth: timerSize * 0.56)
+            .font(StarsFont.timer(timerSize))
+            .foregroundStyle(StarsPalette.star)
+            .lineLimit(1)
     }
 
-    private var pager: some View {
-        FocusLabPager(
-            pageOffset: $pageOffset,
-            page: $page,
-            showsFocusPage: session.hasSession,
-            isLocked: session.isLocked
-        ) {
-            StarsTrackingPage(session: session)
-        } focus: {
-            StarsFocusPage(session: session)
-        }
+    func trackingHeader(_ context: FocusLabContext) -> some View {
+        StarsTrackingHeader(session: context.session)
+    }
+
+    func trackingBody(_ context: FocusLabContext) -> some View {
+        StarsTrackingPage(session: context.session)
+    }
+
+    func focusHeader(_ context: FocusLabContext) -> some View {
+        StarsFocusHeader(session: context.session)
+    }
+
+    func focusBody(_ context: FocusLabContext) -> some View {
+        StarsFocusPage(session: context.session)
     }
 }
 
 #Preview {
-    StarsDesign(session: FocusLabSession())
+    FocusLabScaffold(session: FocusLabSession(), design: StarsDesign())
 }

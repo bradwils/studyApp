@@ -1,37 +1,16 @@
 //  StarsTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Stars' tracking page. Transparent; the timer slot and status row are left empty.
+//  DEV ONLY — Stars' tracking page. Transparent; the status row under the timer is left empty.
 
 import SwiftUI
 
-struct StarsTrackingPage: View {
+struct StarsTrackingHeader: View {
 
     let session: FocusLabSession
 
-    var body: some View {
-        VStack(spacing: 0) {
-            header
-                .frame(height: StarsLayout.headerHeight)
-            Color.clear
-                .frame(height: StarsLayout.slotHeight)
-                .padding(.top, StarsLayout.slotGap)
-            Color.clear
-                .frame(height: StarsLayout.statusRowHeight)
-            buttons
-                .padding(.top, 16)
-            Spacer(minLength: 0)
-            footer
-                .padding(.bottom, 24)
-        }
-        .padding(.horizontal, StarsLayout.sidePadding)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-    }
-
-    // MARK: - Header
-
     @ViewBuilder
-    private var header: some View {
+    var body: some View {
         if session.hasSession {
             nameText
         } else {
@@ -57,6 +36,24 @@ struct StarsTrackingPage: View {
             .font(StarsFont.heading(18))
             .foregroundStyle(StarsPalette.star)
             .lineLimit(1)
+    }
+}
+
+struct StarsTrackingPage: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Color.clear
+                .frame(height: StarsLayout.statusRowHeight)
+            buttons
+                .padding(.top, 16)
+            Spacer(minLength: 0)
+            footer
+                .padding(.bottom, 24)
+        }
+        .padding(.horizontal, StarsLayout.sidePadding)
     }
 
     // MARK: - Buttons
