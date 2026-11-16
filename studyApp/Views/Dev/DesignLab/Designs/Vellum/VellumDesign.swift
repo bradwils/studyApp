@@ -7,51 +7,46 @@
 
 import SwiftUI
 
-struct VellumDesign: View {
-
-    let session: FocusLabSession
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var pageOffset: CGFloat = 0
-    @State private var page: Int? = 0
+struct VellumDesign: FocusLabScreen {
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 80
 
-    private var blend: CGFloat {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return pageOffset
+    // Tall enough for the stacked tile to sit in the timer slot without touching the header.
+    func slots(standard: FocusLabSlots) -> FocusLabSlots {
+        FocusLabSlots(headerHeight: standard.headerHeight, timerHeight: 250)
     }
 
-    var body: some View {
-        FocusLabStage { metrics in
-            backdropLayer(metrics)
-        } content: { metrics in
-            pagerLayer(metrics)
-        }
-        .focusLabChrome(.light)
+    func backdrop(_ context: FocusLabContext) -> some View {
+        VellumBackdrop(session: context.session, layout: VellumLayout(context: context), blend: context.blend)
     }
 
-    private func backdropLayer(_ metrics: FocusLabStageMetrics) -> some View {
-        let layout = VellumLayout(metrics: metrics)
-        return VellumBackdrop(session: session, layout: layout, blend: blend, timerSize: timerSize)
+    func timer(_ context: FocusLabContext) -> some View {
+        let flip: CGFloat = FocusLabMath.window(context.blend, 0.55, 0.85)
+        return FocusLabClock(session: context.session, idleText: "0:00")
+            .font(Font.system(size: timerSize, weight: .medium, design: .rounded))
+            .foregroundStyle(VellumPalette.ink.labBlend(VellumPalette.white, flip))
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .frame(width: 220)
     }
 
-    private func pagerLayer(_ metrics: FocusLabStageMetrics) -> some View {
-        let layout = VellumLayout(metrics: metrics)
-        return FocusLabPager(
-            pageOffset: $pageOffset,
-            page: $page,
-            showsFocusPage: session.hasSession,
-            isLocked: session.isLocked
-        ) {
-            VellumTrackingPage(session: session, layout: layout)
-        } focus: {
-            VellumFocusPage(session: session, layout: layout, blend: blend)
-        }
+    func trackingHeader(_ context: FocusLabContext) -> some View {
+        VellumTrackingPage(session: context.session, layout: VellumLayout(context: context)).header
+    }
+
+    func trackingBody(_ context: FocusLabContext) -> some View {
+        VellumTrackingPage(session: context.session, layout: VellumLayout(context: context)).content
+    }
+
+    func focusHeader(_ context: FocusLabContext) -> some View {
+        VellumFocusPage(session: context.session, blend: context.blend).header
+    }
+
+    func focusBody(_ context: FocusLabContext) -> some View {
+        VellumFocusPage(session: context.session, blend: context.blend).content
     }
 }
 
 #Preview {
-    VellumDesign(session: FocusLabSession())
+    FocusLabScaffold(session: FocusLabSession(), design: VellumDesign())
 }

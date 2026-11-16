@@ -44,8 +44,6 @@ struct VellumSheet: Identifiable {
 
 struct VellumLayout {
 
-    static let headerHeight: CGFloat = 56
-    static let slotGap: CGFloat = 36
     static let sidePadding: CGFloat = 24
     static let sheetOpacity: Double = 0.46
     static let sheetCount: Int = 5
@@ -58,12 +56,12 @@ struct VellumLayout {
     let fullHeight: CGFloat
     let tile: CGFloat
     let timerCenterY: CGFloat
+    let timerBackdropCenter: CGPoint
 
-    init(metrics: FocusLabStageMetrics) {
+    init(context: FocusLabContext) {
+        let metrics: FocusLabStageMetrics = context.metrics
         let safe: CGSize = metrics.safeSize
         let full: CGSize = metrics.fullSize
-        let side: CGFloat = min(safe.width * 0.62, 250)
-        let top: CGFloat = VellumLayout.headerHeight + VellumLayout.slotGap
 
         self.width = safe.width
         self.height = safe.height
@@ -71,16 +69,9 @@ struct VellumLayout {
         self.insetTop = metrics.insets.top
         self.fullWidth = full.width
         self.fullHeight = full.height
-        self.tile = side
-        self.timerCenterY = top + side / 2
-    }
-
-    var centerX: CGFloat {
-        fullWidth / 2
-    }
-
-    var timerBackdropY: CGFloat {
-        timerCenterY + insetTop
+        self.tile = min(context.timerRect.height, safe.width * 0.62, 250)
+        self.timerCenterY = context.timerRect.midY
+        self.timerBackdropCenter = CGPoint(x: context.timerBackdropRect.midX, y: context.timerBackdropRect.midY)
     }
 
     func sheets(blend: CGFloat, bloom: CGFloat) -> [VellumSheet] {

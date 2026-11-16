@@ -1,7 +1,7 @@
 //  VellumBackdrop.swift
 //  studyApp
 //
-//  DEV ONLY — Vellum's fixed layer: Milk, the five sheets, and the timer and status line pinned over them.
+//  DEV ONLY — Vellum's fixed layer: Milk, the five sheets, and the status line pinned under the timer.
 
 import SwiftUI
 
@@ -10,7 +10,6 @@ struct VellumBackdrop: View {
     let session: FocusLabSession
     let layout: VellumLayout
     let blend: CGFloat
-    let timerSize: CGFloat
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
@@ -18,7 +17,6 @@ struct VellumBackdrop: View {
         ZStack(alignment: .topLeading) {
             VellumPalette.milk
             sheetsLayer
-            pinnedTimer
             pinnedStatus
         }
         .frame(width: layout.fullWidth, height: layout.fullHeight, alignment: .topLeading)
@@ -40,21 +38,10 @@ struct VellumBackdrop: View {
         .frame(width: layout.fullWidth, height: layout.fullHeight)
     }
 
-    private var pinnedTimer: some View {
-        FocusLabClock(session: session, idleText: "0:00")
-            .font(Font.system(size: timerSize, weight: .medium, design: .rounded))
-            .foregroundStyle(textColor)
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-            .frame(width: 220)
-            .position(x: layout.centerX, y: layout.timerBackdropY)
-    }
-
     private var pinnedStatus: some View {
-        let statusY: CGFloat = layout.timerBackdropY + 40
-        return VellumStatus(session: session, blend: blend)
+        VellumStatus(session: session, blend: blend)
             .foregroundStyle(textColor.opacity(0.75))
-            .position(x: layout.centerX, y: statusY)
+            .position(x: layout.timerBackdropCenter.x, y: layout.timerBackdropCenter.y + 40)
     }
 }
 
