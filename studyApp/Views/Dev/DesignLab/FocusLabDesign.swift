@@ -12,6 +12,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
     case daylight
     case tide
     case dial
+    case lamp
 
     var id: String { rawValue }
 
@@ -22,6 +23,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .daylight: return "Daylight"
         case .tide: return "Tide"
         case .dial: return "Dial"
+        case .lamp: return "Lamp"
         }
     }
 
@@ -32,6 +34,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .daylight: return "Warm and bright. A sun on the day's arc comes forward and rises with the focus block."
         case .tide: return "Time as a water level. The timer changes colour along the wave where the tide covers it."
         case .dial: return "Watch face. One ring turns from a hairline hour dial into a bold focus band on cobalt."
+        case .lamp: return "A desk at night. The pool of lamplight closes in on the timer as you move to focus."
         }
     }
 
@@ -43,6 +46,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .daylight: return .light
         case .tide: return .light
         case .dial: return .light
+        case .lamp: return .dark
         }
     }
 
@@ -54,6 +58,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .daylight: DaylightDesign(session: session)
         case .tide: TideDesign(session: session)
         case .dial: DialDesign(session: session)
+        case .lamp: LampDesign(session: session)
         }
     }
 }
