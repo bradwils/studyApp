@@ -2,12 +2,6 @@ import SwiftUI
 
 /// Page dots that track the pager's scroll position.
 ///
-/// ## Declaration
-///
-/// ```swift
-/// struct FocusPageIndicator: View
-/// ```
-///
 /// Renders nothing for fewer than two pages. Decorative: hidden from VoiceOver.
 struct FocusPageIndicator: View {
 	let screenState: FocusScreenState

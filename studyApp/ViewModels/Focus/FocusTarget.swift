@@ -2,12 +2,6 @@ import Foundation
 
 /// The hour and minute ranges a focus target may be chosen from.
 ///
-/// ## Declaration
-///
-/// ```swift
-/// struct FocusDurationLimits: Equatable
-/// ```
-///
 /// Read-only configuration shared by the duration picker and the validation in
 /// ``FocusTarget``.
 struct FocusDurationLimits: Equatable {
@@ -27,12 +21,6 @@ struct FocusDurationLimits: Equatable {
 }
 
 /// A focus goal measured against a session's active study time.
-///
-/// ## Declaration
-///
-/// ```swift
-/// struct FocusTarget: Equatable
-/// ```
 ///
 /// The target stores the session's active elapsed time at the moment it began, so it
 /// freezes while the session is paused and needs no deadline adjusting on resume.
