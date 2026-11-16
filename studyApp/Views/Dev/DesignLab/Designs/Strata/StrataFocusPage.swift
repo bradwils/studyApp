@@ -9,17 +9,9 @@ import SwiftUI
 struct StrataFocusPage: View {
 
     let session: FocusLabSession
-    let slotHeight: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(session.selectedSubject.code)
-                .font(StrataFont.sans(20, .semibold))
-                .foregroundStyle(StrataPalette.ink)
-                .frame(height: StrataLayout.headerHeight, alignment: .leading)
-            Color.clear
-                .frame(height: slotHeight)
-                .padding(.top, StrataLayout.slotGap)
             lower
                 .padding(.top, 4)
             Spacer(minLength: 0)
