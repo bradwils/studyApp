@@ -131,7 +131,7 @@ var sessions: [StudySession]
 - Views that exist purely for debugging/inspecting app state (not part of any real user flow) live under `Views/Dev/`
 - If a dev-only affordance is added inline to a real screen instead (e.g. a button on `SettingsView`), mark it clearly with a `// DEV ONLY` comment at the point it's wired in
 - Example: `Views/Dev/DebugDataView.swift` / `DebugModelListView.swift` — lists every registered SwiftData model with live counts, and lets you inspect or delete individual/all records. Linked from a toolbar button on `SettingsView`.
-- Focus Design Lab: `Views/Dev/DesignLab/` holds cosmetic study/focus screen experiments, listed at the top of `DebugDataView`. Each design is a case in `FocusLabDesign` and a folder under `Designs/`; they run on the mock `FocusLabSession` (`ViewModels/Dev/`), never on SwiftData. Shared pager, clock and helpers live in `Kit/`.
+- Focus Design Lab: `Views/Dev/DesignLab/` holds cosmetic study/focus screen experiments, opened from the first row of `DebugDataView` (`FocusLabListView`). Each design is a case in `FocusLabDesign` and a folder under `Designs/`; they run on the mock `FocusLabSession` (`ViewModels/Dev/`), never on SwiftData. Shared pager, clock and helpers live in `Kit/`.
 
 ---
 
