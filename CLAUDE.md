@@ -239,15 +239,10 @@ Transform tasks into verifiable goals before starting. For multi-step work, stat
 
 # CI/CD Pipeline
 
-Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
-
-| Name | Branch | Builds when | Lands in |
-|---|---|---|---|
-| dev testflight | `dev` | Every push | TestFlight internal → **Self** |
-| Master Changes | `master` | Tag Changes for v* | TestFlight external (stable) |
-| PR TestFlight | `*` | Triggered from workflow (which looks for '[\n] /Testflight' in PR body / comment | TestFlight Internal (Self)
-| UAT-testflight | `UAT-testflight` | Every push to UAT | TestFlight external (UAT) |
-| Test /feat & /refactor branches | `test/*` && `refactor/*`  | Changes to PR|  When a branch sees changes, test that build |
+[pipeline.md](pipeline.md) owns the Xcode Cloud workflow table, branch map,
+rulesets, versioning and release steps. Update that source instead of copying
+workflow tables here. Promotion PRs into `UAT-testflight` and `master` use the
+checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
