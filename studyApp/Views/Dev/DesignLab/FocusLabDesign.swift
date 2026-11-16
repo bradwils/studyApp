@@ -19,6 +19,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
     case vellum
     case tape
     case still
+    case ticket
 
     var id: String { rawValue }
 
@@ -36,6 +37,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .vellum: return "Vellum"
         case .tape: return "Tape"
         case .still: return "Still"
+        case .ticket: return "Ticket"
         }
     }
 
@@ -53,6 +55,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .vellum: return "Five translucent sheets. Fanned while tracking, they stack behind the timer and bloom as you focus."
         case .tape: return "A measuring tape slides under a needle. Swipe up: it zooms out to show the whole focus block."
         case .still: return "System colours, one accent. The screen edge is the progress bar; a break takes over the whole screen."
+        case .ticket: return "The session is a paper ticket. Tap it for zen mode; ten punches mark the block; pausing stamps it."
         }
     }
 
@@ -71,6 +74,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .vellum: return .light
         case .tape: return .light
         case .still: return nil
+        case .ticket: return .light
         }
     }
 
@@ -89,6 +93,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .vellum: VellumDesign(session: session)
         case .tape: TapeDesign(session: session)
         case .still: StillDesign(session: session)
+        case .ticket: TicketDesign(session: session)
         }
     }
 }
