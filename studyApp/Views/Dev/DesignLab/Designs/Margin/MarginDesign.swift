@@ -29,6 +29,7 @@ struct MarginDesign: View {
         } content: { _ in
             pager
         }
+        .focusLabChrome(blend < 0.5 ? .light : .dark)
     }
 
     // MARK: - Pager

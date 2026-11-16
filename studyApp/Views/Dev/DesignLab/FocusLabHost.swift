@@ -13,6 +13,7 @@ struct FocusLabHost: View {
 
     @State private var design: FocusLabDesign
     @State private var session = FocusLabSession()
+    @State private var chrome = FocusLabChrome()
 
     init(design: FocusLabDesign) {
         _design = State(initialValue: design)
@@ -28,7 +29,8 @@ struct FocusLabHost: View {
                 }
             }
             .animation(.smooth(duration: 0.35), value: session.isLocked)
-            .preferredColorScheme(design.colorScheme)
+            .environment(chrome)
+            .preferredColorScheme(chrome.scheme ?? design.colorScheme)
     }
 
     // MARK: - Lab bar
@@ -100,6 +102,7 @@ struct FocusLabHost: View {
     private func step(_ direction: Int) {
         let all = FocusLabDesign.allCases
         let next = (position + direction + all.count) % all.count
+        chrome.scheme = nil
         design = all[next]
     }
 }
