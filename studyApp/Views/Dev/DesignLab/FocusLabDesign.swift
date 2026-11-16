@@ -22,6 +22,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
     case ticket
     case words
     case deck
+    case stars
 
     var id: String { rawValue }
 
@@ -42,6 +43,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .ticket: return "Ticket"
         case .words: return "Words"
         case .deck: return "Deck"
+        case .stars: return "Stars"
         }
     }
 
@@ -62,6 +64,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .ticket: return "The session is a paper ticket. Tap it for zen mode; ten punches mark the block; pausing stamps it."
         case .words: return "No digits. The time is a sentence on a chalkboard field, re-worded once a minute."
         case .deck: return "Now playing, timer and leaderboard as three panels. Focus clears the outer two and fills the screen."
+        case .stars: return "A night sky you fill in. The sky turns behind a constellation drawn as the block runs; pausing brings dawn."
         }
     }
 
@@ -83,6 +86,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .ticket: return .light
         case .words: return .dark
         case .deck: return .light
+        case .stars: return .dark
         }
     }
 
@@ -104,6 +108,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .ticket: TicketDesign(session: session)
         case .words: WordsDesign(session: session)
         case .deck: DeckDesign(session: session)
+        case .stars: StarsDesign(session: session)
         }
     }
 }
