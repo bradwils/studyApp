@@ -18,8 +18,30 @@ struct DebugDataView: View {
     @Query private var definitions: [FieldDefinition]
     @Query private var tags: [Tag]
 
+    @State private var presentedLabDesign: FocusLabDesign?
+
     var body: some View {
         List {
+            Section {
+                ForEach(FocusLabDesign.allCases) { design in
+                    Button {
+                        presentedLabDesign = design
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(design.title)
+                                .foregroundStyle(.primary)
+                            Text(design.summary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } header: {
+                Text("Focus Design Lab")
+            } footer: {
+                Text("Cosmetic study and focus screens. Nothing here writes to SwiftData.")
+            }
+
             Section {
                 modelLink(title: "Subjects", systemImage: "book", count: subjects.count) {
                     DebugModelListView(title: "Subjects") { (subject: Subject) in
@@ -96,6 +118,9 @@ struct DebugDataView: View {
             }
         }
         .navigationTitle("Debug Data")
+        .fullScreenCover(item: $presentedLabDesign) { design in
+            FocusLabHost(design: design)
+        }
     }
 
     private func countLabel(_ title: String, systemImage: String, count: Int) -> some View {
