@@ -1,42 +1,31 @@
 //  StarsBackdrop.swift
 //  studyApp
 //
-//  DEV ONLY — Stars' fixed layers: sky, dawn, stars, constellation, pinned timer and status.
+//  DEV ONLY — Stars' fixed layers: sky, dawn, stars, constellation and status.
 //  Nothing here slides with the pages; it all reads blend.
 
 import SwiftUI
 
 struct StarsBackdrop: View {
 
-    let session: FocusLabSession
-    let metrics: FocusLabStageMetrics
-    let blend: CGFloat
-    let timerSize: CGFloat
-
-    private var centerX: CGFloat {
-        metrics.fullSize.width / 2
-    }
-
-    private var timerCenterY: CGFloat {
-        metrics.backdropY(StarsLayout.timerCenterY)
-    }
+    let context: FocusLabContext
 
     var body: some View {
-        let full: CGSize = metrics.fullSize
-        let statusY: CGFloat = metrics.backdropY(StarsLayout.timerCenterY + StarsLayout.statusOffset)
+        let session: FocusLabSession = context.session
+        let blend: CGFloat = context.blend
+        let full: CGSize = context.metrics.fullSize
+        let center = CGPoint(x: context.timerBackdropRect.midX, y: context.timerBackdropRect.midY)
         return ZStack(alignment: .topLeading) {
             sky
             dawn
             StarsSky(
                 session: session,
                 size: full,
-                pole: CGPoint(x: centerX, y: timerCenterY),
+                pole: center,
                 blend: blend
             )
-            timer
-                .position(x: centerX, y: timerCenterY)
             StarsStatus(session: session, blend: blend)
-                .position(x: centerX, y: statusY)
+                .position(x: center.x, y: center.y + StarsLayout.statusOffset)
         }
         .frame(width: full.width, height: full.height, alignment: .topLeading)
     }
@@ -52,16 +41,8 @@ struct StarsBackdrop: View {
     private var dawn: some View {
         Rectangle()
             .fill(StarsPalette.dawn)
-            .opacity(session.isPaused ? 1 : 0)
-            .animation(.smooth(duration: 0.6), value: session.isPaused)
-    }
-
-    private var timer: some View {
-        let digitWidth: CGFloat = timerSize * 0.56
-        return FocusLabClock(session: session, idleText: "0:00", digitWidth: digitWidth)
-            .font(StarsFont.timer(timerSize))
-            .foregroundStyle(StarsPalette.star)
-            .lineLimit(1)
+            .opacity(context.session.isPaused ? 1 : 0)
+            .animation(.smooth(duration: 0.6), value: context.session.isPaused)
     }
 }
 

@@ -1,10 +1,21 @@
 //  StarsFocusPage.swift
 //  studyApp
 //
-//  DEV ONLY — Stars' focus page. Transparent; the timer slot and status row are left empty,
+//  DEV ONLY — Stars' focus page. Transparent; the status row under the timer is left empty,
 //  and the controls sit low so the figure around the timer stays clear.
 
 import SwiftUI
+
+struct StarsFocusHeader: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
+        Text(session.selectedSubject.code)
+            .font(StarsFont.heading(18))
+            .foregroundStyle(StarsPalette.star.opacity(0.85))
+    }
+}
 
 struct StarsFocusPage: View {
 
@@ -12,13 +23,6 @@ struct StarsFocusPage: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Text(session.selectedSubject.code)
-                .font(StarsFont.heading(18))
-                .foregroundStyle(StarsPalette.star.opacity(0.85))
-                .frame(height: StarsLayout.headerHeight)
-            Color.clear
-                .frame(height: StarsLayout.slotHeight)
-                .padding(.top, StarsLayout.slotGap)
             Color.clear
                 .frame(height: StarsLayout.statusRowHeight)
             Spacer(minLength: 0)
@@ -26,7 +30,7 @@ struct StarsFocusPage: View {
                 .padding(.bottom, 24)
         }
         .padding(.horizontal, StarsLayout.sidePadding)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxHeight: .infinity)
     }
 
     private var controls: some View {
