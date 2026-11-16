@@ -1,25 +1,23 @@
 //  VellumTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Vellum's tracking page. Transparent; the tile slot is left empty and the buttons
-//  sit on the fanned sheets.
+//  DEV ONLY — Vellum's tracking page. Transparent; the buttons sit on the fanned sheets.
 
 import SwiftUI
 
-struct VellumTrackingPage: View {
+struct VellumTrackingPage {
 
     let session: FocusLabSession
     let layout: VellumLayout
 
-    var body: some View {
+    var header: some View {
+        subject
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, VellumLayout.sidePadding)
+    }
+
+    var content: some View {
         VStack(spacing: 0) {
-            subject
-                .frame(maxWidth: .infinity)
-                .frame(height: VellumLayout.headerHeight)
-            Color.clear
-                .frame(height: VellumLayout.slotGap)
-            Color.clear
-                .frame(width: layout.tile, height: layout.tile)
             caption
                 .padding(.top, 12)
             Spacer(minLength: 0)
