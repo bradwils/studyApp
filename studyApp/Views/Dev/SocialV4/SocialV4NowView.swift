@@ -6,13 +6,13 @@ struct SocialV4PreviewShell: View {
     @Environment(\.dismiss) private var dismiss
     @State private var theme: SocialV4Theme = .overcast
     @State private var selectedTab: AppTab = .social
-    @State private var mock = SocialV4Mock.load()
-    @State private var loadedAt = Date()
+    @State private var model = SocialV4PreviewModel()
+    @State private var isShowingSession = false
 
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab("Focus", systemImage: "book.badge.plus", value: AppTab.focus, role: .search) {
-                placeholder("Focus", systemImage: "book.badge.plus")
+                focusPlaceholder
             }
             Tab("Debug", systemImage: "exclamationmark.triangle.fill", value: AppTab.debug) {
                 NavigationStack {
@@ -21,7 +21,7 @@ struct SocialV4PreviewShell: View {
             }
             Tab("Social", systemImage: "figure.2", value: AppTab.social) {
                 NavigationStack {
-                    SocialV4NowView(mock: mock, loadedAt: loadedAt)
+                    SocialV4NowView(model: model, theme: $theme, onClose: { dismiss() })
                 }
             }
             Tab("Groups", systemImage: "person.3.fill", value: AppTab.groups) {
@@ -32,10 +32,16 @@ struct SocialV4PreviewShell: View {
             }
         }
         .tabBarMinimizeBehavior(.onScrollDown)
-        .tabViewBottomAccessory {
-            TimelineView(.periodic(from: loadedAt, by: 1)) { context in
-                V4SessionAccessory(session: mock.session, tick: Int(context.date.timeIntervalSince(loadedAt)))
+        .modifier(
+            V4BottomAccessoryModifier(isEnabled: model.session != nil) {
+                V4SessionAccessory(model: model) { isShowingSession = true }
             }
+        )
+        .sheet(isPresented: $isShowingSession) {
+            V4SessionSheet(model: model)
+                .environment(\.socialV4Theme, theme)
+                .tint(theme.accent)
+                .preferredColorScheme(.dark)
         }
         .tint(theme.accent)
         .environment(\.socialV4Theme, theme)
@@ -54,8 +60,31 @@ struct SocialV4PreviewShell: View {
                     dismiss()
                 }
             }
+            Section("Session") {
+                if model.session == nil {
+                    Button("Start session") { model.startSession() }
+                } else {
+                    Button(model.isPaused ? "Resume session" : "Pause session") { model.togglePause() }
+                    Button("End session", role: .destructive) { model.endSession() }
+                }
+            }
         }
         .navigationTitle("Debug")
+    }
+
+    private var focusPlaceholder: some View {
+        ContentUnavailableView {
+            Label("Focus", systemImage: "book.badge.plus")
+        } description: {
+            Text("Not part of this preview")
+        } actions: {
+            if model.session == nil {
+                Button("Start mock session") { model.startSession() }
+                    .buttonStyle(.borderedProminent)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background { SocialV4Background() }
     }
 
     private func placeholder(_ title: String, systemImage: String) -> some View {
@@ -65,142 +94,168 @@ struct SocialV4PreviewShell: View {
     }
 }
 
-struct SocialV4NowView: View {
-    @Environment(\.socialV4Theme) private var theme
-    @State private var segment: V4Segment = .now
+// tabViewBottomAccessory(isEnabled:) needs iOS 26.1; the deployment target is 26.0.
+private struct V4BottomAccessoryModifier<Accessory: View>: ViewModifier {
+    let isEnabled: Bool
+    let accessory: Accessory
 
-    let mock: SocialV4Mock
-    let loadedAt: Date
+    init(isEnabled: Bool, @ViewBuilder accessory: () -> Accessory) {
+        self.isEnabled = isEnabled
+        self.accessory = accessory()
+    }
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26.1, *) {
+            content.tabViewBottomAccessory(isEnabled: isEnabled) { accessory }
+        } else {
+            content.tabViewBottomAccessory { accessory }
+        }
+    }
+}
+
+struct SocialV4NowView: View {
+    @State private var segment: V4Segment = .now
+    @State private var isShowingAddFriend = false
+
+    let model: SocialV4PreviewModel
+    @Binding var theme: SocialV4Theme
+    let onClose: () -> Void
 
     var body: some View {
-        ScrollView {
-            TimelineView(.periodic(from: loadedAt, by: 1)) { context in
-                content(tick: Int(context.date.timeIntervalSince(loadedAt)))
+        TimelineView(.periodic(from: model.loadedAt, by: 1)) { context in
+            List {
+                heroSection(date: context.date)
+                liveSection
+                friendsSection(date: context.date)
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .background { SocialV4Background() }
+            .scrollIndicators(.hidden)
+            .animation(.default, value: segment)
         }
-        .scrollIndicators(.hidden)
-        .background { SocialV4Background() }
         .navigationTitle("Social")
         .navigationBarTitleDisplayMode(.large)
+        .navigationDestination(for: String.self) { friendID in
+            V4FriendDetailView(model: model, friendID: friendID)
+        }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button("Add friend", systemImage: "person.badge.plus") {}
+                Button("Add friend", systemImage: "person.badge.plus") {
+                    isShowingAddFriend = true
+                }
             }
             ToolbarSpacer(.fixed, placement: .topBarTrailing)
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                } label: {
-                    Text(mock.me.initials)
-                        .font(.system(size: 14, weight: .semibold))
-                }
-                .accessibilityLabel("Profile")
+                profileMenu
             }
         }
-    }
-
-    private func content(tick: Int) -> some View {
-        VStack(alignment: .leading, spacing: 22) {
-            hero(tick: tick)
-            liveStrip(tick: tick)
-            segmentRow
-            list(tick: tick)
+        .sheet(isPresented: $isShowingAddFriend) {
+            V4AddFriendSheet(model: model)
+                .environment(\.socialV4Theme, theme)
+                .tint(theme.accent)
+                .preferredColorScheme(.dark)
         }
-        .padding(.top, 4)
-        .padding(.bottom, 24)
     }
 
-    private func hero(tick: Int) -> some View {
-        let today: Int = mock.me.todaySeconds + tick
-        let goal: Int = max(mock.me.goalSeconds, 1)
+    private var profileMenu: some View {
+        Menu {
+            Picker("Theme", selection: $theme) {
+                ForEach(SocialV4Theme.allCases) { option in
+                    Text(option.title).tag(option)
+                }
+            }
+            Button("Close preview", role: .destructive, action: onClose)
+        } label: {
+            Text(model.me.initials)
+                .font(.subheadline.weight(.semibold))
+        }
+        .accessibilityLabel("Profile")
+    }
+
+    private func heroSection(date: Date) -> some View {
+        let today: Int = model.friends.first(where: \.isCurrentUser).map { model.todaySeconds(for: $0, at: date) } ?? 0
+        let goal: Int = max(model.me.goalSeconds, 1)
         let ratio: Double = Double(today) / Double(goal)
-        let percent: Int = Int(ratio * 100)
-        return HStack(alignment: .bottom) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Today")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.75))
-                Text(V4Format.duration(today))
-                    .font(.system(size: 64, weight: .light))
-                    .monospacedDigit()
-                    .tracking(-2.6)
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
-            }
-            Spacer(minLength: 12)
-            VStack(alignment: .trailing, spacing: 6) {
-                HStack(spacing: 4) {
-                    Image(systemName: "flame.fill")
-                    Text("\(mock.me.streakDays) days")
+        return Section {
+            HStack(alignment: .bottom) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Today")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+                    Text(V4Format.duration(today))
+                        .font(.system(size: 64, weight: .light))
+                        .monospacedDigit()
+                        .tracking(-2.6)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(SocialV4Theme.breakColor)
-                goalBar(ratio: ratio)
-                Text("\(percent)% of \(goal / 3600)h")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.75))
+                Spacer(minLength: 12)
+                VStack(alignment: .trailing, spacing: 6) {
+                    Label("\(model.me.streakDays) days", systemImage: "flame.fill")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(SocialV4Theme.breakColor)
+                    ProgressView(value: min(1, ratio))
+                        .tint(theme.accent)
+                        .frame(width: 96)
+                    Text("\(Int(ratio * 100))% of \(goal / 3600)h")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.bottom, 10)
             }
-            .padding(.bottom, 10)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
         }
-        .padding(.horizontal, 20)
     }
 
-    private func goalBar(ratio: Double) -> some View {
-        ZStack(alignment: .leading) {
-            Capsule()
-                .fill(.white.opacity(0.22))
-            Capsule()
-                .fill(theme.accent)
-                .frame(width: 96 * min(1, ratio))
-                .shadow(color: theme.accent.opacity(0.8), radius: 4)
-        }
-        .frame(width: 96, height: 3)
-    }
-
-    private func liveStrip(tick: Int) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+    private var liveSection: some View {
+        Section {
+            Group {
+                if model.stripFriends.isEmpty {
+                    Text("No friends are studying right now")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ScrollView(.horizontal) {
+                        HStack(alignment: .top, spacing: 18) {
+                            ForEach(model.stripFriends) { friend in
+                                V4LiveStripItem(friend: friend, model: model)
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                    }
+                    .scrollIndicators(.hidden)
+                }
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+        } header: {
             HStack {
                 Text("Studying now")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.white)
+                    .font(.headline)
                 Spacer()
-                Text("\(mock.stripFriends.count) of \(mock.friendCount) friends")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.7))
+                Text("\(model.stripFriends.count) of \(model.friendCount) friends")
+                    .font(.footnote)
             }
-            .padding(.horizontal, 20)
-            ScrollView(.horizontal) {
-                HStack(alignment: .top, spacing: 18) {
-                    ForEach(mock.stripFriends) { friend in
-                        V4LiveStripItem(friend: friend, tick: tick)
-                    }
+            .textCase(nil)
+        }
+    }
+
+    private func friendsSection(date: Date) -> some View {
+        Section {
+            ForEach(model.listFriends(for: segment)) { friend in
+                V4FriendRow(friend: friend, segment: segment, date: date, model: model)
+            }
+        } header: {
+            Picker("View", selection: $segment) {
+                ForEach(V4Segment.allCases, id: \.self) { option in
+                    Text(option.rawValue).tag(option)
                 }
-                .padding(.horizontal, 20)
             }
-            .scrollIndicators(.hidden)
+            .pickerStyle(.segmented)
+            .textCase(nil)
         }
-    }
-
-    private var segmentRow: some View {
-        Picker("View", selection: $segment) {
-            ForEach(V4Segment.allCases, id: \.self) { option in
-                Text(option.rawValue).tag(option)
-            }
-        }
-        .pickerStyle(.segmented)
-        .frame(width: 220)
-        .padding(.horizontal, 20)
-    }
-
-    private func list(tick: Int) -> some View {
-        VStack(spacing: 0) {
-            ForEach(mock.listFriends) { friend in
-                V4FriendRow(friend: friend, tick: tick)
-            }
-        }
-        .padding(.vertical, 6)
-        .v4Panel()
-        .padding(.horizontal, 12)
     }
 }
 

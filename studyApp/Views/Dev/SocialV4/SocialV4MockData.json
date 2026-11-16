@@ -1,5 +1,5 @@
 {
-  "me": { "initials": "BW", "todaySeconds": 9240, "goalSeconds": 14400, "streakDays": 5 },
+  "me": { "initials": "BW", "todaySeconds": 9240, "weekSeconds": 38500, "goalSeconds": 14400, "streakDays": 5 },
   "session": {
     "subjectName": "Data Structures",
     "subjectCode": "COMP2123",
@@ -10,35 +10,49 @@
     {
       "id": "priya", "initials": "PR", "name": "Priya Raman", "firstName": "Priya",
       "status": "studying", "subjectName": "Contracts", "subjectCode": "LAWS1006",
-      "sessionSeconds": 1112, "todaySeconds": 14520, "goalSeconds": 21600
+      "sessionSeconds": 1112, "todaySeconds": 14520, "weekSeconds": 36200, "goalSeconds": 21600
     },
     {
       "id": "maya", "initials": "MC", "name": "Maya Chen", "firstName": "Maya",
       "status": "studying", "subjectName": "Data Structures", "subjectCode": "COMP2123",
-      "sessionSeconds": 4368, "todaySeconds": 12000, "goalSeconds": 14400
+      "sessionSeconds": 4368, "todaySeconds": 12000, "weekSeconds": 41000, "goalSeconds": 14400
     },
     {
       "id": "me", "initials": "BW", "name": "You", "firstName": "You", "isMe": true,
       "status": "studying", "subjectName": "Data Structures", "subjectCode": "COMP2123",
-      "sessionSeconds": 2530, "todaySeconds": 9240, "goalSeconds": 14400
+      "sessionSeconds": 2530, "todaySeconds": 9240, "weekSeconds": 38500, "goalSeconds": 14400
     },
     {
       "id": "josh", "initials": "JP", "name": "Josh Patel", "firstName": "Josh",
       "status": "paused", "subjectName": "Cognitive Psych", "subjectCode": "PSYC2012",
-      "breakSeconds": 372, "todaySeconds": 7500, "goalSeconds": 14400
+      "breakSeconds": 372, "todaySeconds": 7500, "weekSeconds": 24100, "goalSeconds": 14400
     },
     {
       "id": "sam", "initials": "SO", "name": "Sam O’Connor", "firstName": "Sam",
       "status": "studying", "subjectName": "Linear Algebra", "subjectCode": "MATH1002",
-      "sessionSeconds": 2465, "todaySeconds": 6600, "goalSeconds": 14400
+      "sessionSeconds": 2465, "todaySeconds": 6600, "weekSeconds": 29800, "goalSeconds": 14400
     },
     {
       "id": "ella", "initials": "EN", "name": "Ella Nguyen", "firstName": "Ella",
-      "status": "offline", "lastSeen": "2h ago", "todaySeconds": 3900, "goalSeconds": 14400
+      "status": "offline", "lastSeen": "2h ago", "todaySeconds": 3900, "weekSeconds": 15600, "goalSeconds": 14400
     },
     {
       "id": "tom", "initials": "TB", "name": "Tom Becker", "firstName": "Tom",
-      "status": "offline", "lastSeen": "yesterday", "todaySeconds": 0, "goalSeconds": 14400
+      "status": "offline", "lastSeen": "yesterday", "todaySeconds": 0, "weekSeconds": 5400, "goalSeconds": 14400
+    }
+  ],
+  "suggestions": [
+    {
+      "id": "zoe", "initials": "ZH", "name": "Zoe Hartley", "firstName": "Zoe",
+      "status": "offline", "lastSeen": "3h ago", "todaySeconds": 5400, "weekSeconds": 21000, "goalSeconds": 14400
+    },
+    {
+      "id": "leo", "initials": "LK", "name": "Leo Kim", "firstName": "Leo",
+      "status": "offline", "lastSeen": "5h ago", "todaySeconds": 1800, "weekSeconds": 12600, "goalSeconds": 10800
+    },
+    {
+      "id": "aisha", "initials": "AK", "name": "Aisha Khan", "firstName": "Aisha",
+      "status": "offline", "lastSeen": "yesterday", "todaySeconds": 0, "weekSeconds": 18900, "goalSeconds": 14400
     }
   ]
 }

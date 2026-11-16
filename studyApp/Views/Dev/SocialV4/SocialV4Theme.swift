@@ -21,14 +21,6 @@ enum SocialV4Theme: String, CaseIterable, Identifiable {
         }
     }
 
-    var panelTint: Color {
-        switch self {
-        case .overcast: return Color(v4Hex: 0x1E2534, opacity: 0.32)
-        case .linen: return Color(v4Hex: 0x2C251D, opacity: 0.30)
-        case .dusk: return Color(v4Hex: 0x18142C, opacity: 0.32)
-        }
-    }
-
     var tabTint: Color {
         switch self {
         case .overcast: return Color(v4Hex: 0x343E54, opacity: 0.42)
@@ -91,42 +83,5 @@ struct SocialV4Background: View {
             )
         }
         .ignoresSafeArea()
-    }
-}
-
-private struct V4PanelModifier: ViewModifier {
-    @Environment(\.socialV4Theme) private var theme
-    let cornerRadius: CGFloat
-
-    func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        content
-            .background {
-                ZStack {
-                    shape.fill(.ultraThinMaterial)
-                    shape.fill(theme.panelTint)
-                }
-            }
-            .clipShape(shape)
-            .overlay {
-                shape.strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
-            }
-            .overlay {
-                // Fades out quickly so only the top edge reads as lit
-                shape.strokeBorder(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.14), Color.clear],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    ),
-                    lineWidth: 1
-                )
-            }
-    }
-}
-
-extension View {
-    func v4Panel(cornerRadius: CGFloat = 28) -> some View {
-        modifier(V4PanelModifier(cornerRadius: cornerRadius))
     }
 }

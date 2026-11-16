@@ -16,7 +16,7 @@ struct V4Avatar: View {
     }
 
     private var ringColor: Color? {
-        if isCurrentUser { return Color.white }
+        if isCurrentUser { return .primary }
         switch status {
         case .studying, .online: return theme.accent
         case .paused: return SocialV4Theme.breakColor
@@ -25,11 +25,11 @@ struct V4Avatar: View {
     }
 
     private var glowColor: Color {
-        if isCurrentUser { return Color.clear }
+        if isCurrentUser { return .clear }
         switch status {
         case .studying, .online: return theme.accent.opacity(0.45)
         case .paused: return SocialV4Theme.breakColor.opacity(0.45)
-        case .offline: return Color.clear
+        case .offline: return .clear
         }
     }
 
@@ -44,11 +44,14 @@ struct V4Avatar: View {
 
     var body: some View {
         ZStack {
-            Circle()
-                .fill(isCurrentUser ? theme.accent.opacity(0.30) : Color.white.opacity(0.16))
+            if isCurrentUser {
+                Circle().fill(theme.accent.opacity(0.30))
+            } else {
+                Circle().fill(.quaternary)
+            }
             Text(initials)
                 .font(.system(size: size * 0.34, weight: .semibold))
-                .foregroundStyle(status == .offline ? Color.white.opacity(0.72) : Color.white)
+                .foregroundStyle(status == .offline ? .secondary : .primary)
         }
         .frame(width: size, height: size)
         .overlay {
@@ -66,20 +69,21 @@ struct V4FriendRow: View {
     @Environment(\.socialV4Theme) private var theme
 
     let friend: SocialV4Mock.Friend
-    let tick: Int
+    let segment: V4Segment
+    let date: Date
+    let model: SocialV4PreviewModel
 
-    init(friend: SocialV4Mock.Friend, tick: Int) {
-        self.friend = friend
-        self.tick = tick
-    }
-
-    private var todayLive: Int {
-        friend.todaySeconds + (friend.isLive ? tick : 0)
+    private var valueSeconds: Int {
+        switch segment {
+        case .now: return model.todaySeconds(for: friend, at: date)
+        case .thisWeek: return model.weekSeconds(for: friend, at: date)
+        }
     }
 
     private var progress: Double {
-        guard friend.goalSeconds > 0 else { return 0 }
-        return min(1.0, Double(todayLive) / Double(friend.goalSeconds))
+        let target: Int = segment == .now ? friend.goalSeconds : friend.goalSeconds * 7
+        guard target > 0 else { return 0 }
+        return min(1.0, Double(valueSeconds) / Double(target))
     }
 
     private var fillBase: Color {
@@ -88,59 +92,64 @@ struct V4FriendRow: View {
 
     private var subtitle: String {
         switch friend.status {
-        case .studying, .online:
+        case .studying:
             return "\(friend.subjectName ?? "Studying") · live"
         case .paused:
-            let minutes: Int = ((friend.breakSeconds ?? 0) + tick) / 60
-            return "On a break · \(minutes)m"
+            return "On a break · \(model.breakSeconds(for: friend, at: date) / 60)m"
+        case .online:
+            return "Online"
         case .offline:
             return "Last seen \(friend.lastSeen ?? "a while ago")"
         }
     }
 
-    private var subtitleColor: Color {
-        friend.status == .paused ? SocialV4Theme.breakColor : Color.white.opacity(0.72)
+    private var nameStyle: AnyShapeStyle {
+        if friend.isCurrentUser { return AnyShapeStyle(theme.accent) }
+        return friend.status == .offline ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary)
     }
 
-    private var nameColor: Color {
-        if friend.isCurrentUser { return theme.accent }
-        return friend.status == .offline ? Color.white.opacity(0.75) : Color.white
+    private var subtitleStyle: AnyShapeStyle {
+        friend.status == .paused ? AnyShapeStyle(SocialV4Theme.breakColor) : AnyShapeStyle(.secondary)
     }
 
     var body: some View {
-        HStack(spacing: 12) {
-            V4Avatar(
-                initials: friend.initials,
-                status: friend.status,
-                size: 40,
-                isCurrentUser: friend.isCurrentUser
-            )
-            VStack(alignment: .leading, spacing: 2) {
-                Text(friend.name)
-                    .font(.system(size: 17, weight: .semibold))
-                    .tracking(-0.3)
-                    .foregroundStyle(nameColor)
-                    .lineLimit(1)
-                Text(subtitle)
-                    .font(.system(size: 14))
-                    .foregroundStyle(subtitleColor)
-                    .lineLimit(1)
+        NavigationLink(value: friend.id) {
+            HStack(spacing: 12) {
+                V4Avatar(
+                    initials: friend.initials,
+                    status: friend.status,
+                    size: 40,
+                    isCurrentUser: friend.isCurrentUser
+                )
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(friend.name)
+                        .font(.headline)
+                        .foregroundStyle(nameStyle)
+                        .lineLimit(1)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(subtitleStyle)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 8)
+                Text(V4Format.duration(valueSeconds))
+                    .font(.callout.weight(.medium))
+                    .monospacedDigit()
+                    .foregroundStyle(friend.status == .offline ? .secondary : .primary)
             }
-            Spacer(minLength: 8)
-            Text(V4Format.duration(todayLive))
-                .font(.system(size: 16, weight: .medium, design: .monospaced))
-                .foregroundStyle(friend.status == .offline ? Color.white.opacity(0.70) : Color.white)
         }
-        .padding(.horizontal, 16)
-        .frame(height: 62)
-        .background(alignment: .leading) {
+        .listRowBackground(rowBackground)
+    }
+
+    private var rowBackground: some View {
+        ZStack(alignment: .leading) {
+            Rectangle().fill(.ultraThinMaterial)
             if friend.status != .offline {
                 GeometryReader { proxy in
                     goalFill(width: proxy.size.width * CGFloat(progress))
                 }
             }
         }
-        .accessibilityElement(children: .combine)
     }
 
     private func goalFill(width: CGFloat) -> some View {
@@ -163,97 +172,118 @@ struct V4FriendRow: View {
 
 struct V4LiveStripItem: View {
     let friend: SocialV4Mock.Friend
-    let tick: Int
-
-    init(friend: SocialV4Mock.Friend, tick: Int) {
-        self.friend = friend
-        self.tick = tick
-    }
+    let model: SocialV4PreviewModel
 
     var body: some View {
-        VStack(spacing: 4) {
-            V4Avatar(
-                initials: friend.initials,
-                status: friend.status,
-                size: 60,
-                isCurrentUser: friend.isCurrentUser
-            )
-            Text(friend.firstName)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Color.white)
-                .lineLimit(1)
-            if friend.status == .paused {
-                Text("break")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(SocialV4Theme.breakColor)
-            } else {
-                Text(V4Format.clock((friend.sessionSeconds ?? 0) + tick))
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(Color.white.opacity(0.78))
+        NavigationLink(value: friend.id) {
+            VStack(spacing: 4) {
+                V4Avatar(
+                    initials: friend.initials,
+                    status: friend.status,
+                    size: 60,
+                    isCurrentUser: friend.isCurrentUser
+                )
+                Text(friend.firstName)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                clock
+                    .font(.caption2.weight(.medium))
+                    .monospacedDigit()
             }
+            .frame(width: 60)
+            .accessibilityElement(children: .combine)
         }
-        .frame(width: 60)
-        .accessibilityElement(children: .combine)
+        .buttonStyle(.plain)
     }
-}
 
-enum V4Segment: String, CaseIterable {
-    case now = "Now"
-    case thisWeek = "This week"
+    @ViewBuilder
+    private var clock: some View {
+        if friend.status == .paused {
+            Text("break")
+                .foregroundStyle(SocialV4Theme.breakColor)
+        } else if let start = model.sessionStartDate(for: friend) {
+            Text(start, style: .timer)
+                .foregroundStyle(.secondary)
+        }
+    }
 }
 
 struct V4SessionAccessory: View {
     @Environment(\.socialV4Theme) private var theme
+    @Environment(\.tabViewBottomAccessoryPlacement) private var placement
 
-    let session: SocialV4Mock.Session
-    let tick: Int
+    let model: SocialV4PreviewModel
+    let onOpen: () -> Void
 
-    init(session: SocialV4Mock.Session, tick: Int) {
-        self.session = session
-        self.tick = tick
+    private var isInline: Bool { placement == .inline }
+
+    var body: some View {
+        if let session = model.session {
+            activeContent(session)
+        } else {
+            Button {
+                model.startSession()
+            } label: {
+                Label("Start session", systemImage: "play.fill")
+                    .font(.subheadline.weight(.semibold))
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal)
+        }
     }
 
-    private var withText: String {
+    private func activeContent(_ session: SocialV4Mock.Session) -> some View {
+        HStack(spacing: 8) {
+            Button(action: onOpen) {
+                HStack(spacing: 10) {
+                    Image(systemName: "book.closed.circle.fill")
+                        .symbolRenderingMode(.palette)
+                        .foregroundStyle(SocialV4Theme.ink, theme.accent)
+                        .font(.title2)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(session.subjectName)
+                            .font(.subheadline.weight(.semibold))
+                            .lineLimit(1)
+                        if !isInline {
+                            Text(withText(session))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                    }
+                    Spacer(minLength: 8)
+                    Text(timerInterval: model.sessionTimerRange, pauseTime: model.pausedAt, countsDown: false)
+                        .font(.headline)
+                        .monospacedDigit()
+                        .foregroundStyle(theme.accent)
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                model.togglePause()
+            } label: {
+                Image(systemName: model.isPaused ? "play.fill" : "pause.fill")
+                    .contentTransition(.symbolEffect(.replace))
+                    .font(.title3)
+                    .frame(width: 40, height: 40)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(model.isPaused ? "Resume" : "Pause")
+        }
+        .padding(.horizontal)
+    }
+
+    private func withText(_ session: SocialV4Mock.Session) -> String {
         let names: [String] = session.withNames
         guard let last = names.last else { return session.subjectCode }
         if names.count == 1 { return "with \(last)" }
         let head: String = names.dropLast().joined(separator: ", ")
         return "with \(head) & \(last)"
-    }
-
-    var body: some View {
-        Button {
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "book.closed.fill")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(SocialV4Theme.ink)
-                    .frame(width: 32, height: 32)
-                    .background(Circle().fill(theme.accent))
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(session.subjectName)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.white)
-                        .lineLimit(1)
-                    Text(withText)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Color.white.opacity(0.72))
-                        .lineLimit(1)
-                }
-                Spacer(minLength: 8)
-                Text(V4Format.clock(session.elapsedSeconds + tick))
-                    .font(.system(size: 17, weight: .medium, design: .monospaced))
-                    .foregroundStyle(theme.accent)
-                Image(systemName: "pause.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(Color.white)
-                    .frame(width: 40, height: 40)
-            }
-            .padding(.horizontal, 8)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("Current session, \(session.subjectName), \(withText)")
     }
 }
 
