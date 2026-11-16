@@ -29,7 +29,7 @@ import os
 /// > wrong phase return without effect.
 @Observable
 final class StudyTrackingViewModel {
-    private(set) var activeSession: StudySession?
+    private var activeSession: StudySession?
     private(set) var focusTarget: FocusTarget?
     private(set) var selectedSubject: Subject?
     /// Set when a transition's save throws; clear it with ``dismissSaveError()``.
@@ -53,6 +53,8 @@ final class StudyTrackingViewModel {
         }
     }
 
+    var activeSessionID: UUID? { activeSession?.id }
+
     var hasActiveSession: Bool { activeSession != nil }
 
     var canSelectSubject: Bool { !hasActiveSession }
@@ -66,9 +68,14 @@ final class StudyTrackingViewModel {
             return .breakElapsed(since: pausedAt)
         case .running:
             guard let anchor = timing.elapsedAnchor else { return .idle }
-            guard let focusTarget else { return .elapsed(since: anchor) }
-            let deadline = anchor.addingTimeInterval(focusTarget.activeElapsedAtStart + focusTarget.duration)
-            return .countdown(until: deadline, total: focusTarget.duration)
+            guard let focusTarget else {
+                return .elapsed(timing: timing, tickOrigin: anchor)
+            }
+            return .countdown(
+                timing: timing,
+                target: focusTarget,
+                tickOrigin: anchor.addingTimeInterval(focusTarget.activeElapsedAtStart)
+            )
         }
     }
 

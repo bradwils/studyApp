@@ -39,7 +39,7 @@ struct FocusSessionScreen: View {
                 screenState.reconcile(availablePages: pages)
             }
         }
-        .onChange(of: vm.activeSession?.id) {
+        .onChange(of: vm.activeSessionID) {
             screenState.sessionIdentityDidChange()
         }
         .alert("Couldn't Save", isPresented: isShowingSaveError) {

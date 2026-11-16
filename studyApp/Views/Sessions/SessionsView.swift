@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct SessionsView: View {
+    let activeSessionID: UUID?
     
     @State private var vm = SessionViewerViewModel()
     
@@ -21,10 +22,10 @@ struct SessionsView: View {
                         } label: {
                             sessionRow(session)
                         }
-                        .deleteDisabled(session.endedAt == nil)
+                        .deleteDisabled(session.id == activeSessionID)
                     }
                     .onDelete { offsets in
-                        vm.deleteSessions(offsets.map { sessions[$0] }, context: context)
+                        vm.deleteSessions(offsets.map { sessions[$0] }, activeSessionID: activeSessionID, context: context)
                     }
                 }
             }
@@ -33,7 +34,7 @@ struct SessionsView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Remove Sessions", role: .destructive) {
-                    vm.removeAllSessions(context: context)
+                    vm.removeAllSessions(activeSessionID: activeSessionID, context: context)
                 }
             }
         }
@@ -47,7 +48,7 @@ struct SessionsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             if session.endedAt == nil {
-                Text("In progress")
+                Text(session.id == activeSessionID ? "In progress" : "Unfinished")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -61,7 +62,7 @@ struct SessionsView: View {
 
 #Preview {
     NavigationStack {
-        SessionsView()
+        SessionsView(activeSessionID: nil)
     }
     .modelContainer(for: StudySession.self, inMemory: true)
 }

@@ -28,16 +28,16 @@ struct SessionTimerText: View {
         case .idle:
             Text("--:--")
                 .accessibilityLabel("No active session")
-        case .elapsed(let since):
-            countUp(since: since)
+        case .elapsed(let timing, let tickOrigin):
+            studyElapsed(timing: timing, tickOrigin: tickOrigin)
                 .accessibilityLabel("Study time")
                 .accessibilityAddTraits(.updatesFrequently)
         case .breakElapsed(let since):
             countUp(since: since)
                 .accessibilityLabel("Break time")
                 .accessibilityAddTraits(.updatesFrequently)
-        case .countdown(let until, let total):
-            countdown(until: until, total: total)
+        case .countdown(let timing, let target, let tickOrigin):
+            countdown(timing: timing, target: target, tickOrigin: tickOrigin)
                 .accessibilityLabel("Focus time remaining")
                 .accessibilityAddTraits(.updatesFrequently)
         }
@@ -54,12 +54,18 @@ struct SessionTimerText: View {
         }
     }
 
-    // The countdown's grid is anchored to its start (`until - total`, a past date) so ticks
-    // land on the same second boundaries as the remaining time. Rounding to the nearest
-    // second stops the display showing one second less than it should for most of each second.
-    private func countdown(until: Date, total: TimeInterval) -> some View {
-        TimelineView(.periodic(from: until.addingTimeInterval(-total), by: 1)) { context in
-            let remaining = max(0, until.timeIntervalSince(context.date)).rounded()
+    private func studyElapsed(timing: SessionTiming, tickOrigin: Date) -> some View {
+        TimelineView(.periodic(from: tickOrigin, by: 1)) { context in
+            digits(timing.activeElapsed(at: context.date), countsDown: false)
+        }
+    }
+
+    private func countdown(timing: SessionTiming, target: FocusTarget, tickOrigin: Date) -> some View {
+        TimelineView(.periodic(from: tickOrigin, by: 1)) { context in
+            // Preserve the segment and target clamps when the wall clock moves backwards.
+            let remaining = target.remaining(
+                sessionActiveElapsed: timing.activeElapsed(at: context.date)
+            ).rounded()
             digits(remaining, countsDown: true)
         }
     }

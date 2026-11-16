@@ -53,7 +53,7 @@ struct StudySessionTests {
 		#expect(stored.count == 1)
 
 		let session = try #require(stored.first)
-		#expect(session.id == vm.activeSession?.id)
+		#expect(session.id == vm.activeSessionID)
 		#expect(session.subject?.id == subject.id)
 		#expect(session.subjectName == "testing_subject")
 		#expect(session.endedAt == nil)
@@ -130,6 +130,68 @@ struct StudySessionTests {
 	}
 
 	@MainActor
+	@Test("Timer snapshots retain accumulated study time after a backwards clock change")
+	func timerSnapshotsClampAfterResume() throws {
+		let container = try makeContainer()
+		let context = container.mainContext
+		let start = Date(timeIntervalSinceReferenceDate: 1_000)
+		var current = start
+		let vm = StudyTrackingViewModel(now: { current })
+		vm.startSession(context: context)
+		#expect(vm.startFocusTarget(duration: 1_200))
+		current = start.addingTimeInterval(600)
+		vm.pauseSession(context: context)
+		current = start.addingTimeInterval(720)
+		vm.resumeSession(context: context)
+
+		guard case .countdown(let timing, let target, let tickOrigin) = vm.timerDisplay else {
+			Issue.record("Expected a countdown snapshot")
+			return
+		}
+		#expect(tickOrigin == start.addingTimeInterval(120))
+		let tick = start.addingTimeInterval(660)
+		let elapsed = timing.activeElapsed(at: tick)
+		#expect(elapsed == 600)
+		#expect(elapsed == vm.activeElapsed(at: tick))
+		#expect(target.remaining(sessionActiveElapsed: elapsed) == 600)
+		#expect(target.progress(sessionActiveElapsed: elapsed) == vm.focusProgress(at: tick))
+		#expect(vm.focusProgress(at: tick) == 0.5)
+
+		vm.resetFocusTarget()
+		guard case .elapsed(let studyTiming, let studyTickOrigin) = vm.timerDisplay else {
+			Issue.record("Expected a study-time snapshot")
+			return
+		}
+		#expect(studyTickOrigin == start.addingTimeInterval(120))
+		#expect(studyTiming.activeElapsed(at: tick) == 600)
+		#expect(studyTiming.activeElapsed(at: tick) == vm.activeElapsed(at: tick))
+	}
+
+	@MainActor
+	@Test("Countdown snapshots clamp a clock change before the target start")
+	func countdownSnapshotClampsBeforeTargetStart() throws {
+		let container = try makeContainer()
+		let start = Date(timeIntervalSinceReferenceDate: 1_000)
+		var current = start
+		let vm = StudyTrackingViewModel(now: { current })
+		vm.startSession(context: container.mainContext)
+		current = start.addingTimeInterval(60)
+		#expect(vm.startFocusTarget(duration: 300))
+
+		guard case .countdown(let timing, let target, let tickOrigin) = vm.timerDisplay else {
+			Issue.record("Expected a countdown snapshot")
+			return
+		}
+		#expect(tickOrigin == current)
+		let tick = start.addingTimeInterval(30)
+		let elapsed = timing.activeElapsed(at: tick)
+		#expect(elapsed == 30)
+		#expect(target.remaining(sessionActiveElapsed: elapsed) == 300)
+		#expect(target.progress(sessionActiveElapsed: elapsed) == vm.focusProgress(at: tick))
+		#expect(vm.focusProgress(at: tick) == 0)
+	}
+
+	@MainActor
 	@Test("Finishing a StudySession clears the view model's session state")
 	func startAndEndSessionWithClearVars() throws {
 		let container = try makeContainer()
@@ -143,7 +205,7 @@ struct StudySessionTests {
 		vm.finishSession(context: context)
 
 		#expect(try context.fetch(FetchDescriptor<StudySession>()).count == 1)
-		#expect(vm.activeSession == nil)
+		#expect(vm.activeSessionID == nil)
 		#expect(vm.focusTarget == nil)
 		#expect(vm.phase == .idle)
 		#expect(vm.timerDisplay == .idle)

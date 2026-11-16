@@ -2,12 +2,6 @@ import SwiftUI
 
 /// The session timer drawn above the pager at a fixed position.
 ///
-/// ## Declaration
-///
-/// ```swift
-/// struct PinnedTimerView: View
-/// ```
-///
 /// Hit testing is off, so drags starting over the digits still reach the pager.
 struct PinnedTimerView: View {
 	let display: TimerDisplay
@@ -48,6 +42,7 @@ struct PinnedTimerView: View {
 }
 
 #Preview {
-	PinnedTimerView(display: .elapsed(since: .now.addingTimeInterval(-754)))
+	let start = Date.now.addingTimeInterval(-754)
+	PinnedTimerView(display: .elapsed(timing: .started(at: start), tickOrigin: start))
 		.background(TimerGradientBackground(progress: 0.3, isTimerActive: false).ignoresSafeArea())
 }
