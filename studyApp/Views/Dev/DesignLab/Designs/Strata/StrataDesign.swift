@@ -6,55 +6,43 @@
 
 import SwiftUI
 
-struct StrataDesign: View {
-
-    let session: FocusLabSession
-
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var pageOffset: CGFloat = 0
-    @State private var page: Int? = 0
+struct StrataDesign: FocusLabScreen {
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 80
-    @ScaledMetric(relativeTo: .largeTitle) private var timerSlotHeight: CGFloat = 100
 
-    private var blend: CGFloat {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return pageOffset
+    func backdrop(_ context: FocusLabContext) -> some View {
+        StrataBackdrop(session: context.session, blend: context.blend, metrics: context.metrics)
     }
 
-    var body: some View {
-        FocusLabStage { metrics in
-            backdrop(metrics)
-        } content: { _ in
-            pager
-        }
+    func timer(_ context: FocusLabContext) -> some View {
+        FocusLabClock(session: context.session, idleText: "0:00", digitWidth: timerSize * 0.56)
+            .font(Font.custom("DINAlternate-Bold", size: 80, relativeTo: .largeTitle))
+            .foregroundStyle(StrataPalette.ink)
+            .padding(.leading, StrataLayout.contentX)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var pager: some View {
-        FocusLabPager(
-            pageOffset: $pageOffset,
-            page: $page,
-            showsFocusPage: session.hasSession,
-            isLocked: session.isLocked
-        ) {
-            StrataTrackingPage(session: session, slotHeight: timerSlotHeight)
-        } focus: {
-            StrataFocusPage(session: session, slotHeight: timerSlotHeight)
-        }
+    func trackingHeader(_ context: FocusLabContext) -> some View {
+        StrataTrackingHeader(session: context.session)
     }
 
-    private func backdrop(_ metrics: FocusLabStageMetrics) -> some View {
-        StrataBackdrop(
-            session: session,
-            blend: blend,
-            metrics: metrics,
-            timerSize: timerSize,
-            timerSlotHeight: timerSlotHeight
-        )
+    func trackingBody(_ context: FocusLabContext) -> some View {
+        StrataTrackingPage(session: context.session)
+    }
+
+    func focusHeader(_ context: FocusLabContext) -> some View {
+        Text(context.session.selectedSubject.code)
+            .font(StrataFont.sans(20, .semibold))
+            .foregroundStyle(StrataPalette.ink)
+            .padding(.horizontal, StrataLayout.contentX)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    func focusBody(_ context: FocusLabContext) -> some View {
+        StrataFocusPage(session: context.session)
     }
 }
 
 #Preview {
-    StrataDesign(session: FocusLabSession())
+    FocusLabScaffold(session: FocusLabSession(), design: StrataDesign())
 }

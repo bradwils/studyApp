@@ -1,7 +1,7 @@
 //  StrataBackdrop.swift
 //  studyApp
 //
-//  DEV ONLY — Strata's fixed layer: the stack of bands, their labels and the pinned timer.
+//  DEV ONLY — Strata's fixed layer: the stack of bands and their labels.
 
 import SwiftUI
 
@@ -10,14 +10,11 @@ struct StrataBackdrop: View {
     let session: FocusLabSession
     let blend: CGFloat
     let metrics: FocusLabStageMetrics
-    let timerSize: CGFloat
-    let timerSlotHeight: CGFloat
 
     var body: some View {
         let full: CGSize = metrics.fullSize
         ZStack(alignment: .topLeading) {
             stack(full: full)
-            timer
         }
         .frame(width: full.width, height: full.height, alignment: .topLeading)
     }
@@ -41,19 +38,6 @@ struct StrataBackdrop: View {
                 StrataBandLabels(bands: bands, width: full.width, opacity: labelOpacity)
             }
         }
-    }
-
-    private var timer: some View {
-        let top: CGFloat = metrics.backdropY(StrataLayout.timerTop)
-        let leading: CGFloat = metrics.backdropX(StrataLayout.contentX)
-        let digitWidth: CGFloat = timerSize * 0.56
-        return FocusLabClock(session: session, idleText: "0:00", digitWidth: digitWidth)
-            .font(Font.custom("DINAlternate-Bold", size: 80, relativeTo: .largeTitle))
-            .foregroundStyle(StrataPalette.ink)
-            .frame(height: timerSlotHeight, alignment: .leading)
-            .padding(.top, top)
-            .padding(.leading, leading)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 }
 

@@ -23,9 +23,6 @@ enum StrataPalette {
 }
 
 enum StrataLayout {
-    static let headerHeight: CGFloat = 60
-    static let slotGap: CGFloat = 8
-    static let timerTop: CGFloat = 68
     static let contentX: CGFloat = 24
 }
 

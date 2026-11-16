@@ -1,23 +1,16 @@
 //  StrataTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Strata's tracking page. Transparent; the timer slot is left empty and the
-//  stack shows through below the buttons.
+//  DEV ONLY — Strata's tracking page. Transparent; the stack shows through below the buttons.
 
 import SwiftUI
 
 struct StrataTrackingPage: View {
 
     let session: FocusLabSession
-    let slotHeight: CGFloat
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            subjectHeader
-                .frame(height: StrataLayout.headerHeight, alignment: .leading)
-            Color.clear
-                .frame(height: slotHeight)
-                .padding(.top, StrataLayout.slotGap)
             status
                 .padding(.top, 4)
             buttons
@@ -28,39 +21,6 @@ struct StrataTrackingPage: View {
         }
         .padding(.horizontal, StrataLayout.contentX)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    // MARK: - Header
-
-    @ViewBuilder
-    private var subjectHeader: some View {
-        if session.hasSession {
-            Text(session.selectedSubject.name)
-                .font(StrataFont.sans(20, .semibold))
-                .foregroundStyle(StrataPalette.ink)
-                .frame(minHeight: 44, alignment: .leading)
-        } else {
-            Menu {
-                ForEach(session.subjects) { subject in
-                    Button(subject.name) { session.selectedSubject = subject }
-                }
-            } label: {
-                subjectLabel
-            }
-        }
-    }
-
-    private var subjectLabel: some View {
-        HStack(spacing: 6) {
-            Text(session.selectedSubject.name)
-                .font(StrataFont.sans(20, .semibold))
-                .foregroundStyle(StrataPalette.ink)
-            Image(systemName: "chevron.down")
-                .font(StrataFont.sans(12, .semibold))
-                .foregroundStyle(StrataPalette.smoke)
-        }
-        .frame(minHeight: 44)
-        .contentShape(Rectangle())
     }
 
     // MARK: - Status
@@ -151,5 +111,47 @@ struct StrataTrackingPage: View {
         .padding(.vertical, 12)
         .frame(maxWidth: .infinity)
         .background(StrataPalette.seam, in: RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+struct StrataTrackingHeader: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
+        subjectHeader
+            .padding(.horizontal, StrataLayout.contentX)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var subjectHeader: some View {
+        if session.hasSession {
+            Text(session.selectedSubject.name)
+                .font(StrataFont.sans(20, .semibold))
+                .foregroundStyle(StrataPalette.ink)
+                .frame(minHeight: 44, alignment: .leading)
+        } else {
+            Menu {
+                ForEach(session.subjects) { subject in
+                    Button(subject.name) { session.selectedSubject = subject }
+                }
+            } label: {
+                subjectLabel
+            }
+        }
+    }
+
+    private var subjectLabel: some View {
+        HStack(spacing: 6) {
+            Text(session.selectedSubject.name)
+                .font(StrataFont.sans(20, .semibold))
+                .foregroundStyle(StrataPalette.ink)
+            Image(systemName: "chevron.down")
+                .font(StrataFont.sans(12, .semibold))
+                .foregroundStyle(StrataPalette.smoke)
+        }
+        .frame(minHeight: 44)
+        .contentShape(Rectangle())
     }
 }
