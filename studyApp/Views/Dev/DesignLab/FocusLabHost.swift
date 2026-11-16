@@ -35,6 +35,7 @@ struct FocusLabHost: View {
 
     // MARK: - Lab bar
 
+    // A fixed dark capsule rather than glass, so it reads the same over every design's bottom edge.
     private var labBar: some View {
         HStack(spacing: 4) {
             barButton("xmark", label: "Close") { dismiss() }
@@ -46,7 +47,7 @@ struct FocusLabHost: View {
                     .font(.subheadline.weight(.semibold))
                 Text("\(position + 1) of \(FocusLabDesign.allCases.count)")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.white.opacity(0.6))
             }
             .lineLimit(1)
             .frame(maxWidth: .infinity)
@@ -57,7 +58,9 @@ struct FocusLabHost: View {
         }
         .padding(.horizontal, 6)
         .padding(.vertical, 4)
-        .glassEffect()
+        .foregroundStyle(.white)
+        .tint(.white)
+        .background(Color.black.opacity(0.62), in: Capsule())
         .padding(.horizontal, 20)
         .padding(.bottom, 4)
     }
