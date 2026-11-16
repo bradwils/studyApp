@@ -6,52 +6,40 @@
 
 import SwiftUI
 
-struct MarginDesign: View {
-
-    let session: FocusLabSession
+struct MarginDesign: FocusLabScreen {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @State private var pageOffset: CGFloat = 0
-    @State private var page: Int? = 0
-
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 92
-    @ScaledMetric(relativeTo: .largeTitle) private var timerSlotHeight: CGFloat = 112
 
-    private var blend: CGFloat {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return pageOffset
+    func chromeScheme(blend: CGFloat) -> ColorScheme? {
+        blend < 0.5 ? .light : .dark
     }
 
-    var body: some View {
-        FocusLabStage { metrics in
-            backdrop(metrics)
-        } content: { _ in
-            pager
-        }
-        .focusLabChrome(blend < 0.5 ? .light : .dark)
+    func timer(_ context: FocusLabContext) -> some View {
+        EmptyView()
     }
 
-    // MARK: - Pager
-
-    private var pager: some View {
-        FocusLabPager(
-            pageOffset: $pageOffset,
-            page: $page,
-            showsFocusPage: session.hasSession,
-            isLocked: session.isLocked
-        ) {
-            MarginTrackingPage(session: session, slotHeight: timerSlotHeight)
-        } focus: {
-            MarginFocusPage(session: session, slotHeight: timerSlotHeight)
-        }
+    func trackingHeader(_ context: FocusLabContext) -> some View {
+        MarginTrackingHeader(session: context.session)
     }
 
-    // MARK: - Backdrop
+    func trackingBody(_ context: FocusLabContext) -> some View {
+        MarginTrackingPage(session: context.session)
+    }
 
-    private func backdrop(_ metrics: FocusLabStageMetrics) -> some View {
+    func focusHeader(_ context: FocusLabContext) -> some View {
+        MarginFocusHeader(session: context.session)
+    }
+
+    func focusBody(_ context: FocusLabContext) -> some View {
+        MarginFocusPage(session: context.session)
+    }
+
+    func backdrop(_ context: FocusLabContext) -> some View {
+        let metrics: FocusLabStageMetrics = context.metrics
         let full: CGSize = metrics.fullSize
-        let edgeX: CGFloat = full.width * (1 - blend)
+        let edgeX: CGFloat = full.width * (1 - context.blend)
         let inkWidth: CGFloat = full.width - edgeX
         let ruleX: CGFloat = metrics.backdropX(MarginLayout.marginX)
         return ZStack(alignment: .topLeading) {
@@ -63,22 +51,22 @@ struct MarginDesign: View {
                 .mask {
                     MarginBar(color: Color.black, width: inkWidth, alignment: .trailing, full: full)
                 }
-            timers(metrics, edgeX: edgeX)
+            timers(context, edgeX: edgeX)
         }
         .frame(width: full.width, height: full.height, alignment: .topLeading)
     }
 
-    private func timers(_ metrics: FocusLabStageMetrics, edgeX: CGFloat) -> some View {
-        let full: CGSize = metrics.fullSize
+    private func timers(_ context: FocusLabContext, edgeX: CGFloat) -> some View {
+        let full: CGSize = context.metrics.fullSize
         let inkWidth: CGFloat = full.width - edgeX
-        return TimelineView(.periodic(from: .now, by: 1)) { context in
-            let fraction: Double = strokeFraction(at: context.date)
+        return TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            let fraction: Double = strokeFraction(context.session, at: timeline.date)
             ZStack(alignment: .topLeading) {
-                timerCopy(onInk: false, fraction: fraction, metrics: metrics)
+                timerCopy(onInk: false, fraction: fraction, context: context)
                     .mask {
                         MarginBar(color: Color.black, width: edgeX, alignment: .leading, full: full)
                     }
-                timerCopy(onInk: true, fraction: fraction, metrics: metrics)
+                timerCopy(onInk: true, fraction: fraction, context: context)
                     .mask {
                         MarginBar(color: Color.black, width: inkWidth, alignment: .trailing, full: full)
                     }
@@ -87,21 +75,22 @@ struct MarginDesign: View {
         }
     }
 
-    private func timerCopy(onInk: Bool, fraction: Double, metrics: FocusLabStageMetrics) -> MarginTimer {
-        MarginTimer(
-            session: session,
+    private func timerCopy(onInk: Bool, fraction: Double, context: FocusLabContext) -> MarginTimer {
+        let rect: CGRect = context.timerBackdropRect
+        return MarginTimer(
+            session: context.session,
             onInk: onInk,
             fraction: fraction,
             animates: !reduceMotion,
             size: timerSize,
-            slotHeight: timerSlotHeight,
-            top: metrics.backdropY(MarginLayout.timerTop),
-            leading: metrics.backdropX(MarginLayout.contentX),
-            full: metrics.fullSize
+            slotHeight: rect.height,
+            top: rect.minY,
+            leading: context.metrics.backdropX(MarginLayout.contentX),
+            full: context.metrics.fullSize
         )
     }
 
-    private func strokeFraction(at date: Date) -> Double {
+    private func strokeFraction(_ session: FocusLabSession, at date: Date) -> Double {
         if let progress = session.focusProgress(at: date) { return progress }
         guard session.hasSession else { return 0 }
         let elapsed: TimeInterval = session.studyElapsed(at: date)
@@ -110,5 +99,5 @@ struct MarginDesign: View {
 }
 
 #Preview {
-    MarginDesign(session: FocusLabSession())
+    FocusLabScaffold(session: FocusLabSession(), design: MarginDesign())
 }

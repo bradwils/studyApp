@@ -1,39 +1,15 @@
 //  MarginTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Margin's tracking page. Transparent; the timer slot is left empty.
+//  DEV ONLY — Margin's tracking page header and body. Transparent; the timer is drawn in the backdrop.
 
 import SwiftUI
 
-struct MarginTrackingPage: View {
+struct MarginTrackingHeader: View {
 
     let session: FocusLabSession
-    let slotHeight: CGFloat
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-                .frame(height: MarginLayout.headerHeight, alignment: .topLeading)
-            Color.clear
-                .frame(height: slotHeight)
-                .padding(.top, 24)
-            caption
-                .padding(.top, 10)
-            ledger
-                .padding(.top, 32)
-            buttons
-                .padding(.top, 36)
-            Spacer(minLength: 0)
-        }
-        .padding(.top, MarginLayout.topInset)
-        .padding(.leading, MarginLayout.contentX)
-        .padding(.trailing, MarginLayout.trailing)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    // MARK: - Header
-
-    private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             subjectName
                 .frame(minHeight: 44, alignment: .leading)
@@ -41,6 +17,9 @@ struct MarginTrackingPage: View {
                 .font(MarginFont.sans(13, .regular))
                 .foregroundStyle(MarginPalette.graphite)
         }
+        .padding(.leading, MarginLayout.contentX)
+        .padding(.trailing, MarginLayout.trailing)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -70,6 +49,26 @@ struct MarginTrackingPage: View {
             }
         }
         .contentShape(Rectangle())
+    }
+}
+
+struct MarginTrackingPage: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            caption
+                .padding(.top, 10)
+            ledger
+                .padding(.top, 32)
+            buttons
+                .padding(.top, 36)
+        }
+        .padding(.top, 24)
+        .padding(.leading, MarginLayout.contentX)
+        .padding(.trailing, MarginLayout.trailing)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     // MARK: - Caption
