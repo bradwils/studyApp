@@ -1,76 +1,112 @@
 import SwiftUI
 
-struct SocialV4NowView: View {
+// A standalone TabView so the preview gets the real iOS 26 tab bar and bottom accessory,
+// which can't be driven from a view pushed inside MainTabView.
+struct SocialV4PreviewShell: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var theme: SocialV4Theme = .overcast
-    @State private var segment: V4Segment = .now
+    @State private var selectedTab: AppTab = .social
     @State private var mock = SocialV4Mock.load()
     @State private var loadedAt = Date()
 
     var body: some View {
-        TimelineView(.periodic(from: loadedAt, by: 1)) { context in
-            screen(tick: Int(context.date.timeIntervalSince(loadedAt)))
+        TabView(selection: $selectedTab) {
+            Tab("Focus", systemImage: "book.badge.plus", value: AppTab.focus, role: .search) {
+                placeholder("Focus", systemImage: "book.badge.plus")
+            }
+            Tab("Debug", systemImage: "exclamationmark.triangle.fill", value: AppTab.debug) {
+                NavigationStack {
+                    previewControls
+                }
+            }
+            Tab("Social", systemImage: "figure.2", value: AppTab.social) {
+                NavigationStack {
+                    SocialV4NowView(mock: mock, loadedAt: loadedAt)
+                }
+            }
+            Tab("Groups", systemImage: "person.3.fill", value: AppTab.groups) {
+                placeholder("Groups", systemImage: "person.3.fill")
+            }
+            Tab("Sessions", systemImage: "clock.arrow.circlepath", value: AppTab.sessions) {
+                placeholder("Sessions", systemImage: "clock.arrow.circlepath")
+            }
         }
+        .tabBarMinimizeBehavior(.onScrollDown)
+        .tabViewBottomAccessory {
+            TimelineView(.periodic(from: loadedAt, by: 1)) { context in
+                V4SessionAccessory(session: mock.session, tick: Int(context.date.timeIntervalSince(loadedAt)))
+            }
+        }
+        .tint(theme.accent)
         .environment(\.socialV4Theme, theme)
-        .environment(\.colorScheme, .dark)
-        .toolbar(.hidden, for: .tabBar)
-        .toolbarBackground(.hidden, for: .navigationBar)
-        .navigationBarTitleDisplayMode(.inline)
+        .preferredColorScheme(.dark)
+    }
+
+    private var previewControls: some View {
+        Form {
+            Section("Social V4 preview") {
+                Picker("Theme", selection: $theme) {
+                    ForEach(SocialV4Theme.allCases) { option in
+                        Text(option.title).tag(option)
+                    }
+                }
+                Button("Close preview", role: .destructive) {
+                    dismiss()
+                }
+            }
+        }
+        .navigationTitle("Debug")
+    }
+
+    private func placeholder(_ title: String, systemImage: String) -> some View {
+        ContentUnavailableView(title, systemImage: systemImage, description: Text("Not part of this preview"))
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background { SocialV4Background() }
+    }
+}
+
+struct SocialV4NowView: View {
+    @Environment(\.socialV4Theme) private var theme
+    @State private var segment: V4Segment = .now
+
+    let mock: SocialV4Mock
+    let loadedAt: Date
+
+    var body: some View {
+        ScrollView {
+            TimelineView(.periodic(from: loadedAt, by: 1)) { context in
+                content(tick: Int(context.date.timeIntervalSince(loadedAt)))
+            }
+        }
+        .scrollIndicators(.hidden)
+        .background { SocialV4Background() }
+        .navigationTitle("Social")
+        .navigationBarTitleDisplayMode(.large)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                themeMenu
+                Button("Add friend", systemImage: "person.badge.plus") {}
             }
-        }
-    }
-
-    private func screen(tick: Int) -> some View {
-        ZStack(alignment: .bottom) {
-            SocialV4Background()
-            ScrollView {
-                VStack(alignment: .leading, spacing: 22) {
-                    header
-                    hero(tick: tick)
-                    liveStrip(tick: tick)
-                    segmentRow
-                    list(tick: tick)
-                }
-                .padding(.bottom, 190)
-            }
-            .scrollIndicators(.hidden)
-            bottomChrome(tick: tick)
-        }
-    }
-
-    private var themeMenu: some View {
-        Menu {
-            Picker("Theme", selection: $theme) {
-                ForEach(SocialV4Theme.allCases) { option in
-                    Text(option.title).tag(option)
-                }
-            }
-        } label: {
-            Image(systemName: "paintpalette")
-        }
-    }
-
-    private var header: some View {
-        HStack {
-            Text("Social")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(.white)
-            Spacer()
-            HStack(spacing: 10) {
-                V4GlassCircleButton(accessibilityLabel: "Add friend", action: {}) {
-                    Image(systemName: "person.badge.plus")
-                        .font(.system(size: 17, weight: .semibold))
-                }
-                V4GlassCircleButton(accessibilityLabel: "Profile", action: {}) {
+            ToolbarSpacer(.fixed, placement: .topBarTrailing)
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                } label: {
                     Text(mock.me.initials)
                         .font(.system(size: 14, weight: .semibold))
                 }
+                .accessibilityLabel("Profile")
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
+    }
+
+    private func content(tick: Int) -> some View {
+        VStack(alignment: .leading, spacing: 22) {
+            hero(tick: tick)
+            liveStrip(tick: tick)
+            segmentRow
+            list(tick: tick)
+        }
+        .padding(.top, 4)
+        .padding(.bottom, 24)
     }
 
     private func hero(tick: Int) -> some View {
@@ -146,10 +182,13 @@ struct SocialV4NowView: View {
     }
 
     private var segmentRow: some View {
-        HStack {
-            V4SegmentedControl(selection: $segment)
-            Spacer()
+        Picker("View", selection: $segment) {
+            ForEach(V4Segment.allCases, id: \.self) { option in
+                Text(option.rawValue).tag(option)
+            }
         }
+        .pickerStyle(.segmented)
+        .frame(width: 220)
         .padding(.horizontal, 20)
     }
 
@@ -163,28 +202,8 @@ struct SocialV4NowView: View {
         .v4Panel()
         .padding(.horizontal, 12)
     }
-
-    private func bottomChrome(tick: Int) -> some View {
-        ZStack(alignment: .bottom) {
-            LinearGradient(
-                colors: [.clear, theme.bottom.opacity(0.78)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .frame(height: 190)
-            .allowsHitTesting(false)
-            .ignoresSafeArea(edges: .bottom)
-            VStack(spacing: 12) {
-                V4SessionAccessory(session: mock.session, tick: tick)
-                V4MockTabBar()
-            }
-            .padding(.horizontal, 16)
-        }
-    }
 }
 
 #Preview {
-    NavigationStack {
-        SocialV4NowView()
-    }
+    SocialV4PreviewShell()
 }

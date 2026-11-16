@@ -25,6 +25,7 @@ struct SettingsView: View {
     @State private var preferredTheme: Theme = .system
     @State private var studyReminderTime = Date()
     @State private var isShowingSubjectsEditor = false // drives the custom bottom drawer
+    @State private var isShowingSocialV4 = false // DEV ONLY — Social V4 preview
     
     @State var settingsSheetDetent: PresentationDetent = .medium //MOVE TO VM
     @Environment(\.modelContext) private var modelContext
@@ -68,10 +69,13 @@ struct SettingsView: View {
                     }
 
                     // DEV ONLY — Social V4 "Now" design preview, mock data from SocialV4MockData.json
-                    NavigationLink {
-                        SocialV4NowView()
+                    Button {
+                        isShowingSocialV4 = true
                     } label: {
                         Label("Social V4 — Now", systemImage: "sparkles.rectangle.stack")
+                    }
+                    .fullScreenCover(isPresented: $isShowingSocialV4) {
+                        SocialV4PreviewShell()
                     }
                 }
                 #endif

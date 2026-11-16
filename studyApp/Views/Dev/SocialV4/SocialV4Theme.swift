@@ -125,35 +125,8 @@ private struct V4PanelModifier: ViewModifier {
     }
 }
 
-private struct V4GlassControlModifier<S: Shape>: ViewModifier {
-    let shape: S
-
-    func body(content: Content) -> some View {
-        content.glassEffect(.regular.interactive(), in: shape)
-    }
-}
-
-private struct V4TabGlassModifier<S: Shape>: ViewModifier {
-    @Environment(\.socialV4Theme) private var theme
-    let shape: S
-
-    func body(content: Content) -> some View {
-        content
-            .glassEffect(.regular.tint(theme.tabTint), in: shape)
-            .shadow(color: Color.black.opacity(0.25), radius: 15, x: 0, y: 10)
-    }
-}
-
 extension View {
     func v4Panel(cornerRadius: CGFloat = 28) -> some View {
         modifier(V4PanelModifier(cornerRadius: cornerRadius))
-    }
-
-    func v4GlassControl<S: Shape>(in shape: S) -> some View {
-        modifier(V4GlassControlModifier(shape: shape))
-    }
-
-    func v4TabGlass<S: Shape>(in shape: S) -> some View {
-        modifier(V4TabGlassModifier(shape: shape))
     }
 }

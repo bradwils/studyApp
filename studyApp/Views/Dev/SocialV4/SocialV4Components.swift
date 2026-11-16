@@ -202,74 +202,6 @@ enum V4Segment: String, CaseIterable {
     case thisWeek = "This week"
 }
 
-struct V4SegmentedControl: View {
-    @Binding var selection: V4Segment
-
-    init(selection: Binding<V4Segment>) {
-        self._selection = selection
-    }
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(V4Segment.allCases, id: \.self) { segment in
-                segmentButton(segment)
-            }
-        }
-        .padding(3)
-        .v4GlassControl(in: Capsule())
-    }
-
-    private func segmentButton(_ segment: V4Segment) -> some View {
-        let isSelected: Bool = selection == segment
-        return Button {
-            withAnimation(.snappy) {
-                selection = segment
-            }
-        } label: {
-            Text(segment.rawValue)
-                .font(.system(size: 14, weight: isSelected ? .semibold : .medium))
-                .foregroundStyle(isSelected ? SocialV4Theme.ink : Color.white.opacity(0.82))
-                .padding(.horizontal, 16)
-                .frame(height: 32)
-                .background {
-                    if isSelected {
-                        Capsule().fill(Color.white)
-                    }
-                }
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-}
-
-struct V4GlassCircleButton<Label: View>: View {
-    let accessibilityLabel: String
-    let action: () -> Void
-    let label: Label
-
-    init(
-        accessibilityLabel: String,
-        action: @escaping () -> Void,
-        @ViewBuilder label: () -> Label
-    ) {
-        self.accessibilityLabel = accessibilityLabel
-        self.action = action
-        self.label = label()
-    }
-
-    var body: some View {
-        Button(action: action) {
-            label
-                .foregroundStyle(Color.white)
-                .frame(width: 42, height: 42)
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .v4GlassControl(in: Circle())
-        .accessibilityLabel(accessibilityLabel)
-    }
-}
-
 struct V4SessionAccessory: View {
     @Environment(\.socialV4Theme) private var theme
 
@@ -296,7 +228,7 @@ struct V4SessionAccessory: View {
                 Image(systemName: "book.closed.fill")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(SocialV4Theme.ink)
-                    .frame(width: 38, height: 38)
+                    .frame(width: 32, height: 32)
                     .background(Circle().fill(theme.accent))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(session.subjectName)
@@ -318,88 +250,21 @@ struct V4SessionAccessory: View {
                     .frame(width: 40, height: 40)
             }
             .padding(.horizontal, 8)
-            .frame(height: 54)
-            .contentShape(Capsule())
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .v4TabGlass(in: Capsule())
         .accessibilityLabel("Current session, \(session.subjectName), \(withText)")
-    }
-}
-
-private struct V4TabItem: Identifiable {
-    let title: String
-    let symbol: String
-    let isSelected: Bool
-    var id: String { title }
-}
-
-struct V4MockTabBar: View {
-    @Environment(\.socialV4Theme) private var theme
-
-    private let tabs: [V4TabItem] = [
-        V4TabItem(title: "Debug", symbol: "exclamationmark.triangle.fill", isSelected: false),
-        V4TabItem(title: "Social", symbol: "figure.2", isSelected: true),
-        V4TabItem(title: "Groups", symbol: "person.3.fill", isSelected: false),
-        V4TabItem(title: "Sessions", symbol: "clock.arrow.circlepath", isSelected: false)
-    ]
-
-    init() {}
-
-    var body: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 0) {
-                ForEach(tabs) { tab in
-                    tabCell(tab)
-                }
-            }
-            .padding(4)
-            .frame(height: 62)
-            .v4TabGlass(in: Capsule())
-
-            Image(systemName: "book.badge.plus")
-                .font(.system(size: 22))
-                .foregroundStyle(Color.white)
-                .frame(width: 62, height: 62)
-                .v4TabGlass(in: Circle())
-                .accessibilityLabel("Focus")
-        }
-    }
-
-    private func tabCell(_ tab: V4TabItem) -> some View {
-        VStack(spacing: 2) {
-            Image(systemName: tab.symbol)
-                .font(.system(size: 22))
-                .frame(height: 26)
-            Text(tab.title)
-                .font(.system(size: 10, weight: .semibold))
-        }
-        .foregroundStyle(tab.isSelected ? theme.accent : Color.white.opacity(0.85))
-        .frame(maxWidth: .infinity)
-        .frame(height: 54)
-        .background {
-            if tab.isSelected {
-                Capsule().fill(Color.white.opacity(0.14))
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(tab.isSelected ? .isSelected : [])
     }
 }
 
 #Preview {
     ZStack {
         SocialV4Background()
-        VStack(spacing: 24) {
-            HStack(spacing: 18) {
-                V4Avatar(initials: "MC", status: .studying, size: 60)
-                V4Avatar(initials: "JP", status: .paused, size: 60)
-                V4Avatar(initials: "BW", status: .studying, size: 60, isCurrentUser: true)
-                V4Avatar(initials: "EN", status: .offline, size: 60)
-            }
-            V4SegmentedControl(selection: .constant(.now))
-            V4MockTabBar()
-                .padding(.horizontal, 16)
+        HStack(spacing: 18) {
+            V4Avatar(initials: "MC", status: .studying, size: 60)
+            V4Avatar(initials: "JP", status: .paused, size: 60)
+            V4Avatar(initials: "BW", status: .studying, size: 60, isCurrentUser: true)
+            V4Avatar(initials: "EN", status: .offline, size: 60)
         }
     }
     .environment(\.socialV4Theme, .overcast)
