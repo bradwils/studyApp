@@ -13,14 +13,16 @@ A SwiftUI iOS app for social study tracking, a focus timer and study groups. It 
 Build for the simulator:
 
 ```bash
-xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination generic/platform=iOS
+xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination 'generic/platform=iOS Simulator'
 ```
 
 Run the tests:
 
 ```bash
-xcodebuild test -project studyApp.xcodeproj -scheme studyApp
+xcodebuild test -project studyApp.xcodeproj -scheme studyApp -destination 'platform=iOS Simulator,name=<installed simulator name>'
 ```
+
+Replace `<installed simulator name>` with an available simulator from `xcrun simctl list devices available`.
 
 For building and installing on a device, see the [Quick Start in CLAUDE.md](CLAUDE.md#quick-start).
 

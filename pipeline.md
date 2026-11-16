@@ -5,7 +5,8 @@ at each hop.
 
 - [Overview](#overview)
 - [Reference](#reference): [branch map](#branch-map), [branch rules](#branch-rules-github-rulesets),
-  [versions](#versions), [Xcode versions](#xcode-versions), [PR builds](#pr-builds)
+  [versions](#versions), [Xcode versions](#xcode-versions),
+  [Xcode Cloud workflows](#xcode-cloud-workflows), [PR builds](#pr-builds)
 - [Procedures](#procedures): [starting work](#starting-work),
   [`feature/*` → `dev`](#feature--dev), [`dev` → `UAT-testflight`](#dev--uat-testflight),
   [`UAT-testflight` → `master`](#uat-testflight--master), [hotfixes](#hotfixes),
@@ -53,7 +54,7 @@ Cloud ran it. Trigger details for each workflow are in
 
 | Branch | Holds | Builds when | Lands in | Xcode |
 |---|---|---|---|---|
-| `feature/*` | work in progress | never (unless [requested](#pr-builds)) | nowhere | — |
+| `feature/*` | work in progress | [PR tests](#xcode-cloud-workflows) where configured; [TestFlight on request](#pr-builds) | no automatic distribution | — |
 | `dev` | integrated, unverified | every push | TestFlight internal → **Self** | Latest Release |
 | `UAT-testflight` | ready to test, may be rough | every push | TestFlight external → **UAT** | pinned (26.6) |
 | `master` | shipped | `v*` tag only | TestFlight external → **Stable**, then App Store review | pinned (26.6) |
@@ -123,10 +124,10 @@ the project, so bump it at the *start* of a cycle, not the end.
 integers after the `v`. `v1.2.3`, `v1.2` and `v2` are all fine. `v1.0.0.1` and
 `v2.0-beta` are rejected and the build fails immediately rather than at upload.
 
-**Lane stamp.** The Settings screen footer shows `lane · version (build)`. CI
-stamps the lane (branch or tag name) into Info.plist as `StudyAppLane`; local
-builds show `local`. Never hardcode branch-specific values in source — it makes
-every promotion conflict.
+**Lane stamp.** The Settings screen footer shows `lane · build time (AEST/AEDT) · version (build)`.
+CI stamps the branch or tag as `StudyAppLane` and Sydney build time as
+`StudyAppBuildTime` into Info.plist; local builds show `local`. Never hardcode
+branch-specific values in source — it makes every promotion conflict.
 
 ### Xcode versions
 
@@ -147,9 +148,27 @@ APIs with `if #available(iOS 26, *)`.
 > the build counter) live in App Store Connect and can't be checked from the
 > repo. Re-check them there when changing a workflow.
 
+### Xcode Cloud workflows
+
+The owner recorded these workflow names and start conditions on `dev` in
+`83156ac`. They are managed in App Store Connect, not in GitHub Actions:
+
+| Workflow | Branch / source | Starts on | Result |
+| --- | --- | --- | --- |
+| dev testflight | `dev` | Every push | TestFlight internal → **Self** |
+| Master Changes | `master` | `v*` tag changes | TestFlight external → **Stable**; App Store review is a separate submission |
+| PR TestFlight | PR head branch | Manual/API request from [the GitHub workflow](#pr-builds) | TestFlight internal → **Self** |
+| UAT-testflight | `UAT-testflight` | Every push | TestFlight external → **UAT** |
+| Test /feat & /refactor branches | Owner's recorded filters: `test/*` and `refactor/*` | PR changes | Build/test feedback; no TestFlight distribution |
+
+The last workflow's name mentions `/feat`, while the recorded filter says
+`test/*`. Confirm the actual filters in App Store Connect before relying on
+coverage for `feat/*`. A workflow existing does not establish that its current
+unit suite passes. Runner migration and required-check coverage remain #186.
+
 ### PR builds
 
-Feature branches don't build on their own. To get one onto your phone, put
+PR test workflows do not distribute a build. To get a feature branch onto your phone, put
 `/testflight` on its own line (any case) in the PR description, or in a comment
 on the PR (owner, members and collaborators only).
 
@@ -198,8 +217,8 @@ git pull
 git checkout -b my-feature
 ```
 
-Push freely. Feature branches don't build, so nothing is watching and nothing
-is spent.
+Push freely. Xcode Cloud PR tests run where configured; TestFlight archives
+for feature branches require an explicit request (see [PR builds](#pr-builds)).
 
 ### `feature/*` → `dev`
 
@@ -209,11 +228,11 @@ Before you merge:
 
 - [ ] Build locally at least once. SwiftLint runs on PRs into every long-lived
   branch (and on pushes to `dev`) — errors fail it, warnings are only
-  annotated — but nothing builds or runs tests, so a compile error reaches
-  TestFlight before anyone notices.
+  annotated. Review the current Xcode Cloud build/test result where configured;
+  lint alone does not verify compilation or unit tests.
 - [ ] PR title follows Conventional Commits (`type(scope): description`). The
-  `PR title` check enforces it on PRs into `dev`, because merge commits take
-  the PR title.
+  `PR title` check enforces it on PRs targeting any branch, because merge
+  commits take the PR title.
 - [ ] If this is the first change of a new release cycle, bump
   `MARKETING_VERSION` and the build number offset in the same commit. See
   [Versions](#versions).
@@ -323,13 +342,15 @@ too high or isn't a whole number. See [Versions](#versions).
 
 Known gaps, in rough priority order:
 
-1. **No tests run anywhere.** The unit tests were rewritten against SwiftData
-   (`AppSessionTests`, `StudySessionTests`; see #135), but no workflow runs
-   them. Add an Xcode Cloud workflow that starts on pull requests into `dev`,
-   `UAT-testflight` and `master`, builds and runs unit tests (no archive, no
-   distribution), and make it a required check in the rulesets.
+1. **Verify Xcode Cloud unit-test coverage** (#186). A feature/refactor PR test
+   workflow is recorded above, but passing the current suite, trigger coverage,
+   result visibility and required statuses must be verified before runner
+   migration is complete. Historical passing runs do not validate a newer head.
 2. UI tests are slow and flaky per PR. Run them on a nightly schedule against
    `UAT-testflight` instead.
-3. TestFlight "What to Test" notes are written by hand. A `ci_post_clone.sh`
-   could generate `TestFlight/WhatToTest.en-US.txt` from the git log.
+3. **Automated TestFlight notes** are in progress in #203. It writes
+   `TestFlight/WhatToTest.en-US.txt` through the post-build hook; until that
+   change is integrated and Apple ingestion is verified, review and provide
+   the notes manually. GitHub Release notes and TestFlight testing instructions
+   serve different purposes.
 4. Retire the `source-branch` check and `promotion-source.yml` (#164).

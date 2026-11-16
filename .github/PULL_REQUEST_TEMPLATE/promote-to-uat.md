@@ -7,10 +7,11 @@
 
 ## Before merging
 
+- [ ] Current-head build/test checks reviewed (SwiftLint alone does not verify the app)
 - [ ] Installed the current `dev` build from TestFlight and opened it
 - [ ] `MARKETING_VERSION` is the version testers should see
 - [ ] If `MARKETING_VERSION` was bumped this cycle, `ci_scripts/build_number_offset` was set in the same commit
-- [ ] TestFlight "What to Test" notes written (the only place testers learn what changed)
+- [ ] TestFlight "What to Test" notes reviewed and supplied (manual until automated notes are integrated and verified)
 - [ ] Merging once, deliberately: every push to `UAT-testflight` builds and goes to the UAT group
 
 ## What's in this promotion

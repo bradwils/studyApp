@@ -1,14 +1,17 @@
 <!--
   Title: chore(release): release vX.Y.Z
-  Source: UAT-testflight (or hotfix/* or ci/*) → Target: master
+  Source: UAT-testflight (or hotfix/*) → Target: master
+  CI-only maintenance uses its own PR and does not require a release.
   Merge with **Create a merge commit**. Never squash or rebase: it breaks the
   shared history promotions rely on.
 -->
 
 ## Before merging
 
-- [ ] Source branch is `UAT-testflight` (or `hotfix/*` / `ci/*`) and the `source-branch` check passes
-- [ ] UAT build was tested
+- [ ] Source branch is `UAT-testflight` (or `hotfix/*` for a hotfix) and the `source-branch` check passes
+- [ ] Current-head checks pass and the UAT build was tested (or the hotfix candidate was tested)
+- [ ] Version/tag and build-number offset reviewed
+- [ ] TestFlight "What to Test" instructions reviewed; release notes do not replace them
 
 ## After merging
 

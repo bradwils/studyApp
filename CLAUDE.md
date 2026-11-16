@@ -199,7 +199,8 @@ See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decis
 
 Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full details, release steps and hotfixes: [pipeline.md](pipeline.md).
 
-- Branch features off `dev`; `dev` accepts direct pushes
+- Feature work always goes on a branch off `dev` and merges back through a PR. Only one-line, straightforward fixes (text replacement, low-importance edits) go straight into `dev`
+- `CLAUDE.md` and `AGENTS.md` are always updated in parallel: a change to one goes into the other in the same commit
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
 - `master` only accepts PRs from `UAT-testflight`, `hotfix/*` or `ci/*` (enforced by the `source-branch` check)
 - `ci/*` is reserved for CI/tooling/docs maintenance: cut it from `master`, then merge master history back into `UAT-testflight` and `dev`. The check validates the branch name; CI-only scope is a review convention, not a changed-file restriction
@@ -238,7 +239,10 @@ Transform tasks into verifiable goals before starting. For multi-step work, stat
 
 # CI/CD Pipeline
 
-Xcode Cloud builds `dev` and `UAT-testflight` on every push and `master` only on a `v*` tag. [pipeline.md](pipeline.md) owns the branch map, rulesets, versioning and release steps — update it there rather than copying tables here. Promotion PRs into `UAT-testflight` and `master` use the templates in `.github/PULL_REQUEST_TEMPLATE/`.
+[pipeline.md](pipeline.md) owns the Xcode Cloud workflow table, branch map,
+rulesets, versioning and release steps. Update that source instead of copying
+workflow tables here. Promotion PRs into `UAT-testflight` and `master` use the
+checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
