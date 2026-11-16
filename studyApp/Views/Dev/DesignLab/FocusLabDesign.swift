@@ -9,6 +9,7 @@ import SwiftUI
 enum FocusLabDesign: String, CaseIterable, Identifiable {
     case reference
     case margin
+    case daylight
 
     var id: String { rawValue }
 
@@ -16,6 +17,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         switch self {
         case .reference: return "Reference"
         case .margin: return "Margin"
+        case .daylight: return "Daylight"
         }
     }
 
@@ -23,6 +25,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         switch self {
         case .reference: return "The current screen rebuilt on the lab kit, for comparison."
         case .margin: return "Muted notebook page. A highlighter stroke tracks time; focus wipes in as an ink page."
+        case .daylight: return "Warm and bright. A sun on the day's arc comes forward and rises with the focus block."
         }
     }
 
@@ -31,6 +34,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         switch self {
         case .reference: return nil
         case .margin: return .light
+        case .daylight: return .light
         }
     }
 
@@ -39,6 +43,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         switch self {
         case .reference: ReferenceDesign(session: session)
         case .margin: MarginDesign(session: session)
+        case .daylight: DaylightDesign(session: session)
         }
     }
 }
