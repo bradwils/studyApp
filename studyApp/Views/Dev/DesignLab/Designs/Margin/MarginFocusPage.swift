@@ -1,32 +1,15 @@
 //  MarginFocusPage.swift
 //  studyApp
 //
-//  DEV ONLY — Margin's focus page. Transparent; it sits on the ink panel, so text is Paper and Slate.
+//  DEV ONLY — Margin's focus page. Header and body, transparent; they sit on the ink panel, so text is Paper and Slate.
 
 import SwiftUI
 
-struct MarginFocusPage: View {
+struct MarginFocusHeader: View {
 
     let session: FocusLabSession
-    let slotHeight: CGFloat
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            header
-                .frame(height: MarginLayout.headerHeight, alignment: .topLeading)
-            Color.clear
-                .frame(height: slotHeight)
-                .padding(.top, 24)
-            lower
-            Spacer(minLength: 0)
-        }
-        .padding(.top, MarginLayout.topInset)
-        .padding(.leading, MarginLayout.contentX)
-        .padding(.trailing, MarginLayout.trailing)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private var header: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(session.selectedSubject.code)
                 .font(MarginFont.serif(24, .medium))
@@ -36,6 +19,22 @@ struct MarginFocusPage: View {
                 .font(MarginFont.sans(13, .regular))
                 .foregroundStyle(MarginPalette.slate)
         }
+        .padding(.leading, MarginLayout.contentX)
+        .padding(.trailing, MarginLayout.trailing)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct MarginFocusPage: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
+        lower
+            .padding(.top, 24)
+            .padding(.leading, MarginLayout.contentX)
+            .padding(.trailing, MarginLayout.trailing)
+            .frame(maxWidth: .infinity, alignment: .topLeading)
     }
 
     // MARK: - Below the timer

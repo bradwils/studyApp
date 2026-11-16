@@ -18,9 +18,6 @@ enum MarginPalette {
 enum MarginLayout {
     static let marginX: CGFloat = 28
     static let contentX: CGFloat = 46
-    static let topInset: CGFloat = 20
-    static let headerHeight: CGFloat = 64
-    static let timerTop: CGFloat = 108
     static let trailing: CGFloat = 24
     static let labelWidth: CGFloat = 92
 }
