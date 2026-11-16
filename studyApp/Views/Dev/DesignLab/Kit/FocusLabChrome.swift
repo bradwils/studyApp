@@ -12,7 +12,8 @@ final class FocusLabChrome {
 }
 
 extension View {
-    func focusLabChrome(_ scheme: ColorScheme) -> some View {
+    // nil hands the choice back to the system appearance.
+    func focusLabChrome(_ scheme: ColorScheme?) -> some View {
         modifier(FocusLabChromeModifier(scheme: scheme))
     }
 }
@@ -22,7 +23,7 @@ private struct FocusLabChromeModifier: ViewModifier {
     // Optional so a design previewed outside FocusLabHost doesn't trap on a missing environment object.
     @Environment(FocusLabChrome.self) private var chrome: FocusLabChrome?
 
-    let scheme: ColorScheme
+    let scheme: ColorScheme?
 
     func body(content: Content) -> some View {
         content
