@@ -15,7 +15,6 @@ struct FocusLabPager<Tracking: View, Focus: View>: View {
     /// 0 = tracking, 1 = focus. Set it inside withAnimation to turn the page from a button.
     @Binding var page: Int?
 
-    var axis: Axis = .horizontal
     var showsFocusPage: Bool = true
     var isLocked: Bool = false
 
@@ -23,14 +22,9 @@ struct FocusLabPager<Tracking: View, Focus: View>: View {
     @ViewBuilder var focus: Focus
 
     var body: some View {
-        ScrollView(axis == .horizontal ? .horizontal : .vertical) {
-            if axis == .horizontal {
-                HStack(spacing: 0) { pages }
-                    .scrollTargetLayout()
-            } else {
-                VStack(spacing: 0) { pages }
-                    .scrollTargetLayout()
-            }
+        ScrollView(.horizontal) {
+            HStack(spacing: 0) { pages }
+                .scrollTargetLayout()
         }
         .scrollPosition(id: $page)
         .scrollTargetBehavior(.paging)
@@ -47,41 +41,30 @@ struct FocusLabPager<Tracking: View, Focus: View>: View {
         }
     }
 
-    // Only the paging axis is pinned to the container, exactly as FocusSessionScreen does it;
-    // the cross axis fills whatever the scroll view proposes, so a page is never taller
-    // (or wider) than the safe area the designs measure their fixed layers against.
-    private var pagingAxis: Axis.Set {
-        axis == .horizontal ? .horizontal : .vertical
-    }
-
+    // Only the width is pinned to the container, exactly as FocusSessionScreen does it; the
+    // height fills whatever the scroll view proposes, so a page is never taller than the
+    // safe area the designs measure their fixed layers against.
     @ViewBuilder
     private var pages: some View {
         tracking
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .containerRelativeFrame(pagingAxis)
+            .containerRelativeFrame(.horizontal)
             .id(0)
 
         if showsFocusPage {
             focus
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .containerRelativeFrame(pagingAxis)
+                .containerRelativeFrame(.horizontal)
                 .id(1)
         }
     }
 
-    // Measured against the scrollable range rather than the page size, so safe-area
-    // insets on a vertical pager can't push the fraction past 1.
+    // Measured against the scrollable range rather than the page size, so the fraction
+    // can't pass 1 whatever the insets.
     private func travelFraction(_ geometry: ScrollGeometry) -> CGFloat {
         let insets = geometry.contentInsets
-        let travelled: CGFloat
-        let range: CGFloat
-        if axis == .horizontal {
-            travelled = geometry.contentOffset.x + insets.leading
-            range = geometry.contentSize.width + insets.leading + insets.trailing - geometry.containerSize.width
-        } else {
-            travelled = geometry.contentOffset.y + insets.top
-            range = geometry.contentSize.height + insets.top + insets.bottom - geometry.containerSize.height
-        }
+        let travelled = geometry.contentOffset.x + insets.leading
+        let range = geometry.contentSize.width + insets.leading + insets.trailing - geometry.containerSize.width
         guard range > 1 else { return 0 }
         return min(max(travelled / range, 0), 1)
     }
