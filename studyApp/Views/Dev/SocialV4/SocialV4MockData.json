@@ -1,0 +1,44 @@
+{
+  "me": { "initials": "BW", "todaySeconds": 9240, "goalSeconds": 14400, "streakDays": 5 },
+  "session": {
+    "subjectName": "Data Structures",
+    "subjectCode": "COMP2123",
+    "withNames": ["Maya", "Sam"],
+    "elapsedSeconds": 2530
+  },
+  "friends": [
+    {
+      "id": "priya", "initials": "PR", "name": "Priya Raman", "firstName": "Priya",
+      "status": "studying", "subjectName": "Contracts", "subjectCode": "LAWS1006",
+      "sessionSeconds": 1112, "todaySeconds": 14520, "goalSeconds": 21600
+    },
+    {
+      "id": "maya", "initials": "MC", "name": "Maya Chen", "firstName": "Maya",
+      "status": "studying", "subjectName": "Data Structures", "subjectCode": "COMP2123",
+      "sessionSeconds": 4368, "todaySeconds": 12000, "goalSeconds": 14400
+    },
+    {
+      "id": "me", "initials": "BW", "name": "You", "firstName": "You", "isMe": true,
+      "status": "studying", "subjectName": "Data Structures", "subjectCode": "COMP2123",
+      "sessionSeconds": 2530, "todaySeconds": 9240, "goalSeconds": 14400
+    },
+    {
+      "id": "josh", "initials": "JP", "name": "Josh Patel", "firstName": "Josh",
+      "status": "paused", "subjectName": "Cognitive Psych", "subjectCode": "PSYC2012",
+      "breakSeconds": 372, "todaySeconds": 7500, "goalSeconds": 14400
+    },
+    {
+      "id": "sam", "initials": "SO", "name": "Sam O’Connor", "firstName": "Sam",
+      "status": "studying", "subjectName": "Linear Algebra", "subjectCode": "MATH1002",
+      "sessionSeconds": 2465, "todaySeconds": 6600, "goalSeconds": 14400
+    },
+    {
+      "id": "ella", "initials": "EN", "name": "Ella Nguyen", "firstName": "Ella",
+      "status": "offline", "lastSeen": "2h ago", "todaySeconds": 3900, "goalSeconds": 14400
+    },
+    {
+      "id": "tom", "initials": "TB", "name": "Tom Becker", "firstName": "Tom",
+      "status": "offline", "lastSeen": "yesterday", "todaySeconds": 0, "goalSeconds": 14400
+    }
+  ]
+}

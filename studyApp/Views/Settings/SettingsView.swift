@@ -66,6 +66,13 @@ struct SettingsView: View {
                     } label: {
                         Label("Generate Fake Study Session", systemImage: "wand.and.stars")
                     }
+
+                    // DEV ONLY — Social V4 "Now" design preview, mock data from SocialV4MockData.json
+                    NavigationLink {
+                        SocialV4NowView()
+                    } label: {
+                        Label("Social V4 — Now", systemImage: "sparkles.rectangle.stack")
+                    }
                 }
                 #endif
 
