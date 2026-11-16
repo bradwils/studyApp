@@ -67,10 +67,16 @@ private struct StrataStackCanvas: View {
         return base.opacity(tintOpacity)
     }
 
+    // Everything the renderer needs is copied into locals first, so the closure touches no
+    // main-actor state even if Canvas runs it off the main thread.
     var body: some View {
-        Canvas { context, size in
+        let haze: Color = StrataPalette.haze
+        let ground: Color = StrataPalette.moss
+        let tint: Color = self.tint
+        let bands: [StrataBand] = self.bands
+        return Canvas { context, size in
             let whole = CGRect(x: 0, y: 0, width: size.width, height: size.height)
-            context.fill(Path(whole), with: .color(StrataPalette.haze))
+            context.fill(Path(whole), with: .color(haze))
             context.fill(Path(whole), with: .color(tint))
             for band in bands {
                 let top: CGFloat = band.top.rounded()
@@ -80,8 +86,8 @@ private struct StrataStackCanvas: View {
                 context.fill(Path(rect), with: .color(band.color))
             }
             if bands.isEmpty {
-                let ground = CGRect(x: 0, y: size.height - 6, width: size.width, height: 6)
-                context.fill(Path(ground), with: .color(StrataPalette.moss))
+                let sliver = CGRect(x: 0, y: size.height - 6, width: size.width, height: 6)
+                context.fill(Path(sliver), with: .color(ground))
             }
         }
     }
