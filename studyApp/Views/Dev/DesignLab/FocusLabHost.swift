@@ -111,5 +111,5 @@ struct FocusLabHost: View {
 }
 
 #Preview {
-    FocusLabHost(design: .reference)
+    FocusLabHost(design: .margin)
 }
