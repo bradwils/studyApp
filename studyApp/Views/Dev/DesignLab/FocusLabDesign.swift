@@ -15,6 +15,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
     case lamp
     case float
     case poster
+    case strata
 
     var id: String { rawValue }
 
@@ -28,6 +29,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .lamp: return "Lamp"
         case .float: return "Float"
         case .poster: return "Poster"
+        case .strata: return "Strata"
         }
     }
 
@@ -41,6 +43,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .lamp: return "A desk at night. The pool of lamplight closes in on the timer as you move to focus."
         case .float: return "Native glass on a subject-coloured field. One glass sheet draws in from a slab to a circle."
         case .poster: return "Flat colour and heavy type. The numerals travel and grow to fill the screen, then fill with orange."
+        case .strata: return "The session settles in flat bands of colour. Focus zooms into the band being laid now."
         }
     }
 
@@ -55,6 +58,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .lamp: return .dark
         case .float: return .light
         case .poster: return .light
+        case .strata: return .light
         }
     }
 
@@ -69,6 +73,7 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
         case .lamp: LampDesign(session: session)
         case .float: FloatDesign(session: session)
         case .poster: PosterDesign(session: session)
+        case .strata: StrataDesign(session: session)
         }
     }
 }
