@@ -19,7 +19,7 @@ struct SessionDetailView: View {
 					Text("Overview")
 					Spacer()
 					if (session.subject == nil) {
-						Text("NO SESSION ATTATCHED")
+						Text("NO SUBJECT ATTATCHED")
 							.foregroundStyle(Color.red)
 							.bold()
 					}

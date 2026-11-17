@@ -193,7 +193,6 @@ final class StudyTrackingViewModel {
     //      - End the study Break
     //      - Resume stopwatch & update resume timing
     func pauseSession() {
-        let now = Date()
         studyTrackingLogger.log("pauseSession() called")
         guard activeSession != nil, ssw?.stopwatchIsRunning ?? false else { return }
         ssw?.startBreak()
@@ -235,6 +234,7 @@ final class StudyTrackingViewModel {
         session.breaks = studyBreaks
         session.sections = studySections
         session.totalBreakDuration = totalBreakTime
+        try? context.save()
 
         ssw?.end()
         ssw = nil
@@ -246,8 +246,8 @@ final class StudyTrackingViewModel {
     /// Abort an active session without persisting; use for user-initiated cancels.
     func cancelActiveSession(ctx: ModelContext) {
         studyTrackingLogger.log("current session cancelled")
-        // swiftlint:disable:next force_unwrapping
-        ctx.delete(activeSession!)
+        guard let session = activeSession else { return }
+        ctx.delete(session)
         try? ctx.save()
         activeSession = nil
         ssw = nil
