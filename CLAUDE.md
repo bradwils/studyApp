@@ -246,5 +246,6 @@ checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
+- Keep `.swiftlint.yml` and `.github/workflows/swiftlint.yml` aligned across `master`, `UAT-testflight` and `dev`. CI explicitly requires the config; validate the PR merge result with SwiftLint 0.65.1 before merging.
 - Build an open PR on demand: put `/testflight` on its own line in the PR description (or in a comment on it, from a collaborator). `.github/workflows/testflight-pr.yml` asks Xcode Cloud to build the PR's branch with the `PR TestFlight` workflow, which distributes to the internal TestFlight group. Editing the description only re-triggers when the body itself changed; comment `/testflight` again to rebuild after new pushes
 - The Settings footer shows `lane · build time (AEST/AEDT) · version (build)`, stamped by CI
