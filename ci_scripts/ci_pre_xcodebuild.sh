@@ -43,7 +43,7 @@ fi
 
 # The lane is stamped into the build rather than hardcoded per branch, so the
 # same source is identical on dev, UAT and master and promotions never conflict.
-LANE="${CI_TAG:-${CI_BRANCH:-unknown}}"
+LANE="${CI_TAG:-${CI_PULL_REQUEST_SOURCE_BRANCH:-${CI_BRANCH:-unknown}}}"
 PLIST="$CI_PRIMARY_REPOSITORY_PATH/studyApp/Info.plist"
 # This script runs before every xcodebuild call, so the key may already exist.
 /usr/libexec/PlistBuddy -c "Delete :StudyAppLane" "$PLIST" 2>/dev/null || true
@@ -53,7 +53,7 @@ PLIST="$CI_PRIMARY_REPOSITORY_PATH/studyApp/Info.plist"
 # two builds of the same branch are tell-apart-able on a device.
 VERSION="$(sed -n '/MARKETING_VERSION = / { s/.*MARKETING_VERSION = \([^;]*\);/\1/p; q; }' "$PROJECT")"
 BUILD_TIME="$(python3 "$CI_PRIMARY_REPOSITORY_PATH/ci_scripts/testflight_notes.py" stamp \
-  --version "$VERSION" --build "$BUILD_NUMBER" --lane "$LANE")"
+  --version "$VERSION" --build "$BUILD_NUMBER" --lane "$LANE" --fetch)"
 /usr/libexec/PlistBuddy -c "Delete :StudyAppBuildTime" "$PLIST" 2>/dev/null || true
 /usr/libexec/PlistBuddy -c "Add :StudyAppBuildTime string ${BUILD_TIME}" "$PLIST"
 

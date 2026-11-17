@@ -6,12 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Start
 
-**Build:**
+Do not build or compile this Xcode app unless the user directly asks for a build.
+Verify app edits by reading the code and mention when a build has not been run.
+
+**Build (only when directly requested):**
 ```bash
 xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination generic/platform=iOS
 ```
 
-**Run tests:**
+**Run tests (only when directly requested):**
 ```bash
 xcodebuild test -project studyApp.xcodeproj -scheme studyApp
 ```
@@ -233,10 +236,12 @@ Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
 
 | Branch | Builds when | Lands in |
 |---|---|---|
+| Eligible PR head branch | `/testflight` request | PR workflow distribution |
 | `dev` | every push | TestFlight internal → **Self** |
 | `UAT-testflight` | every push | TestFlight external → **UAT** |
 | `master` | `v*` tag only (publish a GitHub Release from `master`) | TestFlight external → **Stable**, then App Store review |
 
+- The lane rows describe automatic builds; eligible PRs from any head branch can also request a PR build. Triggers and requirements are in the [GitHub Actions workflow table](.github/workflows/README.md).
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
 
@@ -244,18 +249,15 @@ Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
 
 ## TestFlight notes
 
-- Maintain a unique JSON entry under `TestFlight/entries/` for each change; use
-  the active cycle from `TestFlight/release.json`. See `pipeline.md` for examples.
-- Record the actual origin branch chain and the full commit SHA the final branch
-  started from. Capture this when branching; do not reconstruct unknown names.
-- For visible changes, write a short summary and checks with actions and expected
-  appearance or behavior. Persistence/loading/error behavior counts as visible.
-- Mark implementation-only, CI, docs and refactoring entries `user_visible: false`.
-  The generator hides their details when visible changes exist in the cycle;
-  an internal-only cycle gets a brief explanation instead.
-- For promotion PRs, add a promotion entry with the actual source and destination;
-  retain the existing change entries without copying them. Do not record a route
-  merely because the pipeline normally follows it.
+- Notes are generated from Git commit titles and build metadata; do not maintain
+  release-cycle JSON, manual summaries or promotion entries.
+- Use clear commit titles: they appear directly in TestFlight, including merge
+  commits. The generator keeps newest commits and truncates older history to fit.
+- Native Xcode Cloud PR builds use their actual target branch. Other builds use
+  the lane defaults in `pipeline.md`; `TESTFLIGHT_TARGET_BRANCH` overrides them.
+- Branch containment describes where the commit exists at build time. Do not
+  present it as a reconstructed branch-creation or promotion history.
 - Preview with `python3 ci_scripts/testflight_notes.py preview` and verify scripts
   with `python3 -m unittest discover -s ci_scripts -p 'test_testflight_notes.py'`.
-  These commands do not build the app.
+  These commands do not build the app. Preview writes no files unless `--fetch`
+  is supplied, which updates local Git refs/history only.

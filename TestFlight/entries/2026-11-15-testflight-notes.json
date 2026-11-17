@@ -1,9 +1,0 @@
-{
-  "cycle": "testflight-notes-rollout",
-  "kind": "change",
-  "origin": ["master", "ci/testflight-notes"],
-  "base_commit": "4acee313bc58fa5a36ce6febaba73ca47ae39341",
-  "user_visible": false,
-  "summary": "TestFlight testing notes now include build details and recorded branch origins. This update does not change the app's screens or behavior.",
-  "checks": []
-}

@@ -3,9 +3,10 @@
 How code moves from a feature branch to the App Store, and what you have to do
 at each hop.
 
-App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
-`claude.yml` (the `@claude` mention bot) and `promotion-source.yml` (guards
-what can merge into `master`). If an app build runs, Xcode Cloud ran it.
+CI app builds run on **Xcode Cloud**. GitHub Actions handles repository checks,
+the `@claude` bot and requests for PR TestFlight builds; it does not build the
+app itself. See the [GitHub Actions workflow table](.github/workflows/README.md)
+for triggers and requirements.
 
 ---
 
@@ -13,13 +14,15 @@ what can merge into `master`). If an app build runs, Xcode Cloud ran it.
 
 | Branch | Holds | Builds when | Lands in | Xcode |
 |---|---|---|---|---|
-| `feature/*` | work in progress | never | nowhere | — |
+| Feature branches (`type/*`) | work in progress | on `/testflight` request for an eligible PR | PR workflow distribution | PR workflow settings |
 | `dev` | integrated, unverified | every push | TestFlight internal → **Self** | Latest Release |
 | `UAT-testflight` | ready to test, may be rough | every push | TestFlight external → **UAT** | pinned (26.6) |
 | `master` | shipped | `v*` tag only | TestFlight external → **Stable**, then App Store review | pinned (26.6) |
 
-Direction is always `feature/*` → `dev` → `UAT-testflight` → `master`. Nothing
-skips a step except a hotfix or CI maintenance (see below).
+Direction is normally feature branch → `dev` → `UAT-testflight` → `master`. Nothing
+skips a step except a hotfix or CI maintenance (see below). The table describes
+automatic lane builds; an eligible PR from any head branch can also request a
+separate PR workflow build.
 
 The **UAT** and **Stable** groups have no testers yet — builds land there and
 wait. Add testers in App Store Connect → TestFlight when testing starts.
@@ -55,22 +58,30 @@ Branch app work off `dev`. Hotfixes and CI maintenance branch off `master`:
 ```sh
 git checkout dev
 git pull
-git checkout -b my-feature
+git checkout -b feat/my-feature
 ```
 
-Push freely. Feature branches don't build, so nothing is watching and nothing
-is spent.
+Use `type/short-slug` branch names and Conventional Commits titles, for example
+`feat/sub-timer` and `feat(timer): add a countdown`. PR titles follow the same
+convention because merge commits take the PR title. Agent-written commit subjects
+end with the agent's name in brackets; do not add `Co-Authored-By` trailers.
+
+Feature pushes do not automatically start an app build. To request a TestFlight
+build of an eligible PR's head branch, put `/testflight` on its own line in its
+description or an eligible comment. See the [workflow table](.github/workflows/README.md)
+for triggers, permissions and configuration.
 
 ---
 
-## `feature/*` → `dev`
+## Feature branch → `dev`
 
 Open a PR targeting `dev` (or push straight to `dev` for small changes).
 
 Before you merge:
 
-- Build locally at least once. There is no test or validation workflow yet, so
-  a compile error reaches TestFlight before anyone notices.
+- Build locally at least once. Automated SwiftLint checks apply to relevant
+  changes, but no CI workflow currently compiles and tests PRs. Agents must not
+  build or compile unless the user directly asks for a build.
 - If this is the first change of a new release cycle, bump `MARKETING_VERSION`
   and the build number offset in the same commit. See [Versions](#versions).
 
@@ -88,8 +99,8 @@ aren't you. Before merging:
 
 - Install the current `dev` build from TestFlight and actually open it.
 - Check that `MARKETING_VERSION` is the version you intend testers to see.
-- Review the cumulative TestFlight notes and add a promotion record from `dev`
-  to `UAT-testflight`. See [TestFlight notes](#testflight-notes).
+- Preview the Git-derived TestFlight notes for the destination lane. See
+  [TestFlight notes](#testflight-notes).
 
 On merge, `UAT-testflight` builds and goes to the **UAT** group. Every push
 here builds, so merge once, deliberately.
@@ -103,8 +114,9 @@ a merge commit**. The `source-branch` check rejects a PR from anything other
 than `UAT-testflight`, `hotfix/*` or `ci/*`. The latter two are exceptions for
 production fixes and CI maintenance, respectively.
 
-**Merging does not build anything.** `master` only builds on a version tag.
-That's deliberate: merging and releasing are separate decisions.
+**Merging does not start a release build.** The `master` release workflow starts
+only on a version tag. Merging and releasing are separate decisions; an eligible
+PR may also request a separate PR workflow build.
 
 To cut the release, publish a GitHub Release:
 
@@ -255,114 +267,106 @@ Known gaps, in rough priority order:
 
 ## TestFlight notes
 
-Xcode Cloud generates `TestFlight/WhatToTest.en-US.txt` from reviewed JSON
-records. No GitHub token, App Store Connect key, AI service or extra workflow
-setting is needed. The scripts must reach each building branch before that
-branch can generate notes. Notes are shared by everyone who can access a build.
+Xcode Cloud generates `TestFlight/WhatToTest.en-US.txt` from Git history and
+build metadata. No release-cycle JSON, manual summaries or promotion entries
+are required. Commit titles, including merge commits, appear directly in the
+notes, so write them clearly. No GitHub token, App Store Connect key, AI service
+or additional package is needed for note generation. The scripts must reach
+each building branch before that branch can generate notes.
 
-### Release scope
+### Contents and commit range
 
-`TestFlight/release.json` defines a `cycle` and a human-readable `baseline`
-(commit or release tag). Entries matching that cycle form cumulative notes for
-that release, not a delta since a tester's last installed build. The initial
-baseline marks this rollout; older changes and branch origins are not backfilled.
-The baseline is descriptive, not a Git-log filter: maintain the cycle on entries.
+Each build includes its version, build number, branch/tag, full checkout commit
+SHA, UTC timestamp and Sydney display time (AEST/AEDT). It also lists which of
+`dev`, `UAT-testflight` and `master` contain that commit at the time metadata is
+stamped. This is Git ancestry at build time, not a historical branch-creation
+chain. Deleted branch names and the order of past promotions cannot reliably be
+reconstructed from Git alone.
 
-At the start of a new release cycle, change both fields and add entries with the
-new cycle. Keep old entries as history; they are excluded automatically. Avoid
-renaming a cycle halfway through testing. Consolidate superseded checks within
-the current cycle so testers see the final behavior, not obsolete instructions.
+Commit titles are listed newest first, with abbreviated SHAs. A target range
+means all commits reachable from the build that are not reachable from the
+target (`git log TARGET..BUILD`), including merged feature history. Shared
+history and target-only commits are excluded. This is a comparison of commit
+ancestry, not a file diff or the exact date a branch was originally created.
+Rebased or cherry-picked equivalents can appear because their SHAs differ.
+If the target already contains the entire build, the notes explicitly report
+that there are no unique commits.
 
-### Change entries
+The target is selected in this order:
 
-Add `TestFlight/entries/<unique-name>.json` with the code change:
+1. `--target BRANCH`, for local commands.
+2. The `TESTFLIGHT_TARGET_BRANCH` workflow environment variable.
+3. Xcode Cloud's `CI_PULL_REQUEST_TARGET_BRANCH`, when available. Its
+   `CI_PULL_REQUEST_TARGET_COMMIT` pins the comparison snapshot when provided.
+4. These lane defaults:
 
-```json
-{
-  "cycle": "testflight-notes-rollout",
-  "kind": "change",
-  "origin": ["dev", "feat/focus-timer", "fix/timer-layout"],
-  "base_commit": "<full 40-character commit SHA>",
-  "user_visible": true,
-  "summary": "Timer controls now fit on small screens.",
-  "checks": [
-    "On a small screen, start a focus session; all timer controls should remain visible without overlapping."
-  ]
-}
-```
+| Build location | Comparison |
+|---|---|
+| `dev` | Commits not yet in `UAT-testflight` |
+| `UAT-testflight` | Commits not yet in `master` |
+| `ci/*`, `hotfix/*` | Commits not yet in `master` |
+| Other feature branches | Commits not yet in `dev` |
+| `master` or a tag | Since the nearest earlier reachable `v*` version tag |
 
-Capture `base_commit` with `git rev-parse HEAD` immediately before creating the
-final branch. `origin` lists the actual parent chain, ending with that branch;
-a direct change on `dev` can use `["dev"]`. For a nested branch, carry forward
-the parent's recorded origin and append the new name. Update the same entry for
-follow-up commits on that branch; add a new entry for independent work.
+For master/tag builds, tags on the build's own commit are excluded from baseline
+selection, so rebuilding a release still shows its changes. If there is no
+earlier version tag, the notes explicitly use all reachable history.
 
-Branch names are recorded explicitly because Git commit ancestry does not
-preserve a dependable branch-creation history. The renderer does not need live
-feature branches, a full clone or reflogs. It cannot detect invented origins or
-incorrect visibility classifications; review those fields alongside the code.
+The `/testflight` GitHub Action requests a **branch build**, rather than a native
+Xcode Cloud pull-request build. Apple may therefore omit the PR environment
+variables; these builds use the lane defaults above. Set
+`TESTFLIGHT_TARGET_BRANCH` on the Xcode Cloud workflow when its comparison target
+needs to differ. The script does not query GitHub to discover an open PR.
+The comparison label and full target/base SHA are included in the notes.
 
-Describe what testers can see or do, including persistence, loading and error
-behavior. Internal-only changes use `user_visible: false`, a short nontechnical
-summary and `checks: []`. If any visible entries exist, internal summaries and
-origins are omitted. If all entries are internal, notes explain that no app
-appearance/behavior changes are expected and include those short summaries.
-Missing entries are reported as missing instructions, never as proof that
-nothing changed. This system relies on change authors maintaining the records;
-it does not infer user impact from filenames or commit types.
+### Generation and storage
 
-### Promotions
+Before each xcodebuild invocation, `ci_pre_xcodebuild.sh` stamps the version,
+build number and lane, fetches origin's branches/tags and completes shallow Git
+history. Missing targets, unrelated histories or fetch failures stop generation
+with an explicit error rather than silently describing incomplete history.
+Only the build checkout's Git refs/history are updated; nothing is committed or
+pushed back to the repository.
 
-Promotion PRs retain existing entries and add their own uniquely named record:
+The pre-build hook saves an ignored `TestFlight/build-metadata.json` snapshot,
+including the selected commit titles and branch containment. One timestamp is
+used for that snapshot and `StudyAppBuildTime` in the app's Info.plist. This
+keeps the history range stable between pre-build and post-build even if remote
+branches move. The `TestFlight/` folder is created automatically when needed.
 
-```json
-{
-  "cycle": "testflight-notes-rollout",
-  "kind": "promotion",
-  "from": "dev",
-  "to": "UAT-testflight"
-}
-```
-
-Record the actual source/destination when preparing the promotion PR, including
-hotfix or CI routes. It becomes part of the build after that PR is merged.
-Keep origins separate from promotion steps: a release with several features has
-several origins, not one fabricated linear chain. Repeated promotion edges are
-shown once. The current build's branch/tag is always displayed independently;
-the generator never assumes a tag came from `master` or that UAT was visited.
-
-### Generation and verification
-
-The pre-build hook stamps version/build/lane as before, then validates the active
-records and writes ignored `TestFlight/build-metadata.json`. One timestamp is
-used for that metadata and `StudyAppBuildTime`; the Sydney timezone switches
-between AEST and AEDT automatically. The metadata includes the year and commit.
-
-The post-build hook generates the notes only when
+The post-build hook writes `TestFlight/WhatToTest.en-US.txt` only when
 `CI_APP_STORE_SIGNED_APP_PATH` is a directory, following Apple's documented
 [TestFlight notes mechanism](https://developer.apple.com/documentation/xcode/including-notes-for-testers-with-a-beta-release-of-your-app).
-Test/analyze actions are skipped. Generation rejects stale metadata from a
-different commit. Generated files are ignored and are not app resources.
-Malformed active records or notes exceeding the project's conservative
-3,500-character budget fail validation before compilation; shorten/consolidate
-notes rather than silently truncating testing instructions.
+Test/analyze actions do not produce the notes file. Generation rejects metadata
+from a different checkout commit. Metadata and notes are ignored by Git and are
+not app resources. The generated notes also appear in the post-build log and
+are shared with everyone who can access the TestFlight build.
 
-From the repository root, without building the app:
+Notes retain the project's conservative 3,500-character budget, counting UTF-16
+units so emoji are accounted for conservatively. If the history is too long,
+older commit lines are omitted and the footer reports how many commits are
+shown. An oversized newest title is shortened with an ellipsis. Build identity
+and timestamps are preserved; history length does not fail the build.
+
+### Verification without an app build
+
+From the repository root:
 
 ```sh
 python3 ci_scripts/testflight_notes.py preview --version 0.3 --build 24 --lane UAT-testflight
+python3 ci_scripts/testflight_notes.py preview --target dev
 python3 -m unittest discover -s ci_scripts -p 'test_testflight_notes.py'
 zsh -n ci_scripts/ci_pre_xcodebuild.sh ci_scripts/ci_post_xcodebuild.sh
 ```
 
-Preview prints to stdout without stamping files. Python 3.9+ with the standard
-library and Sydney timezone data is required on the Xcode Cloud image. No Python
-packages are installed. Fixture checks cover nested/deleted branches, separate
-feature origins, promotions, visibility filtering, old cycles, invalid records,
-size limits, timestamps and hook integration. They do not compile Swift or
-contact any service.
+Preview prints to stdout without creating files or accessing the network.
+Use `--fetch` to refresh origin refs and complete shallow history explicitly.
+Without it, preview uses the available local refs, preferring `origin/BRANCH`
+over a local branch. Python 3.9+ with the standard library and Sydney timezone
+data is required. Fixture checks use temporary local Git repositories and do
+not compile Swift or contact any service.
 
-After this change is merged and an app build is explicitly authorized, inspect
-its Xcode Cloud post-build log and TestFlight's “What to Test” field. Confirm the
-version/build, branch/tag, Sydney timestamp and testing instructions match the
-uploaded build. This last service-side check cannot be proven by local fixtures.
+After an app build is explicitly authorized, inspect its Xcode Cloud post-build
+log and TestFlight's “What to Test” field. Confirm the version/build, branch/tag,
+full commit, timestamps, comparison range and commit titles match the upload.
+This service-side check cannot be proven by local fixtures.

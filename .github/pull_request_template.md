@@ -17,12 +17,9 @@
 
 ## TestFlight notes
 
-<!-- Add/update TestFlight/entries/<unique-name>.json for this change.
-Record the real branch origin and starting commit. For visible changes, give
-an action and expected visual/behavioral result. Mark internal-only changes
-user_visible: false. Promotion PRs add a promotion record instead of copying
-change entries. See pipeline.md, "TestFlight notes". -->
-- Note entry:
+<!-- Notes are generated from Git commit titles and build metadata.
+Review the commit titles and comparison target; see pipeline.md, "TestFlight notes".
+No manual summary or JSON entry is required. -->
 
 ## Tested
 
