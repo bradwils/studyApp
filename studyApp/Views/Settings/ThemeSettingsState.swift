@@ -4,7 +4,7 @@ import Combine
 
 @MainActor
 /// Manages the app themes backed by SwiftData so the Settings UI can show saved palettes and create new ones.
-final class ThemeSettingsViewModel: ObservableObject {
+final class ThemeSettingsState: ObservableObject {
     struct ThemeTemplate: Identifiable {
         let id = UUID()
         let name: String

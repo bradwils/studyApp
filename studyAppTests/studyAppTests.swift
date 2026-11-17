@@ -10,7 +10,7 @@ import Testing
 
 import Foundation
 
-struct studyAppTests {
+struct StudyAppTests {
 
     // Helper to create a temporary directory for isolated disk tests
     private func makeTempDirectory() throws -> URL {
