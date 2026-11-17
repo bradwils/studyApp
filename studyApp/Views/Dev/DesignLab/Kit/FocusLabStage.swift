@@ -20,11 +20,6 @@ struct FocusLabStageMetrics: Equatable {
         )
     }
 
-    /// A y measured from the top of a page, expressed in backdrop coordinates.
-    func backdropY(_ pageY: CGFloat) -> CGFloat {
-        pageY + insets.top
-    }
-
     /// An x measured from the leading edge of a page, expressed in backdrop coordinates.
     func backdropX(_ pageX: CGFloat) -> CGFloat {
         pageX + insets.leading

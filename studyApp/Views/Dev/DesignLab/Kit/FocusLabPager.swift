@@ -1,9 +1,9 @@
 //  FocusLabPager.swift
 //  studyApp
 //
-//  DEV ONLY — the two-page pager every Focus Design Lab screen shares. Same mechanics
-//  as FocusSessionScreen's pager: the pages scroll, and anything a design wants to stay
-//  put (timer, background, a shared shape) is drawn outside it and driven by pageOffset.
+//  DEV ONLY — the two-page pager FocusLabScaffold drives. Same mechanics as
+//  FocusSessionScreen's pager: only the pages scroll; the scaffold draws the backdrop
+//  and timer outside it and hands every design the resulting blend.
 
 import SwiftUI
 

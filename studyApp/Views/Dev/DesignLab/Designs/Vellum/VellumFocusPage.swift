@@ -1,25 +1,30 @@
 //  VellumFocusPage.swift
 //  studyApp
 //
-//  DEV ONLY — Vellum's focus page. Transparent; the controls
+//  DEV ONLY — Vellum's focus page header and body. Transparent; the controls
 //  fade in late so the arriving sheets don't cross them at full strength.
 
 import SwiftUI
 
-struct VellumFocusPage {
+struct VellumFocusHeader: View {
 
     let session: FocusLabSession
-    let blend: CGFloat
 
-    var header: some View {
+    var body: some View {
         Text(session.selectedSubject.code)
             .font(VellumFont.text(20, .semibold))
             .foregroundStyle(VellumPalette.ink)
             .frame(maxWidth: .infinity)
             .padding(.horizontal, VellumLayout.sidePadding)
     }
+}
 
-    var content: some View {
+struct VellumFocusPage: View {
+
+    let session: FocusLabSession
+    let blend: CGFloat
+
+    var body: some View {
         VStack(spacing: 0) {
             controls
                 .padding(.top, 48)

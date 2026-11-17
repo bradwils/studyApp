@@ -1,7 +1,7 @@
 //  DaylightFocusPage.swift
 //  studyApp
 //
-//  DEV ONLY — the transparent focus page of the Daylight design.
+//  DEV ONLY — the Daylight design's focus page body and header. Transparent; the controls sit on the ground.
 
 import SwiftUI
 

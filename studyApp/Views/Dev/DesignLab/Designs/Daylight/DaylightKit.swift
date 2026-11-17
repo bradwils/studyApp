@@ -1,4 +1,4 @@
-//  DaylightStyle.swift
+//  DaylightKit.swift
 //  studyApp
 //
 //  DEV ONLY — palette, type, formatting and the shared pill button for the Daylight design.

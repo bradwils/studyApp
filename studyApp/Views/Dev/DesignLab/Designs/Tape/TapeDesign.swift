@@ -33,7 +33,7 @@ struct TapeDesign: FocusLabScreen {
     }
 
     func trackingBody(_ context: FocusLabContext) -> some View {
-        TapeTrackingBody(session: context.session)
+        TapeTrackingPage(session: context.session)
     }
 
     func focusHeader(_ context: FocusLabContext) -> some View {
@@ -41,7 +41,7 @@ struct TapeDesign: FocusLabScreen {
     }
 
     func focusBody(_ context: FocusLabContext) -> some View {
-        TapeFocusBody(session: context.session)
+        TapeFocusPage(session: context.session)
     }
 
     func chromeScheme(blend: CGFloat) -> ColorScheme? {

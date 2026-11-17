@@ -15,14 +15,6 @@ final class FocusLabSession {
         case paused
     }
 
-    enum ClockSource: Equatable {
-        case study
-        case rest
-        case focusRemaining
-        /// Break time while paused, time left while a focus block runs, study time otherwise.
-        case automatic
-    }
-
     struct LabSubject: Identifiable, Hashable {
         let code: String
         let name: String
@@ -31,8 +23,6 @@ final class FocusLabSession {
 
     struct LabFriend: Identifiable, Hashable {
         let name: String
-        let subjectCode: String
-        let minutes: Int
         var id: String { name }
     }
 
@@ -57,9 +47,9 @@ final class FocusLabSession {
     ]
 
     static let sampleFriends: [LabFriend] = [
-        LabFriend(name: "Mia", subjectCode: "PSYC2001", minutes: 42),
-        LabFriend(name: "Arjun", subjectCode: "STAT2170", minutes: 18),
-        LabFriend(name: "Tess", subjectCode: "PHIL1037", minutes: 65)
+        LabFriend(name: "Mia"),
+        LabFriend(name: "Arjun"),
+        LabFriend(name: "Tess")
     ]
 
     static let focusPresets: [TimeInterval] = [15 * 60, 25 * 60, 45 * 60, 60 * 60, 90 * 60]
@@ -87,7 +77,6 @@ final class FocusLabSession {
     // MARK: - State
 
     var hasSession: Bool { phase != .idle }
-    var isRunning: Bool { phase == .running }
     var isPaused: Bool { phase == .paused }
     var hasFocusBlock: Bool { focusGoal != nil }
 
@@ -136,35 +125,18 @@ final class FocusLabSession {
         return remaining <= 0
     }
 
-    func seconds(for source: ClockSource, at date: Date = .now) -> TimeInterval? {
-        switch source {
-        case .study:
-            return hasSession ? studyElapsed(at: date) : nil
-        case .rest:
-            return isPaused ? currentBreakElapsed(at: date) : nil
-        case .focusRemaining:
-            return focusRemaining(at: date)
-        case .automatic:
-            if isPaused { return currentBreakElapsed(at: date) }
-            if hasFocusBlock { return focusRemaining(at: date) }
-            return hasSession ? studyElapsed(at: date) : nil
-        }
+    /// What the timer shows: break time while paused, time left while a focus block runs, study time otherwise.
+    func clockSeconds(at date: Date = .now) -> TimeInterval? {
+        if isPaused { return currentBreakElapsed(at: date) }
+        if hasFocusBlock { return focusRemaining(at: date) }
+        return hasSession ? studyElapsed(at: date) : nil
     }
 
-    /// Whole-second ticks line up with this date, so a clock redraws exactly as its digits change.
-    func tickOrigin(for source: ClockSource) -> Date {
+    /// Whole-second ticks line up with this date, so the clock redraws exactly as its digits change.
+    var clockTickOrigin: Date {
         let fallback = Date(timeIntervalSinceReferenceDate: 0)
-        switch source {
-        case .study:
-            return studyAnchor ?? fallback
-        case .rest:
-            return pausedAt ?? fallback
-        case .focusRemaining:
-            return focusGoal ?? fallback
-        case .automatic:
-            if isPaused { return pausedAt ?? fallback }
-            return focusGoal ?? studyAnchor ?? fallback
-        }
+        if isPaused { return pausedAt ?? fallback }
+        return focusGoal ?? studyAnchor ?? fallback
     }
 
     // MARK: - Session actions

@@ -1,7 +1,7 @@
 //  StarsFocusPage.swift
 //  studyApp
 //
-//  DEV ONLY — Stars' focus page. Transparent; the status row under the timer is left empty,
+//  DEV ONLY — Stars' focus page header and body. Transparent; the status row under the timer is left empty,
 //  and the controls sit low so the figure around the timer stays clear.
 
 import SwiftUI

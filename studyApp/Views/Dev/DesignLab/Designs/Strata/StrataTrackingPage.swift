@@ -1,7 +1,7 @@
 //  StrataTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Strata's tracking page. Transparent; the stack shows through below the buttons.
+//  DEV ONLY — Strata's tracking page header and body. Transparent; the stack shows through below the buttons.
 
 import SwiftUI
 

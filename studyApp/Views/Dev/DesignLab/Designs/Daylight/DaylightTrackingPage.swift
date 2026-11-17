@@ -1,7 +1,7 @@
 //  DaylightTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — the transparent tracking page of the Daylight design.
+//  DEV ONLY — the Daylight design's tracking page body and header. Transparent; the sun and sky are in the backdrop.
 
 import SwiftUI
 

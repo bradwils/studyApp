@@ -9,7 +9,6 @@ import SwiftUI
 struct FocusLabClock: View {
 
     let session: FocusLabSession
-    var source: FocusLabSession.ClockSource = .automatic
     var idleText: String = "00:00"
 
     /// Set this for typefaces without tabular figures (Didot, Futura, Avenir…): every
@@ -17,7 +16,7 @@ struct FocusLabClock: View {
     var digitWidth: CGFloat?
 
     var body: some View {
-        TimelineView(.periodic(from: session.tickOrigin(for: source), by: 1)) { context in
+        TimelineView(.periodic(from: session.clockTickOrigin, by: 1)) { context in
             let whole = wholeSeconds(at: context.date)
             let text = whole.map { formattedElapsed(TimeInterval($0)) } ?? idleText
 
@@ -36,26 +35,24 @@ struct FocusLabClock: View {
 
     // A countdown rounds up so a 25 minute block opens on 25:00, not 24:59.
     private func wholeSeconds(at date: Date) -> Int? {
-        guard let seconds = session.seconds(for: source, at: date) else { return nil }
-        let countsDown = source == .focusRemaining || (source == .automatic && session.hasFocusBlock && !session.isPaused)
+        guard let seconds = session.clockSeconds(at: date) else { return nil }
+        let countsDown = session.hasFocusBlock && !session.isPaused
         return Int(countsDown ? seconds.rounded(.up) : seconds.rounded(.down))
     }
 }
 
-/// Lays text out one character per fixed-width cell.
+/// Lays text out one character per fixed-width cell; ":" and other non-digits get half a cell.
 struct FocusLabDigits: View {
 
     let text: String
     var digitWidth: CGFloat
-    /// Width for ":" and other non-digits. Defaults to half a digit.
-    var separatorWidth: CGFloat?
 
     var body: some View {
         HStack(spacing: 0) {
             ForEach(Array(text.enumerated()), id: \.offset) { item in
                 Text(String(item.element))
                     .contentTransition(.numericText())
-                    .frame(width: item.element.isNumber ? digitWidth : (separatorWidth ?? digitWidth * 0.5))
+                    .frame(width: item.element.isNumber ? digitWidth : digitWidth * 0.5)
             }
         }
     }

@@ -31,19 +31,19 @@ struct VellumDesign: FocusLabScreen {
     }
 
     func trackingHeader(_ context: FocusLabContext) -> some View {
-        VellumTrackingPage(session: context.session, layout: VellumLayout(context: context)).header
+        VellumTrackingHeader(session: context.session)
     }
 
     func trackingBody(_ context: FocusLabContext) -> some View {
-        VellumTrackingPage(session: context.session, layout: VellumLayout(context: context)).content
+        VellumTrackingPage(session: context.session, layout: VellumLayout(context: context))
     }
 
     func focusHeader(_ context: FocusLabContext) -> some View {
-        VellumFocusPage(session: context.session, blend: context.blend).header
+        VellumFocusHeader(session: context.session)
     }
 
     func focusBody(_ context: FocusLabContext) -> some View {
-        VellumFocusPage(session: context.session, blend: context.blend).content
+        VellumFocusPage(session: context.session, blend: context.blend)
     }
 }
 

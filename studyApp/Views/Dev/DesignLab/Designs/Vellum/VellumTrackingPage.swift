@@ -1,37 +1,19 @@
 //  VellumTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Vellum's tracking page. Transparent; the buttons sit on the fanned sheets.
+//  DEV ONLY — Vellum's tracking page header and body. Transparent; the buttons sit on the fanned sheets.
 
 import SwiftUI
 
-struct VellumTrackingPage {
+struct VellumTrackingHeader: View {
 
     let session: FocusLabSession
-    let layout: VellumLayout
 
-    var header: some View {
+    var body: some View {
         subject
             .frame(maxWidth: .infinity)
             .padding(.horizontal, VellumLayout.sidePadding)
     }
-
-    var content: some View {
-        VStack(spacing: 0) {
-            caption
-                .padding(.top, 12)
-            Spacer(minLength: 0)
-            buttons
-            friendsLine
-                .padding(.top, 16)
-            Color.clear
-                .frame(height: max(layout.height * 0.30 - 70, 20))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.horizontal, VellumLayout.sidePadding)
-    }
-
-    // MARK: - Header
 
     @ViewBuilder
     private var subject: some View {
@@ -62,6 +44,27 @@ struct VellumTrackingPage {
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
+    }
+}
+
+struct VellumTrackingPage: View {
+
+    let session: FocusLabSession
+    let layout: VellumLayout
+
+    var body: some View {
+        VStack(spacing: 0) {
+            caption
+                .padding(.top, 12)
+            Spacer(minLength: 0)
+            buttons
+            friendsLine
+                .padding(.top, 16)
+            Color.clear
+                .frame(height: max(layout.height * 0.30 - 70, 20))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .padding(.horizontal, VellumLayout.sidePadding)
     }
 
     // MARK: - Caption

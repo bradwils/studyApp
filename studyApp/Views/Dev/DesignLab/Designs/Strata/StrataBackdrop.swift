@@ -13,10 +13,8 @@ struct StrataBackdrop: View {
 
     var body: some View {
         let full: CGSize = metrics.fullSize
-        ZStack(alignment: .topLeading) {
-            stack(full: full)
-        }
-        .frame(width: full.width, height: full.height, alignment: .topLeading)
+        stack(full: full)
+            .frame(width: full.width, height: full.height, alignment: .topLeading)
     }
 
     private func stack(full: CGSize) -> some View {

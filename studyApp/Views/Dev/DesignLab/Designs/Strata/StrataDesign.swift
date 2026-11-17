@@ -31,11 +31,7 @@ struct StrataDesign: FocusLabScreen {
     }
 
     func focusHeader(_ context: FocusLabContext) -> some View {
-        Text(context.session.selectedSubject.code)
-            .font(StrataFont.sans(20, .semibold))
-            .foregroundStyle(StrataPalette.ink)
-            .padding(.horizontal, StrataLayout.contentX)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        StrataFocusHeader(session: context.session)
     }
 
     func focusBody(_ context: FocusLabContext) -> some View {

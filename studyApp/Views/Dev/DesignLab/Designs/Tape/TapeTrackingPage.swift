@@ -67,7 +67,7 @@ struct TapeTrackingHeader: View {
 
 }
 
-struct TapeTrackingBody: View {
+struct TapeTrackingPage: View {
 
     let session: FocusLabSession
 

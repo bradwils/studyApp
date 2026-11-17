@@ -1,7 +1,7 @@
 //  FocusLabMath.swift
 //  studyApp
 //
-//  DEV ONLY — small helpers for driving Focus Design Lab visuals off pageOffset.
+//  DEV ONLY — small helpers for driving Focus Design Lab visuals off the page blend.
 
 import SwiftUI
 
@@ -17,7 +17,7 @@ nonisolated enum FocusLabMath {
     }
 
     /// Remaps `value` from `start...end` onto 0...1, clamped. Use it to make one part of
-    /// a swipe finish early or start late: `window(pageOffset, 0.5, 1)` only moves in the second half.
+    /// a swipe finish early or start late: `window(blend, 0.5, 1)` only moves in the second half.
     static func window(_ value: CGFloat, _ start: CGFloat, _ end: CGFloat) -> CGFloat {
         guard end > start else { return value >= end ? 1 : 0 }
         return clamp((value - start) / (end - start))

@@ -17,7 +17,7 @@ struct TapeFocusHeader: View {
     }
 }
 
-struct TapeFocusBody: View {
+struct TapeFocusPage: View {
 
     let session: FocusLabSession
 

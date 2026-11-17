@@ -1,7 +1,7 @@
 //  StarsTrackingPage.swift
 //  studyApp
 //
-//  DEV ONLY — Stars' tracking page. Transparent; the status row under the timer is left empty.
+//  DEV ONLY — Stars' tracking page header and body. Transparent; the status row under the timer is left empty.
 
 import SwiftUI
 

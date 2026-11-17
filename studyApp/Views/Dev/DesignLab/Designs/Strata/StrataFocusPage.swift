@@ -1,10 +1,23 @@
 //  StrataFocusPage.swift
 //  studyApp
 //
-//  DEV ONLY — Strata's focus page. Transparent; the current band rises behind these
-//  controls, so there are no backing cards.
+//  DEV ONLY — Strata's focus page header and body. Transparent; the current band rises
+//  behind these controls, so there are no backing cards.
 
 import SwiftUI
+
+struct StrataFocusHeader: View {
+
+    let session: FocusLabSession
+
+    var body: some View {
+        Text(session.selectedSubject.code)
+            .font(StrataFont.sans(20, .semibold))
+            .foregroundStyle(StrataPalette.ink)
+            .padding(.horizontal, StrataLayout.contentX)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
 
 struct StrataFocusPage: View {
 
