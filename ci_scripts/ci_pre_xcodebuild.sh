@@ -13,6 +13,15 @@
 #                whatever is in the project — the version being worked toward.
 
 set -euo pipefail
+trap 'echo "error: ci_pre_xcodebuild.sh failed at line $LINENO (action=${CI_XCODEBUILD_ACTION:-?}, workflow=${CI_WORKFLOW:-?})" >&2' ERR
+
+# Test workflows (feat/ and refactor/ branches) run xcodebuild for
+# build-for-testing and test-without-building; nothing is shipped from them, so
+# stamping version/lane/build time is pointless and only adds a way to fail.
+if [[ -n "${CI_XCODEBUILD_ACTION:-}" && "${CI_XCODEBUILD_ACTION}" != "archive" ]]; then
+  echo "skipping version stamping for xcodebuild action '${CI_XCODEBUILD_ACTION}'"
+  exit 0
+fi
 
 PROJECT="$CI_PRIMARY_REPOSITORY_PATH/studyApp.xcodeproj/project.pbxproj"
 OFFSET="$(<"$CI_PRIMARY_REPOSITORY_PATH/ci_scripts/build_number_offset")"
