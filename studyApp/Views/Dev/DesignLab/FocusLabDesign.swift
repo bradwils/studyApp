@@ -53,12 +53,12 @@ enum FocusLabDesign: String, CaseIterable, Identifiable {
     @ViewBuilder
     func screen(session: FocusLabSession) -> some View {
         switch self {
-        case .margin: FocusLabScaffold(session: session, design: MarginDesign())
-        case .daylight: FocusLabScaffold(session: session, design: DaylightDesign())
-        case .strata: FocusLabScaffold(session: session, design: StrataDesign())
-        case .vellum: FocusLabScaffold(session: session, design: VellumDesign())
-        case .tape: FocusLabScaffold(session: session, design: TapeDesign())
-        case .stars: FocusLabScaffold(session: session, design: StarsDesign())
+        case .margin: FocusPagerScaffold(screen: MarginDesign(session: session))
+        case .daylight: FocusPagerScaffold(screen: DaylightDesign(session: session))
+        case .strata: FocusPagerScaffold(screen: StrataDesign(session: session))
+        case .vellum: FocusPagerScaffold(screen: VellumDesign(session: session))
+        case .tape: FocusPagerScaffold(screen: TapeDesign(session: session))
+        case .stars: FocusPagerScaffold(screen: StarsDesign(session: session))
         }
     }
 }

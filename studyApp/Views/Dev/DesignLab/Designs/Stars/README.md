@@ -10,7 +10,7 @@ A night sky you fill in. Every five minutes of study lights four more stars. On 
 - `trackingBody`: an empty 40 pt status row (the status is in the backdrop), Start/Pause/Resume, End session while paused, and a footer with today's total and friends.
 - `focusHeader`: subject code.
 - `focusBody`: the same empty status row, with the controls (presets, outline Start/End/Finish pill, Lock screen) pushed to the bottom so the figure around the timer stays clear.
-- No `slots` or `chromeScheme` override. The design is dark throughout, set by `FocusLabDesign.colorScheme`.
+- No `slots` override and no `.focusLabChrome`. The design is dark throughout, set by `FocusLabDesign.colorScheme`.
 
 ## What drives it
 
@@ -19,7 +19,7 @@ A night sky you fill in. Every five minutes of study lights four more stars. On 
 
 ## Files
 
-- `StarsDesign.swift`: the `FocusLabScreen` conformance.
+- `StarsDesign.swift`: the `FocusLabScreen` conformance (a `FocusPagerScreen` that holds the mock `session`).
 - `StarsBackdrop.swift`: sky, dawn, the private sky view with its two Canvases, and the status line.
 - `StarsField.swift`: `StarsField` (star positions, lit count, turn) and `StarsFigure` (anchors and partial segments) as plain values.
 - `StarsTrackingPage.swift`: `StarsTrackingHeader` and `StarsTrackingPage`.
@@ -30,5 +30,5 @@ A night sky you fill in. Every five minutes of study lights four more stars. On 
 
 - The maths types are `nonisolated`, and the Canvases copy their inputs into locals, so the renderer touches no main-actor state.
 - Star positions come from a deterministic sine hash, so the sky is the same on every launch.
-- The figure's radii (124 to 168 pt around the timer's centre) are fixed points, not scaled to screen width.
+- The figure's radii (124 to 168 pt around the timer's centre) are fixed points, not scaled to screen width. The timer's centre is the column's centre, so the figure and the status line stay centred on a wide screen. The sky and the star field span the whole screen and turn around that same point.
 - `StarsLayout.statusRowHeight` in the bodies and `StarsLayout.statusOffset` in the backdrop must stay in step.

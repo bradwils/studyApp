@@ -8,37 +8,43 @@ import SwiftUI
 
 struct StrataDesign: FocusLabScreen {
 
+    let session: FocusLabSession
+
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 80
 
-    func backdrop(_ context: FocusLabContext) -> some View {
-        StrataBackdrop(session: context.session, blend: context.blend, metrics: context.metrics)
+    init(session: FocusLabSession) {
+        self.session = session
     }
 
-    func timer(_ context: FocusLabContext) -> some View {
-        FocusLabClock(session: context.session, idleText: "0:00", digitWidth: timerSize * 0.56)
+    func backdrop(_ context: FocusPagerContext) -> some View {
+        StrataBackdrop(session: session, blend: context.blend, metrics: context.metrics)
+    }
+
+    func timer(_ context: FocusPagerContext) -> some View {
+        FocusLabClock(session: session, idleText: "0:00", digitWidth: timerSize * 0.56)
             .font(Font.custom("DINAlternate-Bold", size: 80, relativeTo: .largeTitle))
             .foregroundStyle(StrataPalette.ink)
             .padding(.leading, StrataLayout.contentX)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    func trackingHeader(_ context: FocusLabContext) -> some View {
-        StrataTrackingHeader(session: context.session)
+    func trackingHeader(_ context: FocusPagerContext) -> some View {
+        StrataTrackingHeader(session: session)
     }
 
-    func trackingBody(_ context: FocusLabContext) -> some View {
-        StrataTrackingPage(session: context.session)
+    func trackingBody(_ context: FocusPagerContext) -> some View {
+        StrataTrackingPage(session: session)
     }
 
-    func focusHeader(_ context: FocusLabContext) -> some View {
-        StrataFocusHeader(session: context.session)
+    func focusHeader(_ context: FocusPagerContext) -> some View {
+        StrataFocusHeader(session: session)
     }
 
-    func focusBody(_ context: FocusLabContext) -> some View {
-        StrataFocusPage(session: context.session)
+    func focusBody(_ context: FocusPagerContext) -> some View {
+        StrataFocusPage(session: session)
     }
 }
 
 #Preview {
-    FocusLabScaffold(session: FocusLabSession(), design: StrataDesign())
+    FocusPagerScaffold(screen: StrataDesign(session: FocusLabSession()))
 }

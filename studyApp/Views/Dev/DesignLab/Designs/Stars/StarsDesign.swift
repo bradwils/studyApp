@@ -9,36 +9,42 @@ import SwiftUI
 
 struct StarsDesign: FocusLabScreen {
 
+    let session: FocusLabSession
+
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 80
 
-    func backdrop(_ context: FocusLabContext) -> some View {
-        StarsBackdrop(context: context)
+    init(session: FocusLabSession) {
+        self.session = session
     }
 
-    func timer(_ context: FocusLabContext) -> some View {
-        FocusLabClock(session: context.session, idleText: "0:00", digitWidth: timerSize * 0.56)
+    func backdrop(_ context: FocusPagerContext) -> some View {
+        StarsBackdrop(session: session, context: context)
+    }
+
+    func timer(_ context: FocusPagerContext) -> some View {
+        FocusLabClock(session: session, idleText: "0:00", digitWidth: timerSize * 0.56)
             .font(StarsFont.timer(timerSize))
             .foregroundStyle(StarsPalette.star)
             .lineLimit(1)
     }
 
-    func trackingHeader(_ context: FocusLabContext) -> some View {
-        StarsTrackingHeader(session: context.session)
+    func trackingHeader(_ context: FocusPagerContext) -> some View {
+        StarsTrackingHeader(session: session)
     }
 
-    func trackingBody(_ context: FocusLabContext) -> some View {
-        StarsTrackingPage(session: context.session)
+    func trackingBody(_ context: FocusPagerContext) -> some View {
+        StarsTrackingPage(session: session)
     }
 
-    func focusHeader(_ context: FocusLabContext) -> some View {
-        StarsFocusHeader(session: context.session)
+    func focusHeader(_ context: FocusPagerContext) -> some View {
+        StarsFocusHeader(session: session)
     }
 
-    func focusBody(_ context: FocusLabContext) -> some View {
-        StarsFocusPage(session: context.session)
+    func focusBody(_ context: FocusPagerContext) -> some View {
+        StarsFocusPage(session: session)
     }
 }
 
 #Preview {
-    FocusLabScaffold(session: FocusLabSession(), design: StarsDesign())
+    FocusPagerScaffold(screen: StarsDesign(session: FocusLabSession()))
 }

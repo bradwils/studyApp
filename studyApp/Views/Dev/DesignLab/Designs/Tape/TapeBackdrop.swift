@@ -8,11 +8,11 @@ import SwiftUI
 
 struct TapeBackdrop: View {
 
-    let context: FocusLabContext
+    let session: FocusLabSession
+    let context: FocusPagerContext
     let reduceMotion: Bool
 
-    private var session: FocusLabSession { context.session }
-    private var metrics: FocusLabStageMetrics { context.metrics }
+    private var metrics: FocusPagerStageMetrics { context.metrics }
     private var blend: CGFloat { context.blend }
 
     private var centerX: CGFloat {
@@ -42,7 +42,7 @@ struct TapeBackdrop: View {
             session: session,
             needleX: metrics.backdropX(metrics.safeSize.width / 2),
             width: metrics.fullSize.width,
-            safeWidth: metrics.safeSize.width,
+            columnWidth: context.contentRect.width,
             blend: blend,
             reduceMotion: reduceMotion
         )

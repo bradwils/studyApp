@@ -12,7 +12,6 @@ struct DaylightGeometry {
     static let trackingSunDiameter: CGFloat = 22
     static let focusSunDiameter: CGFloat = 168
 
-    let width: CGFloat
     let insetLeading: CGFloat
     let insetTop: CGFloat
     let fullWidth: CGFloat
@@ -25,22 +24,21 @@ struct DaylightGeometry {
     let timerBottom: CGFloat
     let horizonY: CGFloat
 
-    init(context: FocusLabContext) {
-        let metrics: FocusLabStageMetrics = context.metrics
+    init(context: FocusPagerContext) {
+        let metrics: FocusPagerStageMetrics = context.metrics
         let safe: CGSize = metrics.safeSize
         let full: CGSize = metrics.fullSize
         let apex: CGFloat = context.timerRect.minY - 20
         let sagitta: CGFloat = DaylightGeometry.arcSagitta
-        let half: CGFloat = max((safe.width - 64) / 2, 1)
+        let half: CGFloat = max((context.contentRect.width - 64) / 2, 1)
         let radius: CGFloat = (half * half + sagitta * sagitta) / (2 * sagitta)
         let ratio: Double = min(Double(half / radius), 1)
 
-        self.width = safe.width
         self.insetLeading = metrics.insets.leading
         self.insetTop = metrics.insets.top
         self.fullWidth = full.width
         self.fullHeight = full.height
-        self.arcCenterX = safe.width / 2
+        self.arcCenterX = context.contentRect.midX
         self.arcCenterY = apex + radius
         self.arcRadius = radius
         self.arcTheta = asin(ratio)
@@ -79,7 +77,7 @@ struct DaylightGeometry {
         let tracking: CGPoint = arcPoint(day)
         let focusY: CGFloat = FocusLabMath.lerp(horizonY, timerCenterY, progress)
         let travel: CGFloat = FocusLabMath.smoothstep(blend)
-        let sunX: CGFloat = FocusLabMath.lerp(tracking.x, width / 2, travel)
+        let sunX: CGFloat = FocusLabMath.lerp(tracking.x, arcCenterX, travel)
         let sunY: CGFloat = FocusLabMath.lerp(tracking.y, focusY, travel)
         return toBackdrop(CGPoint(x: sunX, y: sunY))
     }

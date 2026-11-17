@@ -8,38 +8,41 @@ import SwiftUI
 
 struct MarginDesign: FocusLabScreen {
 
+    let session: FocusLabSession
+
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 92
 
-    func chromeScheme(blend: CGFloat) -> ColorScheme? {
-        blend < 0.5 ? .light : .dark
+    init(session: FocusLabSession) {
+        self.session = session
     }
 
-    func backdrop(_ context: FocusLabContext) -> some View {
-        MarginBackdrop(context: context, timerSize: timerSize)
+    func backdrop(_ context: FocusPagerContext) -> some View {
+        MarginBackdrop(session: session, context: context, timerSize: timerSize)
+            .focusLabChrome(context.blend < 0.5 ? .light : .dark)
     }
 
     // The timer has to change colour exactly at the ink edge, so it is drawn twice in the backdrop.
-    func timer(_ context: FocusLabContext) -> some View {
+    func timer(_ context: FocusPagerContext) -> some View {
         EmptyView()
     }
 
-    func trackingHeader(_ context: FocusLabContext) -> some View {
-        MarginTrackingHeader(session: context.session)
+    func trackingHeader(_ context: FocusPagerContext) -> some View {
+        MarginTrackingHeader(session: session)
     }
 
-    func trackingBody(_ context: FocusLabContext) -> some View {
-        MarginTrackingPage(session: context.session)
+    func trackingBody(_ context: FocusPagerContext) -> some View {
+        MarginTrackingPage(session: session)
     }
 
-    func focusHeader(_ context: FocusLabContext) -> some View {
-        MarginFocusHeader(session: context.session)
+    func focusHeader(_ context: FocusPagerContext) -> some View {
+        MarginFocusHeader(session: session)
     }
 
-    func focusBody(_ context: FocusLabContext) -> some View {
-        MarginFocusPage(session: context.session)
+    func focusBody(_ context: FocusPagerContext) -> some View {
+        MarginFocusPage(session: session)
     }
 }
 
 #Preview {
-    FocusLabScaffold(session: FocusLabSession(), design: MarginDesign())
+    FocusPagerScaffold(screen: MarginDesign(session: FocusLabSession()))
 }

@@ -48,7 +48,9 @@ struct VellumLayout {
     static let sheetOpacity: Double = 0.46
     static let sheetCount: Int = 5
 
-    let width: CGFloat
+    // The fan and the tile belong to the controls, so they follow the centred column rather than the screen.
+    let columnWidth: CGFloat
+    let columnCenterX: CGFloat
     let height: CGFloat
     let insetLeading: CGFloat
     let insetTop: CGFloat
@@ -58,18 +60,19 @@ struct VellumLayout {
     let timerCenterY: CGFloat
     let timerBackdropCenter: CGPoint
 
-    init(context: FocusLabContext) {
-        let metrics: FocusLabStageMetrics = context.metrics
+    init(context: FocusPagerContext) {
+        let metrics: FocusPagerStageMetrics = context.metrics
         let safe: CGSize = metrics.safeSize
         let full: CGSize = metrics.fullSize
 
-        self.width = safe.width
+        self.columnWidth = context.contentRect.width
+        self.columnCenterX = context.contentRect.midX
         self.height = safe.height
         self.insetLeading = metrics.insets.leading
         self.insetTop = metrics.insets.top
         self.fullWidth = full.width
         self.fullHeight = full.height
-        self.tile = min(context.timerRect.height, safe.width * 0.62, 250)
+        self.tile = min(context.timerRect.height, context.contentRect.width * 0.62, 250)
         self.timerCenterY = context.timerRect.midY
         self.timerBackdropCenter = CGPoint(x: context.timerBackdropRect.midX, y: context.timerBackdropRect.midY)
     }
@@ -84,10 +87,10 @@ struct VellumLayout {
         let slot: CGFloat = CGFloat(index)
         let spread: CGFloat = slot - 2
 
-        let fanWidth: CGFloat = width * 0.74
+        let fanWidth: CGFloat = columnWidth * 0.74
         let fanHeight: CGFloat = height * 0.40
-        let fanShift: CGFloat = spread * width * 0.15
-        let fanX: CGFloat = width / 2 + fanShift
+        let fanShift: CGFloat = spread * columnWidth * 0.15
+        let fanX: CGFloat = columnCenterX + fanShift
         let fanY: CGFloat = height * 0.70 + spread * 16
         let fanDegrees: CGFloat = spread * 7
 
@@ -103,7 +106,7 @@ struct VellumLayout {
         let sheetWidth: CGFloat = FocusLabMath.lerp(fanWidth, tile, travel)
         let sheetHeight: CGFloat = FocusLabMath.lerp(fanHeight, tile, travel)
         let sheetRadius: CGFloat = FocusLabMath.lerp(34, stackRadius, travel)
-        let pageX: CGFloat = FocusLabMath.lerp(fanX, width / 2, travel)
+        let pageX: CGFloat = FocusLabMath.lerp(fanX, columnCenterX, travel)
         let pageY: CGFloat = FocusLabMath.lerp(fanY, timerCenterY, travel)
         let sheetDegrees: CGFloat = FocusLabMath.lerp(fanDegrees, stackDegrees, travel)
 

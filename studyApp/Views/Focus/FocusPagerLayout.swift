@@ -18,6 +18,10 @@ enum FocusPagerLayout {
     static let timerFontBaseSize: CGFloat = 90
     static let timerSlotBaseHeight: CGFloat = 120
 
+    // A standard iPhone is about 400pt wide, so this only bites on wider screens, where the
+    // page content and the timer sit in a centred column of this width.
+    static let maxContentWidth: CGFloat = 500
+
     static let ringDiameter: CGFloat = 250
     static let ringLineWidth: CGFloat = 8
 }

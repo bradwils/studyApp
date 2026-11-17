@@ -8,17 +8,18 @@ import SwiftUI
 
 struct MarginBackdrop: View {
 
-    let context: FocusLabContext
+    let session: FocusLabSession
+    let context: FocusPagerContext
     let timerSize: CGFloat
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
-        let metrics: FocusLabStageMetrics = context.metrics
+        let metrics: FocusPagerStageMetrics = context.metrics
         let full: CGSize = metrics.fullSize
         let edgeX: CGFloat = full.width * (1 - context.blend)
         let inkWidth: CGFloat = full.width - edgeX
-        let ruleX: CGFloat = metrics.backdropX(MarginLayout.marginX)
+        let ruleX: CGFloat = context.contentBackdropRect.minX + MarginLayout.marginX
         return ZStack(alignment: .topLeading) {
             Rectangle()
                 .fill(MarginPalette.paper)
@@ -55,20 +56,19 @@ struct MarginBackdrop: View {
     private func timerCopy(onInk: Bool, fraction: Double) -> MarginTimer {
         let rect: CGRect = context.timerBackdropRect
         return MarginTimer(
-            session: context.session,
+            session: session,
             onInk: onInk,
             fraction: fraction,
             animates: !reduceMotion,
             size: timerSize,
             slotHeight: rect.height,
             top: rect.minY,
-            leading: context.metrics.backdropX(MarginLayout.contentX),
+            leading: context.contentBackdropRect.minX + MarginLayout.contentX,
             full: context.metrics.fullSize
         )
     }
 
     private func strokeFraction(at date: Date) -> Double {
-        let session: FocusLabSession = context.session
         if let progress = session.focusProgress(at: date) { return progress }
         guard session.hasSession else { return 0 }
         let elapsed: TimeInterval = session.studyElapsed(at: date)

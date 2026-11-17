@@ -10,7 +10,7 @@ A study day as the sun crossing the sky. Both pages share one sun. While trackin
 - `trackingBody`: status line ("x of 4 h today", "On a break", "Saved ..."), Start/Pause/Resume pill, End session outline pill while paused, friends line at the bottom. Light haptic on every phase change.
 - `focusHeader`: subject code.
 - `focusBody`: status line under the timer. The controls (presets, primary pill, Lock screen) are pushed down by `controlsOffset` so that they sit on the ground.
-- No `slots` or `chromeScheme` override.
+- No `slots` override and no `.focusLabChrome`.
 
 ## What drives it
 
@@ -19,7 +19,7 @@ A study day as the sun crossing the sky. Both pages share one sun. While trackin
 
 ## Files
 
-- `DaylightDesign.swift`: the `FocusLabScreen` conformance.
+- `DaylightDesign.swift`: the `FocusLabScreen` conformance (a `FocusPagerScreen` that holds the mock `session`).
 - `DaylightBackdrop.swift`: `DaylightBackdrop` (ticks once a second) and the private `DaylightScene` that draws it.
 - `DaylightTrackingPage.swift`: `DaylightTrackingPage` and `DaylightTrackingHeader`.
 - `DaylightFocusPage.swift`: `DaylightFocusPage` and `DaylightFocusHeader`.
@@ -28,6 +28,7 @@ A study day as the sun crossing the sky. Both pages share one sun. While trackin
 
 ## Notes
 
-- `DaylightGeometry` is built from the same `FocusLabContext` in both the backdrop and the focus body, so the focus controls land on the drawn ground. It works in page coordinates; anything it returns for drawing goes through `toBackdrop`.
+- `DaylightGeometry` is built from the same `FocusPagerContext` in both the backdrop and the focus body, so the focus controls land on the drawn ground. It works in page coordinates; anything it returns for drawing goes through `toBackdrop`.
+- The arc's width and centre come from the scaffold's centred column (`contentRect`), so the sun lines up with the timer on a wide screen. The sky and ground stay full bleed.
 - The horizon is at 60% of the safe height. The arc's apex sits 20 pt above the timer slot.
 - This folder keeps the name `DaylightGeometry` for its maths file, as Strata, Tape and Stars name theirs after what they compute.

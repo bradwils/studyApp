@@ -29,9 +29,10 @@ struct TapeScale {
     // Seconds of tape behind the needle: time since the session began, 0 while idle.
     let elapsed: TimeInterval
 
-    static func focusPointsPerSecond(safeWidth: CGFloat, focusLength: TimeInterval) -> CGFloat {
+    // Fits to the page column, not the screen, so on an iPad the flag lands over the controls instead of near the screen edge.
+    static func focusPointsPerSecond(columnWidth: CGFloat, focusLength: TimeInterval) -> CGFloat {
         guard focusLength > 0 else { return trackingPointsPerSecond }
-        let span: CGFloat = max(safeWidth / 2 - 28, 40)
+        let span: CGFloat = max(columnWidth / 2 - 28, 40)
         return span / CGFloat(focusLength)
     }
 

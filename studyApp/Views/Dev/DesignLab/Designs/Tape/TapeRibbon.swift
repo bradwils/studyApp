@@ -11,7 +11,7 @@ struct TapeRibbon: View {
     let session: FocusLabSession
     let needleX: CGFloat
     let width: CGFloat
-    let safeWidth: CGFloat
+    let columnWidth: CGFloat
     let blend: CGFloat
     let reduceMotion: Bool
 
@@ -46,7 +46,7 @@ struct TapeRibbon: View {
 
     private func makeScale(at date: Date) -> TapeScale {
         let tracking: CGFloat = TapeScale.trackingPointsPerSecond
-        let focus: CGFloat = TapeScale.focusPointsPerSecond(safeWidth: safeWidth, focusLength: focusLength)
+        let focus: CGFloat = TapeScale.focusPointsPerSecond(columnWidth: columnWidth, focusLength: focusLength)
         let perSecond: CGFloat = FocusLabMath.lerp(tracking, focus, blend)
         return TapeScale(
             needleX: needleX,

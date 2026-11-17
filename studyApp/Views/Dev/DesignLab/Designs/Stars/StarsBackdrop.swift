@@ -8,10 +8,10 @@ import SwiftUI
 
 struct StarsBackdrop: View {
 
-    let context: FocusLabContext
+    let session: FocusLabSession
+    let context: FocusPagerContext
 
     var body: some View {
-        let session: FocusLabSession = context.session
         let blend: CGFloat = context.blend
         let full: CGSize = context.metrics.fullSize
         let center = CGPoint(x: context.timerBackdropRect.midX, y: context.timerBackdropRect.midY)
@@ -41,8 +41,8 @@ struct StarsBackdrop: View {
     private var dawn: some View {
         Rectangle()
             .fill(StarsPalette.dawn)
-            .opacity(context.session.isPaused ? 1 : 0)
-            .animation(.smooth(duration: 0.6), value: context.session.isPaused)
+            .opacity(session.isPaused ? 1 : 0)
+            .animation(.smooth(duration: 0.6), value: session.isPaused)
     }
 }
 

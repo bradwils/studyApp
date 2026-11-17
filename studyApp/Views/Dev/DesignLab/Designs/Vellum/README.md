@@ -11,7 +11,7 @@ Five translucent sheets of coloured tracing paper. While tracking, they fan out 
 - `trackingBody`: `VellumTrackingPage`. Today's total and break count, then Start/Pause/Resume (and End session while paused) with the friends line, raised so that they sit on the fan.
 - `focusHeader`: `VellumFocusHeader`, the subject code.
 - `focusBody`: `VellumFocusPage`. Presets, Start focus block / End block / Finish, and Lock screen.
-- No `chromeScheme` override.
+- No `.focusLabChrome`.
 
 ## What drives it
 
@@ -20,7 +20,7 @@ Five translucent sheets of coloured tracing paper. While tracking, they fan out 
 
 ## Files
 
-- `VellumDesign.swift`: the `FocusLabScreen` conformance and the `slots` override.
+- `VellumDesign.swift`: the `FocusLabScreen` conformance (a `FocusPagerScreen` that holds the mock `session`) and the `slots` override.
 - `VellumBackdrop.swift`: background, sheet stack, pinned status line.
 - `VellumTrackingPage.swift`: `VellumTrackingHeader` and `VellumTrackingPage`.
 - `VellumFocusPage.swift`: `VellumFocusHeader` and `VellumFocusPage`.
@@ -30,4 +30,5 @@ Five translucent sheets of coloured tracing paper. While tracking, they fan out 
 
 - `VellumLayout` is built from the context in both the backdrop and the tracking body. The body's bottom spacer (`height * 0.30 - 70`) is what keeps the buttons over the fan, so change it together with the fan position in `VellumLayout.sheet`.
 - Sheets draw at 46% opacity with `.multiply` blending. That is where the overlap colours come from.
-- The tile is `min(timer slot height, 62% of width, 250)`.
+- The tile is `min(timer slot height, 62% of the column width, 250)`.
+- The fan and the tile follow the centred 500 pt column (`context.contentRect`), not the screen, so on an iPad they stay behind the buttons. Only the milk background and the full-bleed layer they draw in span the screen; the sheets are not clipped to the column. On a phone the column is the whole width.

@@ -9,20 +9,26 @@ import SwiftUI
 
 struct VellumDesign: FocusLabScreen {
 
+    let session: FocusLabSession
+
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 80
 
+    init(session: FocusLabSession) {
+        self.session = session
+    }
+
     // Tall enough for the stacked tile to sit in the timer slot without touching the header.
-    func slots(standard: FocusLabSlots) -> FocusLabSlots {
-        FocusLabSlots(headerHeight: standard.headerHeight, timerHeight: 250)
+    func slots(standard: FocusPagerSlots) -> FocusPagerSlots {
+        FocusPagerSlots(headerHeight: standard.headerHeight, timerHeight: 250)
     }
 
-    func backdrop(_ context: FocusLabContext) -> some View {
-        VellumBackdrop(session: context.session, layout: VellumLayout(context: context), blend: context.blend)
+    func backdrop(_ context: FocusPagerContext) -> some View {
+        VellumBackdrop(session: session, layout: VellumLayout(context: context), blend: context.blend)
     }
 
-    func timer(_ context: FocusLabContext) -> some View {
+    func timer(_ context: FocusPagerContext) -> some View {
         let flip: CGFloat = FocusLabMath.window(context.blend, 0.55, 0.85)
-        return FocusLabClock(session: context.session, idleText: "0:00")
+        return FocusLabClock(session: session, idleText: "0:00")
             .font(Font.system(size: timerSize, weight: .medium, design: .rounded))
             .foregroundStyle(VellumPalette.ink.labBlend(VellumPalette.white, flip))
             .lineLimit(1)
@@ -30,23 +36,23 @@ struct VellumDesign: FocusLabScreen {
             .frame(width: 220)
     }
 
-    func trackingHeader(_ context: FocusLabContext) -> some View {
-        VellumTrackingHeader(session: context.session)
+    func trackingHeader(_ context: FocusPagerContext) -> some View {
+        VellumTrackingHeader(session: session)
     }
 
-    func trackingBody(_ context: FocusLabContext) -> some View {
-        VellumTrackingPage(session: context.session, layout: VellumLayout(context: context))
+    func trackingBody(_ context: FocusPagerContext) -> some View {
+        VellumTrackingPage(session: session, layout: VellumLayout(context: context))
     }
 
-    func focusHeader(_ context: FocusLabContext) -> some View {
-        VellumFocusHeader(session: context.session)
+    func focusHeader(_ context: FocusPagerContext) -> some View {
+        VellumFocusHeader(session: session)
     }
 
-    func focusBody(_ context: FocusLabContext) -> some View {
-        VellumFocusPage(session: context.session, blend: context.blend)
+    func focusBody(_ context: FocusPagerContext) -> some View {
+        VellumFocusPage(session: session, blend: context.blend)
     }
 }
 
 #Preview {
-    FocusLabScaffold(session: FocusLabSession(), design: VellumDesign())
+    FocusPagerScaffold(screen: VellumDesign(session: FocusLabSession()))
 }

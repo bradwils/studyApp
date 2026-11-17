@@ -9,18 +9,25 @@ import SwiftUI
 
 struct TapeDesign: FocusLabScreen {
 
+    let session: FocusLabSession
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @ScaledMetric(relativeTo: .largeTitle) private var timerSize: CGFloat = 76
 
-    func backdrop(_ context: FocusLabContext) -> some View {
-        TapeBackdrop(context: context, reduceMotion: reduceMotion)
+    init(session: FocusLabSession) {
+        self.session = session
     }
 
-    func timer(_ context: FocusLabContext) -> some View {
+    func backdrop(_ context: FocusPagerContext) -> some View {
+        TapeBackdrop(session: session, context: context, reduceMotion: reduceMotion)
+            .focusLabChrome(context.blend < 0.5 ? .light : .dark)
+    }
+
+    func timer(_ context: FocusPagerContext) -> some View {
         let size: CGFloat = min(timerSize, 88)
         let color: Color = TapePalette.ink.labBlend(TapePalette.tape, FocusLabMath.window(context.blend, 0.4, 0.7))
-        return FocusLabClock(session: context.session, idleText: "0:00")
+        return FocusLabClock(session: session, idleText: "0:00")
             .font(Font.system(size: size, weight: .semibold).width(.condensed))
             .foregroundStyle(color)
             .lineLimit(1)
@@ -28,27 +35,23 @@ struct TapeDesign: FocusLabScreen {
             .frame(maxWidth: .infinity)
     }
 
-    func trackingHeader(_ context: FocusLabContext) -> some View {
-        TapeTrackingHeader(session: context.session)
+    func trackingHeader(_ context: FocusPagerContext) -> some View {
+        TapeTrackingHeader(session: session)
     }
 
-    func trackingBody(_ context: FocusLabContext) -> some View {
-        TapeTrackingPage(session: context.session)
+    func trackingBody(_ context: FocusPagerContext) -> some View {
+        TapeTrackingPage(session: session)
     }
 
-    func focusHeader(_ context: FocusLabContext) -> some View {
-        TapeFocusHeader(session: context.session)
+    func focusHeader(_ context: FocusPagerContext) -> some View {
+        TapeFocusHeader(session: session)
     }
 
-    func focusBody(_ context: FocusLabContext) -> some View {
-        TapeFocusPage(session: context.session)
-    }
-
-    func chromeScheme(blend: CGFloat) -> ColorScheme? {
-        blend < 0.5 ? .light : .dark
+    func focusBody(_ context: FocusPagerContext) -> some View {
+        TapeFocusPage(session: session)
     }
 }
 
 #Preview {
-    FocusLabScaffold(session: FocusLabSession(), design: TapeDesign())
+    FocusPagerScaffold(screen: TapeDesign(session: FocusLabSession()))
 }

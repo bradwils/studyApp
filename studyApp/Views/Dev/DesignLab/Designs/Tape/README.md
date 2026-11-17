@@ -10,17 +10,17 @@ Time as a measuring tape. A white tape slides under a fixed needle at the centre
 - `trackingBody`: Start/Pause/Resume, End session while paused, the friends line, and a "Swipe left for focus" hint during a session.
 - `focusHeader`: subject code in tape white.
 - `focusBody`: presets, Start focus block / End block / Finish, and Lock screen.
-- `chromeScheme`: `.light` below a blend of 0.5, `.dark` above, because the background goes from fog to slate.
+- Chrome: the design applies `.focusLabChrome` to its backdrop, `.light` below a blend of 0.5 and `.dark` above, because the background goes from fog to slate.
 - No `slots` override.
 
 ## What drives it
 
-- `blend` changes the background from fog to slate and the timer from ink to tape white (between 0.4 and 0.7). It crossfades and recolours the status line. It also interpolates the tape's scale from 24 pt per minute to a scale that fits the focus block into half the safe width, and fades the flag in between 0.3 and 0.8.
+- `blend` changes the background from fog to slate and the timer from ink to tape white (between 0.4 and 0.7). It crossfades and recolours the status line. It also interpolates the tape's scale from 24 pt per minute to a scale that fits the focus block into half the page column (500 pt at most), and fades the flag in between 0.3 and 0.8.
 - Session: time since `startedAt` positions the minute ticks, which are labelled every 5 or 15 minutes depending on zoom. Study `segments` become mint ink, cut off at the needle, so breaks leave gaps. `focusGoal` places the flag. With no block, `focusDuration` sets the zoom.
 
 ## Files
 
-- `TapeDesign.swift`: the `FocusLabScreen` conformance.
+- `TapeDesign.swift`: the `FocusLabScreen` conformance (a `FocusPagerScreen` that holds the mock `session`).
 - `TapeBackdrop.swift`: background, tape and needle placement, and the private status line.
 - `TapeRibbon.swift`: the tape view, its two Canvases (tape with ticks and ink, flag) and `TapeNeedle`.
 - `TapeScale.swift`: all the tape maths as plain values (tick positions, ink rects, flag x, zoom).
@@ -32,4 +32,5 @@ Time as a measuring tape. A white tape slides under a fixed needle at the centre
 
 - Both bodies start with a clear spacer of `TapeLayout.bodyTopInset` (gap plus tape height) so their controls sit below the tape, which is drawn in the backdrop.
 - The ribbon redraws on `TimelineView(.animation)` at 15 fps so the tape slides smoothly. Under Reduce Motion it drops to a 1 s periodic tick.
+- The tape, needle and status line stay centred and the tape runs the full width of the screen. Only the focus zoom uses the column width, so on an iPad the flag lands over the controls instead of near the screen edge, and the zoom matches an iPhone.
 - The Canvases copy their values into locals before drawing. `TapeScale.ticks` is capped at 400 ticks.

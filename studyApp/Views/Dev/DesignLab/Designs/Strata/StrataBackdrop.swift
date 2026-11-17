@@ -9,7 +9,7 @@ struct StrataBackdrop: View {
 
     let session: FocusLabSession
     let blend: CGFloat
-    let metrics: FocusLabStageMetrics
+    let metrics: FocusPagerStageMetrics
 
     var body: some View {
         let full: CGSize = metrics.fullSize
@@ -33,7 +33,7 @@ struct StrataBackdrop: View {
             let labelOpacity: Double = Double(1 - FocusLabMath.window(blend, 0, 0.4))
             ZStack(alignment: .topLeading) {
                 StrataStackCanvas(bands: bands, tintOpacity: tintOpacity)
-                StrataBandLabels(bands: bands, width: full.width, opacity: labelOpacity)
+                StrataBandLabels(bands: bands, trailingX: metrics.backdropRect(metrics.contentRect).maxX, opacity: labelOpacity)
             }
         }
     }
@@ -78,7 +78,7 @@ private struct StrataStackCanvas: View {
 private struct StrataBandLabels: View {
 
     let bands: [StrataBand]
-    let width: CGFloat
+    let trailingX: CGFloat
     let opacity: Double
 
     private var labelled: [StrataBand] {
@@ -97,7 +97,7 @@ private struct StrataBandLabels: View {
     }
 
     private func label(for band: StrataBand) -> some View {
-        let centerX: CGFloat = width - StrataLayout.contentX - 40
+        let centerX: CGFloat = trailingX - StrataLayout.contentX - 40
         let centerY: CGFloat = (band.top + band.bottom) / 2
         return Text("\(band.minutes) min")
             .font(StrataFont.sans(13, .medium))

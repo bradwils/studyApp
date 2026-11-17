@@ -1,13 +1,13 @@
-//  FocusLabPager.swift
+//  FocusPager.swift
 //  studyApp
 //
-//  DEV ONLY — the two-page pager FocusLabScaffold drives. Same mechanics as
+//  The two-page pager FocusPagerScaffold drives. Same mechanics as
 //  FocusSessionScreen's pager: only the pages scroll; the scaffold draws the backdrop
-//  and timer outside it and hands every design the resulting blend.
+//  and timer outside it and hands the screen the resulting blend.
 
 import SwiftUI
 
-struct FocusLabPager<Tracking: View, Focus: View>: View {
+struct FocusPager<Tracking: View, Focus: View>: View {
 
     /// 0 on the tracking page, 1 on the focus page, continuous while a drag is in flight.
     @Binding var pageOffset: CGFloat
