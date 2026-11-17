@@ -20,6 +20,7 @@ struct Stopwatch {
         if stopwatchIsRunning {
             return Date.now.timeIntervalSince(anchor)
         } else {
+            // swiftlint:disable:next force_unwrapping
             return lastPausedAt!.timeIntervalSince(anchor) //safe to unwrap as we can only pause if we've started
         }
     }
@@ -36,14 +37,16 @@ struct Stopwatch {
     mutating func initialise() {
         self.stopwatchIsRunning = true
         self.startedAt = Date.now
-        self.adjustedStartTimeForAnchor = self.startedAt!
+        self.adjustedStartTimeForAnchor = self.startedAt
     }
     
 
 
     mutating func endBreak() {
+        // swiftlint:disable:next force_unwrapping
         let breakLength = Date.now.timeIntervalSince(lastPausedAt!) //safe to unwrap as we cna only resume after we've paused
         self.stopwatchIsRunning = true
+        // swiftlint:disable:next force_unwrapping
         self.adjustedStartTimeForAnchor = adjustedStartTimeForAnchor!.addingTimeInterval(breakLength)
     }
 
