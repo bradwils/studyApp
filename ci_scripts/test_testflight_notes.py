@@ -201,6 +201,18 @@ class TestFlightNotesTests(unittest.TestCase):
         self.assertEqual(len(build["commits"]), 2)
         self.assertEqual(notes.git(clone, "rev-parse", "refs/tags/v0.2"), self.baseline)
 
+    @unittest.skipUnless(shutil.which("zsh"), "pre-build hook requires zsh")
+    def test_non_archive_actions_skip_stamping_without_repository(self):
+        for action in ["build-for-testing", "test-without-building", "analyze"]:
+            with self.subTest(action=action):
+                result = subprocess.run(
+                    ["zsh", str(SCRIPTS / "ci_pre_xcodebuild.sh")],
+                    capture_output=True, text=True,
+                    env=dict(self.env, CI_XCODEBUILD_ACTION=action),
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+
+    @unittest.skipUnless(sys.platform == "darwin" and shutil.which("zsh"), "archive hooks require macOS sed, PlistBuddy and zsh")
     def test_hooks_generate_notes_without_building_or_pushing(self):
         (self.root / "ci_scripts").mkdir()
         for name in ["ci_pre_xcodebuild.sh", "ci_post_xcodebuild.sh", "testflight_notes.py"]:
