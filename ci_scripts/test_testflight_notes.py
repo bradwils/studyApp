@@ -63,8 +63,9 @@ class TestFlightNotesTests(unittest.TestCase):
         build = self.build()
         self.assertEqual([item["commit"] for item in build["commits"]], [self.latest, self.first])
         self.assertEqual(build["comparison"], "dev..build")
-        self.assertEqual(build["contained_in"], [])
         result = notes.render(build)
+        self.assertNotIn("Branch preview:", result)
+        self.assertNotIn("Target/base commit:", result)
         self.assertIn("fix(timer): fit controls", result)
         self.assertNotIn("target-only work", result)
         self.assertNotIn("shared baseline", result)
@@ -80,6 +81,7 @@ class TestFlightNotesTests(unittest.TestCase):
         result = self.command("preview", **env)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Branch/tag: ci/notes", result.stdout)
+        self.assertIn("Branch preview: ci/notes → dev", result.stdout)
         self.assertIn("Comparison: dev..build", result.stdout)
         self.assertIn("feat(timer): add timer", result.stdout)
         override = self.command("preview", "--target", "UAT-testflight", **env)
@@ -94,7 +96,6 @@ class TestFlightNotesTests(unittest.TestCase):
         self.git("branch", "-f", "dev", self.latest)
         build = self.build()
         self.assertEqual(build["commits"], [])
-        self.assertEqual(build["contained_in"], ["dev"])
         self.assertIn("No commits unique", notes.render(build))
 
     def test_tag_build_with_deleted_feature_branch_and_merge_history(self):
@@ -109,7 +110,6 @@ class TestFlightNotesTests(unittest.TestCase):
         self.assertEqual(build["comparison"], "v0.2..build")
         self.assertEqual(build["base_commit"], self.baseline)
         self.assertEqual([item["commit"] for item in build["commits"]], [merged, self.latest, self.first])
-        self.assertEqual(build["contained_in"], ["master"])
         self.assertNotIn("shared baseline", notes.render(build))
 
     def test_first_release_explicitly_uses_all_history(self):

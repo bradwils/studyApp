@@ -12,7 +12,6 @@ from zoneinfo import ZoneInfo
 
 SYDNEY = ZoneInfo("Australia/Sydney")
 MAX_LENGTH = 3500
-PROMOTION_BRANCHES = ("dev", "UAT-testflight", "master")
 
 
 def text(value, label):
@@ -92,21 +91,17 @@ def metadata(root, version, build, lane, target=None, now=None):
     for line in history.splitlines():
         sha, subject = line.split("\0", 1)
         commits.append({"commit": sha, "title": " ".join(subject.split())})
-    contained = []
-    for branch in PROMOTION_BRANCHES:
-        tip = branch_commit(root, branch)
-        if tip and git(root, "merge-base", "--is-ancestor", commit, tip, optional=True) is not None:
-            contained.append(branch)
     return {
         "version": text(version, "version"),
         "build": text(build, "build"),
         "lane": text(lane, "lane"),
+        "pr_source": os.environ.get("CI_PULL_REQUEST_SOURCE_BRANCH"),
+        "pr_target": os.environ.get("CI_PULL_REQUEST_TARGET_BRANCH"),
         "commit": commit,
         "built_at": now.isoformat(),
         "build_time": f"{local.day} {local:%b %Y %H:%M %Z}",
         "comparison": scope,
         "base_commit": base,
-        "contained_in": contained,
         "commits": commits,
     }
 
@@ -123,11 +118,10 @@ def render(build):
         f"Commit: {build['commit']}",
         f"Built (UTC): {build['built_at']}",
         f"Built (Sydney): {build['build_time']}",
-        f"Commit present in: {', '.join(build['contained_in']) or 'no promotion branch'}",
-        f"Comparison: {build['comparison']}",
     ]
-    if build["base_commit"]:
-        lines.append(f"Target/base commit: {build['base_commit']}")
+    if build.get("pr_source") and build.get("pr_target"):
+        lines.append(f"Branch preview: {text(build['pr_source'], 'PR source branch')} → {text(build['pr_target'], 'PR target branch')}")
+    lines.append(f"Comparison: {build['comparison']}")
     header = "\n".join(lines) + "\n\nCommits (newest first):\n"
     commits = [f"• {entry['commit'][:12]} {entry['title']}\n" for entry in build["commits"]]
     result = header + ("".join(commits) if commits else "No commits unique to this build relative to the target.\n")

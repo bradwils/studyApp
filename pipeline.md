@@ -277,11 +277,9 @@ each building branch before that branch can generate notes.
 ### Contents and commit range
 
 Each build includes its version, build number, branch/tag, full checkout commit
-SHA, UTC timestamp and Sydney display time (AEST/AEDT). It also lists which of
-`dev`, `UAT-testflight` and `master` contain that commit at the time metadata is
-stamped. This is Git ancestry at build time, not a historical branch-creation
-chain. Deleted branch names and the order of past promotions cannot reliably be
-reconstructed from Git alone.
+SHA, UTC timestamp and Sydney display time (AEST/AEDT). When Xcode Cloud supplies
+both PR branch variables, the branch preview shows the PR source and target at
+build time. It does not attempt to reconstruct branch origins or promotions.
 
 Commit titles are listed newest first, with abbreviated SHAs. A target range
 means all commits reachable from the build that are not reachable from the
@@ -317,7 +315,9 @@ Xcode Cloud pull-request build. Apple may therefore omit the PR environment
 variables; these builds use the lane defaults above. Set
 `TESTFLIGHT_TARGET_BRANCH` on the Xcode Cloud workflow when its comparison target
 needs to differ. The script does not query GitHub to discover an open PR.
-The comparison label and full target/base SHA are included in the notes.
+The comparison label is included in the notes. A branch preview is omitted when
+the PR source and target are unavailable; lane defaults are not presented as PR
+metadata. The listed commit titles are not individually written testing steps.
 
 ### Generation and storage
 
