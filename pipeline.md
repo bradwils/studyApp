@@ -190,8 +190,8 @@ the build time in Sydney time, and the usual version (build).
 - Fork PRs and closed PRs are skipped; only open PRs from this repository can build.
 - Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
   and `APP_STORE_CONNECT_PRIVATE_KEY`.
-- **One-off setup in Xcode:** create a workflow called `PR TestFlight` whose only
-  start condition is **Manual Start** for *all branches* (Apple refuses an
+- **One-off setup in Xcode:** create a workflow called `PR TestFlight` that permits manual PR builds. Its only
+  start condition should be **Manual Start** for *all branches* (Apple refuses an
   API-started build on a branch the workflow doesn't list, and a Branch Changes
   condition would build every push), a TestFlight Internal
   Testing post-action (distribute to **Self**), and the same environment as
@@ -412,6 +412,35 @@ must be part of the checkout. Branch and UAT builds without PR metadata use the
 lane defaults above and omit the PR preview. `TESTFLIGHT_TARGET_BRANCH` can
 override the comparison target. Commit titles are not written testing steps;
 consult the PR for testing guidance.
+
+### Reading a build's notes
+
+The first lines of the notes say what was built:
+
+- **Branch/tag** is the lane label: for PR builds, the PR's source branch, not
+  its target. The checkout may be a temporary merge commit. The `Comparison`
+  line names the comparison target (`TARGET..build`).
+- **Comparison** shows what the commit list is measured against. `dev..build`
+  means commits not yet in `dev`; `master..build` means not yet in `master`.
+- **Commit** is the full checkout SHA that was built; a temporary merge commit
+  can differ from the PR head. **PR source commit**, when shown, identifies the
+  source snapshot included in that checkout. Compare that with the PR head.
+
+How to tell the kind of build apart:
+
+| Build | Notes show |
+|---|---|
+| Automatic (`dev`, `UAT-testflight`, `v*` tag) | No PR link; lane-default comparison |
+| `/testflight` PR build | A PR link, and the PR's own target as the comparison |
+| `/testflight` that built a plain branch (action ran an old script, or Apple supplied no PR metadata) | No PR link; lane-default comparison, same as an automatic build |
+
+`/testflight` comments run the workflow and script from the repository's default
+branch (`master`), not from the PR's branch, so a change to `.github/scripts/`
+does not take effect for comment triggers until it is merged into master.
+Merging into dev alone does not update the comment entry point. Editing the PR description to add
+or keep a `/testflight` line runs the PR's own version. In stacked PRs, a
+`/testflight` on each PR produces a separate build; compare the Branch/tag and
+Commit lines to see which PR a build came from.
 
 ### Generation and storage
 
