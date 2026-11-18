@@ -6,7 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Quick Start
 
-**Build Simulator:**
+Do not build or compile this Xcode app unless the user directly asks for a build.
+Verify app edits by reading the code and mention when a build has not been run.
+
+**Build Simulator (only when directly requested):**
 ```bash
 xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination generic/platform=iOS
 ```
@@ -251,6 +254,7 @@ checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 - Keep `.swiftlint.yml` and `.github/workflows/swiftlint.yml` aligned across `master`, `UAT-testflight` and `dev`. CI explicitly requires the config; validate the PR merge result with SwiftLint 0.65.1 before merging.
 - Build an open PR on demand: put `/testflight` on its own line in the PR description (or in a comment on it, from a collaborator). `.github/workflows/testflight-pr.yml` asks Xcode Cloud to build the PR's branch with the `PR TestFlight` workflow, which distributes to the internal TestFlight group. Editing the description only re-triggers when the body itself changed; comment `/testflight` again to rebuild after new pushes
 - The Settings footer shows `lane · build time (AEST/AEDT) · version (build)`, stamped by CI
+- If workflows change, the documents must always be updated. This can also be confirmed with the user before editing, if there was a manual change required.
 
 ## Workflow Configuration Decisions
 
@@ -293,3 +297,13 @@ status, and how the change will reach each affected branch. Validate the
 relevant trigger/build behavior where possible and distinguish verified
 results from pending remote checks. Keep CLAUDE.md and AGENTS.md in sync; keep
 workflow tables and confirmed operational details in pipeline.md.
+
+---
+
+## TestFlight notes
+
+- Notes are generated from Git commit titles and build metadata; do not maintain release-cycle JSON, manual summaries or promotion entries.
+- Use clear commit titles: they appear directly in TestFlight, including merge commits. The generator keeps newest commits and truncates older history to fit.
+- Native Xcode Cloud PR builds use their actual target branch. Other builds use the lane defaults in `pipeline.md`; `TESTFLIGHT_TARGET_BRANCH` overrides them.
+- Branch containment describes where the commit exists at build time. Do not present it as a reconstructed branch-creation or promotion history.
+- Preview with `python3 ci_scripts/testflight_notes.py preview` and verify scripts with `python3 -m unittest discover -s ci_scripts -p 'test_testflight_notes.py'`. These commands do not build the app. `preview` only prints the notes; `--fetch` additionally updates local Git refs and full history.
