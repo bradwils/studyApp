@@ -7,3 +7,4 @@ xcuserdata/
 *.xcbkptlist
 buildServer.json
 /secrets
+*.pyc
