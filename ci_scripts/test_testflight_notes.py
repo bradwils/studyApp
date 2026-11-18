@@ -92,6 +92,23 @@ class TestFlightNotesTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Comparison: master..build", result.stdout)
 
+    def test_pr_merge_checkout_lists_source_changes_and_links_pr(self):
+        self.git("switch", "dev")
+        target = self.commit("target-only work")
+        self.git("merge", "--no-ff", "feat/timer", "-m", "temporary PR merge")
+        merged = self.git("rev-parse", "HEAD")
+        env = dict(CI_PULL_REQUEST_SOURCE_BRANCH="feat/timer", CI_PULL_REQUEST_TARGET_BRANCH="dev",
+                   CI_PULL_REQUEST_SOURCE_COMMIT=self.latest, CI_PULL_REQUEST_TARGET_COMMIT=target,
+                   CI_PULL_REQUEST_HTML_URL="https://github.com/example/repo/pull/42")
+        result = self.command("preview", **env)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"Commit: {merged}", result.stdout)
+        self.assertIn(f"PR source commit: {self.latest}", result.stdout)
+        self.assertIn("Pull request: https://github.com/example/repo/pull/42", result.stdout)
+        self.assertIn("fix(timer): fit controls", result.stdout)
+        self.assertNotIn("target-only work", result.stdout)
+        self.assertNotIn("temporary PR merge", result.stdout)
+
     def test_already_merged_branch_has_no_unique_commits(self):
         self.git("branch", "-f", "dev", self.latest)
         build = self.build()

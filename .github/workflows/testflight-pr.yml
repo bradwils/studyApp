@@ -1,7 +1,7 @@
 name: TestFlight PR build
 
 # Put /testflight on its own line in a PR's description, or in a comment on the PR,
-# to start an Xcode Cloud build of its branch. Xcode Cloud ships it to TestFlight.
+# to start an Xcode Cloud build associated with that PR. Xcode Cloud ships it to TestFlight.
 
 on:
   pull_request:
