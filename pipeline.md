@@ -40,8 +40,7 @@ both branch off `master` and are merged back down afterwards.
 
 App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
 `claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint),
-`pr-title.yml` (Conventional Commits PR titles), `promotion-source.yml` (guards
-what can merge into `master`) and `testflight-pr.yml` (asks Xcode Cloud to
+`pr-title.yml` (Conventional Commits PR titles) and `testflight-pr.yml` (asks Xcode Cloud to
 build a PR on request, see [PR builds](#pr-builds)). If an app build runs, Xcode
 Cloud ran it. Trigger details for each workflow are in
 [.github/workflows/README.md](.github/workflows/README.md).
@@ -68,7 +67,7 @@ wait. Add testers in App Store Connect → TestFlight when testing starts.
 |---|---|---|---|---|
 | `dev` | ✅ | no | any | no force-push, no deletion |
 | `UAT-testflight` | ❌ | yes | merge commit only | no force-push, no deletion |
-| `master` | ❌ | yes, from `UAT-testflight`, `hotfix/*` or `ci/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
+| `master` | ❌ | yes | merge commit only | source policy reviewed manually; no force-push, no deletion |
 | `v*` tags | — | — | — | can't be moved or deleted once created |
 
 Approvals required: 0 (you can't approve your own PR). Head branches are
@@ -82,9 +81,10 @@ promotion conflicts.
 **Land an app change once.** Make it on `dev` and promote it. Opening matching PRs
 into `dev` and `master` is what caused the earlier drift.
 
-The `source-branch` check remains required by the `master` ruleset. Full
-retirement is tracked in #164 and requires removing that live status
-requirement before deleting the workflow.
+The master ruleset requires a PR and a merge commit. Reviewers check that its
+source is `UAT-testflight`, `hotfix/*` or `ci/*`; this is a convention, not an
+automated branch-name gate. The obsolete `source-branch` required status and
+`promotion-source.yml` were retired together (#164, #223).
 
 ### Versions
 
@@ -258,9 +258,9 @@ here builds, so merge once, deliberately.
 ### `UAT-testflight` → `master`
 
 Open a PR from `UAT-testflight` targeting `master`, and merge it with **Create
-a merge commit**. The `source-branch` check rejects a PR from anything other
-than `UAT-testflight`, `hotfix/*` or `ci/*`. The latter two are exceptions for
-production fixes and CI maintenance, respectively.
+a merge commit**. Check that the source is `UAT-testflight`, `hotfix/*` or
+`ci/*`. The latter two are exceptions for production fixes and CI maintenance,
+respectively; the source policy is reviewed manually.
 
 **Merging does not build anything.** `master` only builds on a version tag.
 That's deliberate: merging and releasing are separate decisions.
@@ -302,9 +302,9 @@ git push
 
 For CI, tooling or documentation changes that need to reach the default branch
 without promoting app work, cut a `ci/*` branch from `master` and open a PR into
-`master`. Merge with **Create a merge commit**. The `source-branch` check accepts
-the prefix; keeping the change limited to maintenance is a review convention,
-not a changed-file restriction.
+`master`. Merge with **Create a merge commit**. Review both the source branch
+and maintenance-only scope; there is no automated source-name or changed-file
+gate.
 
 After merging, merge `master` into `UAT-testflight` through a merge-commit PR
 and back into `dev`, preserving each target's current changes. This carries the
@@ -353,4 +353,3 @@ Known gaps, in rough priority order:
    change is integrated and Apple ingestion is verified, review and provide
    the notes manually. GitHub Release notes and TestFlight testing instructions
    serve different purposes.
-4. Retire the `source-branch` check and `promotion-source.yml` (#164).
