@@ -9,19 +9,21 @@ final class SubjectsEditorVM {
     var newSubjectCode: String = ""
 
     var canAddSubject: Bool {
-        newSubjectName.count > 0 && newSubjectName.count <= 32 &&
-        newSubjectCode.count > 0 && newSubjectCode.count <= 4
+        !newSubjectName.isEmpty && newSubjectName.count <= 32 &&
+        !newSubjectCode.isEmpty && newSubjectCode.count <= 4
     }
     
     //recieve context as soon as called
     func addSubject(context: ModelContext) {
         guard canAddSubject else { return }
         context.insert(Subject(name: newSubjectName, code: newSubjectCode.uppercased()))
+        try? context.save()
         newSubjectName = ""
         newSubjectCode = ""
     }
 
     func removeSubject(_ subject: Subject, context: ModelContext) {
         context.delete(subject)
+        try? context.save()
     }
 }

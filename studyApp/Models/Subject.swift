@@ -17,6 +17,9 @@ final class Subject {
     @Relationship(deleteRule: .nullify, inverse: \StudySession.subject)
     var sessions: [StudySession]
 
+    @Relationship(deleteRule: .nullify, inverse: \StudyItem.subject)
+    var items: [StudyItem] = []
+
     init(id: UUID = UUID(), name: String, code: String, createdAt: Date = Date(), sessions: [StudySession] = []) {
         self.id = id
         self.name = name

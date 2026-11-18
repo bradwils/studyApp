@@ -6,7 +6,6 @@ build/
 xcuserdata/
 *.xcbkptlist
 build/
-
-/TestFlight/build-metadata.json
-/TestFlight/WhatToTest.*.txt
-/ci_scripts/__pycache__/
+*.xcconfig
+buildServer.json
+/secrets

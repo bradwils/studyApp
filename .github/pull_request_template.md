@@ -32,4 +32,4 @@ No manual summary or JSON entry is required. -->
 - [ ] No testing needed (why?)
 
 ## Todo before merge
-<!-- @claude -->
+<!-- claude: outstanding todos go here -->
