@@ -19,20 +19,20 @@ import Foundation
 /// - ``FocusPagePolicy`` chooses which pages exist for a session phase and which backdrop each gets.
 /// - ``FocusScreenState`` holds the live page list, the requested and settled pages, and the scroll position.
 /// - ``FocusPager`` draws one view per page and tags it with `.id(page)`, so scroll position binds to the case.
-/// - ``FocusSessionScreen`` maps each page to its content view and reconciles the state when the phase changes.
+/// - ``FocusPagerScaffold`` reconciles the state when the phase changes; each ``FocusPagerScreen`` maps every page to its header and content.
 ///
 /// ```text
 /// SessionPhase ─▶ FocusPagePolicy ─▶ [FocusPage] ─▶ FocusScreenState
 ///                                                       │ pages, scrolledPage
 ///                                                       ▼
-/// FocusSessionScreen ─ pageContent(for:) ─▶ FocusPager (one view per page)
+/// FocusPagerScreen ─ header/content(for:) ─▶ FocusPager (one view per page)
 ///                                                       │ scroll geometry
 ///                                                       ▼
 ///                                       FocusScreenState (position, settledPage)
 /// ```
 ///
 /// > Important: A new case fails to compile in `FocusPagePolicy.backgroundStyle(for:)` and
-/// > `FocusSessionScreen.pageContent(for:)`, but not in `availablePages(for:)`. Until it is
+/// > every `FocusPagerScreen.header(for:_:)` and `content(for:_:)`, but not in `availablePages(for:)`. Until it is
 /// > added there, the page never appears.
 enum FocusPage: Hashable, Identifiable {
     /// The base page. Always available, and where the state falls back when another page disappears.

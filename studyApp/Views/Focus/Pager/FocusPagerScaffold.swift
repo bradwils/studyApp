@@ -1,13 +1,15 @@
 //  FocusPagerScaffold.swift
 //  studyApp
 //
-//  Renders any FocusPagerScreen with FocusSessionScreen's structure: a two-page pager over
-//  a pinned timer, each page a header band, then the timer gap, then its body. The backdrop
-//  and the pager run full width; the pages' content and the timer share one centred column.
+//  Renders any FocusPagerScreen with FocusSessionScreen's structure. Back to front: the
+//  full-bleed backdrop, the pinned timer and overlay (hit testing off), then FocusPager
+//  drawn last so it receives every touch. Each page is a FocusPageScaffold: header band,
+//  timer gap, then content. The backdrop and the pager run full width; page content and
+//  the timer share one centred column.
 
 import SwiftUI
 
-/// A view that renders a focus screen as a two-page pager over a pinned timer.
+/// A view that renders a focus screen as a pager over a pinned timer.
 ///
 /// ## Declaration
 ///
@@ -15,28 +17,23 @@ import SwiftUI
 /// struct FocusPagerScaffold<Screen: FocusPagerScreen>: View
 /// ```
 ///
-/// The backdrop and the swipe area span the full width. Each page's header, timer gap and body,
-/// and the timer itself, share one column capped at `FocusPagerLayout.maxContentWidth` and centred.
+/// The caller owns `screenState`, as `FocusSessionScreen` always has, so it can read the lock
+/// and the settled page. The scaffold keeps the state's page list in step with
+/// `FocusPagePolicy.availablePages(for: screen.phase)`, unlocks when `screen.sessionID` changes,
+/// and hides the tab bar while locked.
 ///
 /// ```swift
-/// FocusPagerScaffold(screen: MyScreen(vm: vm))
+/// @State private var screenState = FocusScreenState()
+/// FocusPagerScaffold(screen: MyScreen(vm: vm), screenState: screenState)
 /// ```
 struct FocusPagerScaffold<Screen: FocusPagerScreen>: View {
 
     let screen: Screen
+    let screenState: FocusScreenState
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    @ScaledMetric(relativeTo: .largeTitle) private var standardTimerHeight: CGFloat = 120
-
-    @State private var pageOffset: CGFloat = 0
-    @State private var page: Int? = 0
-
-    // Reduce Motion gets the destination state rather than a crossfade travelling with the drag.
-    private var blend: CGFloat {
-        guard !reduceMotion else { return pageOffset < 0.5 ? 0 : 1 }
-        return pageOffset
-    }
+    @ScaledMetric(relativeTo: .largeTitle) private var standardTimerHeight: CGFloat = FocusPagerLayout.timerSlotBaseHeight
 
     // Both pages and the timer read this one value, so they can never disagree on where the timer is.
     private var slots: FocusPagerSlots {
@@ -48,60 +45,58 @@ struct FocusPagerScaffold<Screen: FocusPagerScreen>: View {
 
     var body: some View {
         FocusPagerStage { metrics in
-            screen.backdrop(makeContext(metrics))
+            FocusPagerLayer { screen.backdrop(makeContext(metrics)) }
         } content: { metrics in
             let context = makeContext(metrics)
             ZStack {
-                screen.timer(context)
+                FocusPagerLayer { screen.timer(context) }
                     .frame(width: context.timerRect.width, height: context.timerRect.height)
                     .position(x: context.timerRect.midX, y: context.timerRect.midY)
                     .allowsHitTesting(false)
 
-                pager(context)
+                FocusPagerLayer { screen.overlay(context) }
+                    .frame(width: context.contentRect.width, height: context.contentRect.height, alignment: .top)
+                    .position(x: context.contentRect.midX, y: context.contentRect.midY)
+                    .allowsHitTesting(false)
+
+                FocusPager(screenState: screenState) { page in
+                    FocusPagerLayer {
+                        FocusPageScaffold(slots: context.slots, horizontalPadding: screen.horizontalPadding(for: page)) {
+                            screen.header(for: page, context)
+                        } content: {
+                            screen.content(for: page, context)
+                        }
+                    }
+                    .frame(maxWidth: FocusPagerLayout.maxContentWidth)
+                }
             }
+        }
+        .toolbar(screenState.isLocked ? .hidden : .visible, for: .tabBar)
+        .onChange(of: FocusPagePolicy.availablePages(for: screen.phase), initial: true) { _, pages in
+            var transaction = Transaction()
+            if let scrolled = screenState.scrolledPage, !pages.contains(scrolled) {
+                transaction.disablesAnimations = true
+            }
+            withTransaction(transaction) {
+                screenState.reconcile(availablePages: pages)
+            }
+        }
+        .onChange(of: screen.sessionID) {
+            screenState.sessionIdentityDidChange()
         }
     }
 
     private func makeContext(_ metrics: FocusPagerStageMetrics) -> FocusPagerContext {
-        let slots = self.slots
-        let column = metrics.contentRect
-        return FocusPagerContext(
-            blend: blend,
-            metrics: metrics,
-            timerRect: CGRect(
-                x: column.minX,
-                y: slots.headerHeight,
-                width: column.width,
-                height: slots.timerHeight
-            )
-        )
+        FocusPagerContext(screenState: screenState, metrics: metrics, slots: slots, reduceMotion: reduceMotion)
     }
+}
 
-    private func pager(_ context: FocusPagerContext) -> some View {
-        FocusPager(
-            pageOffset: $pageOffset,
-            page: $page,
-            showsFocusPage: screen.showsFocusPage,
-            isLocked: screen.isLocked
-        ) {
-            pageLayout(header: screen.trackingHeader(context), content: screen.trackingBody(context))
-        } focus: {
-            pageLayout(header: screen.focusHeader(context), content: screen.focusBody(context))
-        }
-    }
+// Calls its content inside its own body, so a screen reading `position` through the context
+// (blend, weights) redraws only this layer per scroll frame, never the scaffold or the pager.
+private struct FocusPagerLayer<Content: View>: View {
+    @ViewBuilder let content: () -> Content
 
-    // The pager centres this inside its full-width page, so it lands on the same column as the timer.
-    private func pageLayout(header: some View, content: some View) -> some View {
-        let slots = self.slots
-        return VStack(spacing: 0) {
-            header
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .frame(height: slots.headerHeight)
-            Color.clear
-                .frame(height: slots.timerHeight)
-            content
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        }
-        .frame(maxWidth: FocusPagerLayout.maxContentWidth)
+    var body: some View {
+        content()
     }
 }

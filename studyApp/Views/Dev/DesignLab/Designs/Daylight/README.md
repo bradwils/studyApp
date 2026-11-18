@@ -6,10 +6,10 @@ A study day as the sun crossing the sky. Both pages share one sun. While trackin
 
 - `backdrop`: `DaylightBackdrop`. Sky gradient, the day's arc, the sun (halo and disc) and the ground hill.
 - `timer`: `FocusLabClock` in Avenir Next Medium, plum, with fixed digit cells because Avenir has no tabular figures.
-- `trackingHeader`: subject name; a subject menu while idle.
-- `trackingBody`: status line ("x of 4 h today", "On a break", "Saved ..."), Start/Pause/Resume pill, End session outline pill while paused, friends line at the bottom. Light haptic on every phase change.
-- `focusHeader`: subject code.
-- `focusBody`: status line under the timer. The controls (presets, primary pill, Lock screen) are pushed down by `controlsOffset` so that they sit on the ground.
+- `header(for:)`, tracking: subject name; a subject menu while idle.
+- `content(for:)`, tracking: status line ("x of 4 h today", "On a break", "Saved ..."), Start/Pause/Resume pill, End session outline pill while paused, friends line at the bottom. Light haptic on every phase change.
+- `header(for:)`, focus: subject code.
+- `content(for:)`, focus: status line under the timer. Lock state is owned by the context (`isLocked`, `onLockChange`), not the session. The controls (presets, primary pill, Lock screen) are pushed down by `controlsOffset` so that they sit on the ground.
 - No `slots` override and no `.focusLabChrome`.
 
 ## What drives it

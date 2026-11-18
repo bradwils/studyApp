@@ -20,6 +20,8 @@ struct TapeFocusHeader: View {
 struct TapeFocusPage: View {
 
     let session: FocusLabSession
+    let isLocked: Bool
+    let onLockChange: (Bool) -> Void
 
     var body: some View {
         let blockGap: CGFloat = session.hasFocusBlock ? 24 : 12
@@ -108,9 +110,9 @@ struct TapeFocusPage: View {
 
     private var lockButton: some View {
         Button {
-            session.isLocked.toggle()
+            onLockChange(!isLocked)
         } label: {
-            Text(session.isLocked ? "Unlock" : "Lock screen")
+            Text(isLocked ? "Unlock" : "Lock screen")
                 .font(TapeFont.text(15, .regular))
                 .foregroundStyle(TapePalette.pale)
                 .padding(.horizontal, 20)

@@ -6,10 +6,8 @@ The session settles like sediment. Each stretch of study is a flat band of colou
 
 - `backdrop`: `StrataBackdrop`. A Canvas of the band stack over a haze background, plus minute labels on the study bands.
 - `timer`: `FocusLabClock` in DIN Alternate Bold, ink, leading-aligned at the content margin, with fixed digit cells.
-- `trackingHeader`: subject name; a subject menu while idle.
-- `trackingBody`: status ("Studying, 2 breaks" etc.), Start/Pause/Resume, End session while paused, and a footer card with today's total and the friend count.
-- `focusHeader`: `StrataFocusHeader`, the subject code.
-- `focusBody`: status ("This layer is n minutes tall", "left of n minutes", "Layer complete"), presets, Start focus block / End block / Finish, and Lock screen.
+- `header(for:)`: a switch over the page. Tracking is `StrataTrackingHeader`, the subject name with a subject menu while idle. Focus is `StrataFocusHeader`, the subject code.
+- `content(for:)`: a switch over the page. Tracking is `StrataTrackingPage`: status ("Studying, 2 breaks" etc.), Start/Pause/Resume, End session while paused, and a footer card with today's total and the friend count. Focus is `StrataFocusPage`: status ("This layer is n minutes tall", "left of n minutes", "Layer complete"), presets, Start focus block / End block / Finish, and Lock screen. The lock state lives on the context: the page gets `isLocked` and `onLockChange` from `context.isLocked` and `context.setLocked`.
 - No `slots` override and no `.focusLabChrome`.
 
 ## What drives it

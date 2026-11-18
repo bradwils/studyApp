@@ -6,10 +6,9 @@ A muted notebook page with one fixed margin rule. A highlighter stroke grows beh
 
 - `backdrop`: `MarginBackdrop`. Paper fill, the ink panel, the margin rule, and both copies of the timer.
 - `timer`: `EmptyView`. The timer lives in the backdrop (see below).
-- `trackingHeader`: subject name in serif with its code underneath; a subject menu while idle.
-- `trackingBody`: status caption, a ledger (today's total, breaks, friends), Start/Pause/Resume, and End session while paused.
-- `focusHeader`: subject code and name in paper and slate, for the ink panel.
-- `focusBody`: status caption, the Length presets (hidden once a block runs), Start focus block / End block / Finish, and Lock screen.
+- `header(for:)`: a switch over the page. Tracking: subject name in serif with its code underneath, and a subject menu while idle. Focus: subject code and name in paper and slate, for the ink panel.
+- `content(for:)`: a switch over the page. Tracking: status caption, a ledger (today's total, breaks, friends), Start/Pause/Resume, and End session while paused. Focus: status caption, the Length presets (hidden once a block runs), Start focus block / End block / Finish, and Lock screen.
+- Lock: `MarginFocusPage` takes `isLocked` and `onLockChange` from the context (`context.isLocked`, `context.setLocked`); the lock state lives in the screen state, not the session.
 - Chrome: the design applies `.focusLabChrome` to its backdrop, `.light` below a blend of 0.5 and `.dark` above, because the ink panel covers the screen by then.
 
 ## What drives it

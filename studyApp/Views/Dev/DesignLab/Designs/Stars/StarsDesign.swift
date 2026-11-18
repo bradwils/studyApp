@@ -28,23 +28,25 @@ struct StarsDesign: FocusLabScreen {
             .lineLimit(1)
     }
 
-    func trackingHeader(_ context: FocusPagerContext) -> some View {
-        StarsTrackingHeader(session: session)
+    func header(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            StarsTrackingHeader(session: session)
+        case .focus:
+            StarsFocusHeader(session: session)
+        }
     }
 
-    func trackingBody(_ context: FocusPagerContext) -> some View {
-        StarsTrackingPage(session: session)
-    }
-
-    func focusHeader(_ context: FocusPagerContext) -> some View {
-        StarsFocusHeader(session: session)
-    }
-
-    func focusBody(_ context: FocusPagerContext) -> some View {
-        StarsFocusPage(session: session)
+    func content(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            StarsTrackingPage(session: session)
+        case .focus:
+            StarsFocusPage(session: session, isLocked: context.isLocked, onLockChange: context.setLocked)
+        }
     }
 }
 
 #Preview {
-    FocusPagerScaffold(screen: StarsDesign(session: FocusLabSession()))
+    FocusLabHost(design: .stars)
 }

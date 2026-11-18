@@ -28,23 +28,25 @@ struct StrataDesign: FocusLabScreen {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    func trackingHeader(_ context: FocusPagerContext) -> some View {
-        StrataTrackingHeader(session: session)
+    func header(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            StrataTrackingHeader(session: session)
+        case .focus:
+            StrataFocusHeader(session: session)
+        }
     }
 
-    func trackingBody(_ context: FocusPagerContext) -> some View {
-        StrataTrackingPage(session: session)
-    }
-
-    func focusHeader(_ context: FocusPagerContext) -> some View {
-        StrataFocusHeader(session: session)
-    }
-
-    func focusBody(_ context: FocusPagerContext) -> some View {
-        StrataFocusPage(session: session)
+    func content(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            StrataTrackingPage(session: session)
+        case .focus:
+            StrataFocusPage(session: session, isLocked: context.isLocked, onLockChange: context.setLocked)
+        }
     }
 }
 
 #Preview {
-    FocusPagerScaffold(screen: StrataDesign(session: FocusLabSession()))
+    FocusLabHost(design: .strata)
 }

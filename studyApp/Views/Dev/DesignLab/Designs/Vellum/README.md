@@ -7,10 +7,8 @@ Five translucent sheets of coloured tracing paper. While tracking, they fan out 
 - `slots`: keeps the standard header height, but makes the timer slot 250 pt tall so the stacked tile fits in it without touching the header.
 - `backdrop`: `VellumBackdrop`. Milk background, the five sheets, and a status line pinned 40 pt below the timer's centre.
 - `timer`: `FocusLabClock` in SF Rounded, 220 pt wide.
-- `trackingHeader`: `VellumTrackingHeader`, the subject name or a subject menu while idle.
-- `trackingBody`: `VellumTrackingPage`. Today's total and break count, then Start/Pause/Resume (and End session while paused) with the friends line, raised so that they sit on the fan.
-- `focusHeader`: `VellumFocusHeader`, the subject code.
-- `focusBody`: `VellumFocusPage`. Presets, Start focus block / End block / Finish, and Lock screen.
+- `header(for:)`: a switch on the page. Tracking is `VellumTrackingHeader`, the subject name or a subject menu while idle. Focus is `VellumFocusHeader`, the subject code.
+- `content(for:)`: a switch on the page. Tracking is `VellumTrackingPage`: today's total and break count, then Start/Pause/Resume (and End session while paused) with the friends line, raised so that they sit on the fan. Focus is `VellumFocusPage`: presets, Start focus block / End block / Finish, and Lock screen. The lock state is owned by the context (`context.isLocked`, `context.setLocked`) and passed in as `isLocked` and `onLockChange`.
 - No `.focusLabChrome`.
 
 ## What drives it

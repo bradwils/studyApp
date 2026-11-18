@@ -20,6 +20,8 @@ struct StarsFocusHeader: View {
 struct StarsFocusPage: View {
 
     let session: FocusLabSession
+    let isLocked: Bool
+    let onLockChange: (Bool) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -109,9 +111,9 @@ struct StarsFocusPage: View {
 
     private var lockButton: some View {
         Button {
-            session.isLocked.toggle()
+            onLockChange(!isLocked)
         } label: {
-            Text(session.isLocked ? "Unlock" : "Lock screen")
+            Text(isLocked ? "Unlock" : "Lock screen")
                 .font(StarsFont.text(15))
                 .foregroundStyle(StarsPalette.haze)
                 .padding(.horizontal, 20)

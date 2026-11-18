@@ -9,12 +9,6 @@ import Foundation
 @Observable
 final class FocusLabSession {
 
-    enum Phase: Equatable {
-        case idle
-        case running
-        case paused
-    }
-
     struct LabSubject: Identifiable, Hashable {
         let code: String
         let name: String
@@ -60,9 +54,10 @@ final class FocusLabSession {
 
     var selectedSubject: LabSubject = FocusLabSession.sampleSubjects[0]
     var focusDuration: TimeInterval = 25 * 60
-    var isLocked = false
 
-    private(set) var phase: Phase = .idle
+    private(set) var phase: SessionPhase = .idle
+    /// Changes whenever a session starts or ends, as StudyTrackingViewModel.activeSessionID does.
+    private(set) var sessionID: UUID?
     private(set) var startedAt: Date?
     /// Session start pushed forward by every finished break, so `now - studyAnchor` is net study time.
     private(set) var studyAnchor: Date?
@@ -151,6 +146,7 @@ final class FocusLabSession {
         finishedBreakTime = 0
         lastCompletedLength = nil
         segments = [Segment(id: 0, kind: .study, start: now, end: nil)]
+        sessionID = UUID()
         phase = .running
     }
 
@@ -210,7 +206,7 @@ final class FocusLabSession {
         focusStart = nil
         focusGoal = nil
         segments = []
-        isLocked = false
+        sessionID = nil
     }
 
     private func openSegment(_ kind: Segment.Kind, at date: Date) {
@@ -232,7 +228,6 @@ final class FocusLabSession {
     func clearFocusBlock() {
         focusStart = nil
         focusGoal = nil
-        isLocked = false
     }
 
     // MARK: - Lab controls
@@ -269,6 +264,7 @@ final class FocusLabSession {
             Segment(id: 3, kind: .rest, start: minutesAgo(8), end: minutesAgo(6)),
             Segment(id: 4, kind: .study, start: minutesAgo(6), end: nil)
         ]
+        sessionID = UUID()
         phase = .running
     }
 }

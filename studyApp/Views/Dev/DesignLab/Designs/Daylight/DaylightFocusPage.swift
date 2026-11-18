@@ -8,6 +8,8 @@ import SwiftUI
 struct DaylightFocusPage: View {
     let session: FocusLabSession
     let geometry: DaylightGeometry
+    let isLocked: Bool
+    let onLockChange: (Bool) -> Void
 
     @ScaledMetric(relativeTo: .footnote) private var captionSize: CGFloat = 14
     @ScaledMetric(relativeTo: .title3) private var presetSize: CGFloat = 20
@@ -122,9 +124,9 @@ struct DaylightFocusPage: View {
 
     private var lockButton: some View {
         Button {
-            session.isLocked.toggle()
+            onLockChange(!isLocked)
         } label: {
-            Text(session.isLocked ? "Unlock" : "Lock screen")
+            Text(isLocked ? "Unlock" : "Lock screen")
                 .font(DaylightFont.body(lockSize))
                 .foregroundStyle(DaylightPalette.chalk.opacity(0.8))
                 .padding(.horizontal, 16)

@@ -1,21 +1,15 @@
 //  FocusPagerScreen.swift
 //  studyApp
 //
-//  The contract a focus screen conforms to. FocusPagerScaffold owns the structure
-//  FocusSessionScreen has (pager, pinned timer, header band, timer gap); a screen only
-//  supplies what goes in each place.
+//  The contract every focus screen conforms to. FocusPagerScaffold owns FocusSessionScreen's
+//  structure (backdrop, pinned timer, FocusPager over FocusScreenState, header band and timer
+//  gap on every page); a screen only supplies what goes in each place.
 
 import SwiftUI
 
 /// The heights of the two fixed bands at the top of every page.
 ///
-/// ## Declaration
-///
-/// ```swift
-/// struct FocusPagerSlots: Equatable
-/// ```
-///
-/// Both pages and the pinned timer read one value of this type, so the timer gap sits at the
+/// Every page and the pinned timer read one value of this type, so the timer gap sits at the
 /// same offset on each page.
 struct FocusPagerSlots: Equatable {
     /// The band above the timer that holds each page's header.
@@ -24,7 +18,7 @@ struct FocusPagerSlots: Equatable {
     var timerHeight: CGFloat
 }
 
-/// The layout values a screen needs to draw one frame.
+/// The layout and pager values a screen needs to draw one frame.
 ///
 /// ## Declaration
 ///
@@ -36,21 +30,44 @@ struct FocusPagerSlots: Equatable {
 /// ``FocusPagerScreen``. Rects come in two coordinate spaces: page (safe-area) coordinates for
 /// anything inside a page, and backdrop coordinates for anything drawn in the full-bleed backdrop.
 ///
+/// > Important: `blend` and `weight(of:)` read `FocusScreenState.position`, which changes every
+/// > scroll frame. Read them inside the view that draws from them, not in a page's parent, so a
+/// > swipe redraws only that view.
+///
 /// > Important: On screens wider than `FocusPagerLayout.maxContentWidth` the column is narrower
 /// > than the screen. Align backdrop content to ``contentBackdropRect``, not to `metrics.fullSize`.
 struct FocusPagerContext {
 
-    /// 0 on the tracking page, 1 on the focus page; already snapped under Reduce Motion.
-    let blend: CGFloat
+    let screenState: FocusScreenState
 
     /// The safe-area size and insets of the whole screen, not of the column.
     let metrics: FocusPagerStageMetrics
 
-    /// Where the pinned timer sits, in page (safe-area) coordinates. Inside `contentRect`.
-    let timerRect: CGRect
+    let slots: FocusPagerSlots
+
+    let reduceMotion: Bool
+
+    /// How much of `page` is on screen, 0...1; snapped to the nearest page under Reduce Motion.
+    func weight(of page: FocusPage) -> Double {
+        screenState.weight(of: page, reduceMotion: reduceMotion)
+    }
+
+    /// 0 on the tracking page, 1 on the focus page, continuous while a swipe is in flight.
+    var blend: CGFloat { CGFloat(weight(of: .focus)) }
+
+    var isLocked: Bool { screenState.isLocked }
+
+    func setLocked(_ locked: Bool) {
+        screenState.setLocked(locked)
+    }
 
     /// The centred column every page and the timer are laid out in, in page (safe-area) coordinates.
     var contentRect: CGRect { metrics.contentRect }
+
+    /// Where the pinned timer sits, in page (safe-area) coordinates. Inside `contentRect`.
+    var timerRect: CGRect {
+        CGRect(x: contentRect.minX, y: slots.headerHeight, width: contentRect.width, height: slots.timerHeight)
+    }
 
     /// The column in backdrop coordinates.
     var contentBackdropRect: CGRect { metrics.backdropRect(contentRect) }
@@ -59,7 +76,7 @@ struct FocusPagerContext {
     var timerBackdropRect: CGRect { metrics.backdropRect(timerRect) }
 }
 
-/// The content of a two-page study screen: a tracking page and a focus page around one pinned timer.
+/// The content of a focus screen: one page per available ``FocusPage`` around one pinned timer.
 ///
 /// ## Declaration
 ///
@@ -67,18 +84,22 @@ struct FocusPagerContext {
 /// protocol FocusPagerScreen: DynamicProperty
 /// ```
 ///
-/// A conforming type supplies what goes in each place and holds its own state as a stored
-/// property; ``FocusPagerScaffold`` owns the pager, the page blend and where everything sits.
+/// A conforming type supplies what goes in each place; ``FocusPagerScaffold`` owns the pager,
+/// which pages exist (``FocusPagePolicy`` from `phase`), the lock and where everything sits.
 /// It refines `DynamicProperty` so a screen can keep `@ScaledMetric` and `@Environment`
 /// properties, which SwiftUI installs because the scaffold stores the screen.
+///
+/// `header(for:_:)` and `content(for:_:)` switch over ``FocusPage``, so a new page fails to
+/// compile in every screen until each one decides what it shows there.
 ///
 /// ```swift
 /// struct MyScreen: FocusPagerScreen {
 ///     let vm: StudyTrackingViewModel
-///     var showsFocusPage: Bool { vm.sessionIsRunning }
-///     var isLocked: Bool { vm.focusLockEnabled }
+///     var phase: SessionPhase { vm.phase }
+///     var sessionID: UUID? { vm.activeSessionID }
 ///     func backdrop(_ context: FocusPagerContext) -> some View { Color.black }
-///     // timer, trackingHeader, trackingBody, focusHeader, focusBody
+///     func timer(_ context: FocusPagerContext) -> some View { PinnedTimerView(display: vm.timerDisplay) }
+///     // header(for:_:), content(for:_:)
 /// }
 /// ```
 ///
@@ -87,16 +108,15 @@ struct FocusPagerContext {
 protocol FocusPagerScreen: DynamicProperty {
     associatedtype Backdrop: View
     associatedtype TimerFace: View
-    associatedtype TrackingHeader: View
-    associatedtype TrackingBody: View
-    associatedtype FocusHeader: View
-    associatedtype FocusBody: View
+    associatedtype Overlay: View = EmptyView
+    associatedtype Header: View
+    associatedtype Content: View
 
-    /// The focus page exists only while this is true.
-    var showsFocusPage: Bool { get }
+    /// Decides the available pages through `FocusPagePolicy.availablePages(for:)`.
+    var phase: SessionPhase { get }
 
-    /// Swiping between the pages is disabled while this is true.
-    var isLocked: Bool { get }
+    /// A change unlocks the screen, so a new session never starts locked.
+    var sessionID: UUID? { get }
 
     /// Full bleed, behind everything, never hit-tested.
     @ViewBuilder func backdrop(_ context: FocusPagerContext) -> Backdrop
@@ -104,16 +124,26 @@ protocol FocusPagerScreen: DynamicProperty {
     /// Laid out in a frame the size of `timerRect`, under the pager, never hit-tested.
     @ViewBuilder func timer(_ context: FocusPagerContext) -> TimerFace
 
-    /// Placed in the header band of the tracking page; `trackingBody` fills the space under the timer gap.
-    @ViewBuilder func trackingHeader(_ context: FocusPagerContext) -> TrackingHeader
-    @ViewBuilder func trackingBody(_ context: FocusPagerContext) -> TrackingBody
-    @ViewBuilder func focusHeader(_ context: FocusPagerContext) -> FocusHeader
-    @ViewBuilder func focusBody(_ context: FocusPagerContext) -> FocusBody
+    /// Laid out over the column, top-aligned, under the pager, never hit-tested. Defaults to nothing.
+    @ViewBuilder func overlay(_ context: FocusPagerContext) -> Overlay
+
+    /// Placed in the header band of `page`; `content(for:_:)` fills the space under the timer gap.
+    @ViewBuilder func header(for page: FocusPage, _ context: FocusPagerContext) -> Header
+    @ViewBuilder func content(for page: FocusPage, _ context: FocusPagerContext) -> Content
+
+    /// Inset applied to both the header and the content of `page`. Defaults to 16.
+    func horizontalPadding(for page: FocusPage) -> CGFloat
 
     /// Returns the band heights for this screen. The default keeps `standard`, the real screen's sizes.
     func slots(standard: FocusPagerSlots) -> FocusPagerSlots
 }
 
 extension FocusPagerScreen {
+    func horizontalPadding(for page: FocusPage) -> CGFloat { 16 }
+
     func slots(standard: FocusPagerSlots) -> FocusPagerSlots { standard }
+}
+
+extension FocusPagerScreen where Overlay == EmptyView {
+    func overlay(_ context: FocusPagerContext) -> EmptyView { EmptyView() }
 }

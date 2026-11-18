@@ -35,23 +35,25 @@ struct TapeDesign: FocusLabScreen {
             .frame(maxWidth: .infinity)
     }
 
-    func trackingHeader(_ context: FocusPagerContext) -> some View {
-        TapeTrackingHeader(session: session)
+    func header(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            TapeTrackingHeader(session: session)
+        case .focus:
+            TapeFocusHeader(session: session)
+        }
     }
 
-    func trackingBody(_ context: FocusPagerContext) -> some View {
-        TapeTrackingPage(session: session)
-    }
-
-    func focusHeader(_ context: FocusPagerContext) -> some View {
-        TapeFocusHeader(session: session)
-    }
-
-    func focusBody(_ context: FocusPagerContext) -> some View {
-        TapeFocusPage(session: session)
+    func content(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            TapeTrackingPage(session: session)
+        case .focus:
+            TapeFocusPage(session: session, isLocked: context.isLocked, onLockChange: context.setLocked)
+        }
     }
 }
 
 #Preview {
-    FocusPagerScaffold(screen: TapeDesign(session: FocusLabSession()))
+    FocusLabHost(design: .tape)
 }

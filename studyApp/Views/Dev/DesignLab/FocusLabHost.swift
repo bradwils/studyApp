@@ -13,6 +13,8 @@ struct FocusLabHost: View {
 
     @State private var design: FocusLabDesign
     @State private var session = FocusLabSession()
+    // Owned here, as FocusSessionScreen owns its own, so the lab bar can hide while locked.
+    @State private var screenState = FocusScreenState()
     @State private var chrome = FocusLabChrome()
 
     init(design: FocusLabDesign) {
@@ -20,15 +22,15 @@ struct FocusLabHost: View {
     }
 
     var body: some View {
-        design.screen(session: session)
+        design.screen(session: session, screenState: screenState)
             .id(design)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !session.isLocked {
+                if !screenState.isLocked {
                     labBar
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .animation(.smooth(duration: 0.35), value: session.isLocked)
+            .animation(.smooth(duration: 0.35), value: screenState.isLocked)
             .environment(chrome)
             .preferredColorScheme(chrome.scheme ?? design.colorScheme)
     }
@@ -106,6 +108,8 @@ struct FocusLabHost: View {
         let all = FocusLabDesign.allCases
         let next = (position + direction + all.count) % all.count
         chrome.scheme = nil
+        // The new design's pager opens on tracking, so its state has to start there too.
+        screenState = FocusScreenState()
         design = all[next]
     }
 }

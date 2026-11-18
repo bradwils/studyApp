@@ -36,23 +36,30 @@ struct VellumDesign: FocusLabScreen {
             .frame(width: 220)
     }
 
-    func trackingHeader(_ context: FocusPagerContext) -> some View {
-        VellumTrackingHeader(session: session)
+    func header(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            VellumTrackingHeader(session: session)
+        case .focus:
+            VellumFocusHeader(session: session)
+        }
     }
 
-    func trackingBody(_ context: FocusPagerContext) -> some View {
-        VellumTrackingPage(session: session, layout: VellumLayout(context: context))
-    }
-
-    func focusHeader(_ context: FocusPagerContext) -> some View {
-        VellumFocusHeader(session: session)
-    }
-
-    func focusBody(_ context: FocusPagerContext) -> some View {
-        VellumFocusPage(session: session, blend: context.blend)
+    func content(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            VellumTrackingPage(session: session, layout: VellumLayout(context: context))
+        case .focus:
+            VellumFocusPage(
+                session: session,
+                blend: context.blend,
+                isLocked: context.isLocked,
+                onLockChange: context.setLocked
+            )
+        }
     }
 }
 
 #Preview {
-    FocusPagerScaffold(screen: VellumDesign(session: FocusLabSession()))
+    FocusLabHost(design: .vellum)
 }

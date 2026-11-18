@@ -26,23 +26,25 @@ struct MarginDesign: FocusLabScreen {
         EmptyView()
     }
 
-    func trackingHeader(_ context: FocusPagerContext) -> some View {
-        MarginTrackingHeader(session: session)
+    func header(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            MarginTrackingHeader(session: session)
+        case .focus:
+            MarginFocusHeader(session: session)
+        }
     }
 
-    func trackingBody(_ context: FocusPagerContext) -> some View {
-        MarginTrackingPage(session: session)
-    }
-
-    func focusHeader(_ context: FocusPagerContext) -> some View {
-        MarginFocusHeader(session: session)
-    }
-
-    func focusBody(_ context: FocusPagerContext) -> some View {
-        MarginFocusPage(session: session)
+    func content(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            MarginTrackingPage(session: session)
+        case .focus:
+            MarginFocusPage(session: session, isLocked: context.isLocked, onLockChange: context.setLocked)
+        }
     }
 }
 
 #Preview {
-    FocusPagerScaffold(screen: MarginDesign(session: FocusLabSession()))
+    FocusLabHost(design: .margin)
 }

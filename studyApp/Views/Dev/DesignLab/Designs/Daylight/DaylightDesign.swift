@@ -27,23 +27,30 @@ struct DaylightDesign: FocusLabScreen {
             .foregroundStyle(DaylightPalette.plum)
     }
 
-    func trackingHeader(_ context: FocusPagerContext) -> some View {
-        DaylightTrackingHeader(session: session)
+    func header(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            DaylightTrackingHeader(session: session)
+        case .focus:
+            DaylightFocusHeader(session: session)
+        }
     }
 
-    func trackingBody(_ context: FocusPagerContext) -> some View {
-        DaylightTrackingPage(session: session)
-    }
-
-    func focusHeader(_ context: FocusPagerContext) -> some View {
-        DaylightFocusHeader(session: session)
-    }
-
-    func focusBody(_ context: FocusPagerContext) -> some View {
-        DaylightFocusPage(session: session, geometry: DaylightGeometry(context: context))
+    func content(for page: FocusPage, _ context: FocusPagerContext) -> some View {
+        switch page {
+        case .tracking:
+            DaylightTrackingPage(session: session)
+        case .focus:
+            DaylightFocusPage(
+                session: session,
+                geometry: DaylightGeometry(context: context),
+                isLocked: context.isLocked,
+                onLockChange: context.setLocked
+            )
+        }
     }
 }
 
 #Preview {
-    FocusPagerScaffold(screen: DaylightDesign(session: FocusLabSession()))
+    FocusLabHost(design: .daylight)
 }

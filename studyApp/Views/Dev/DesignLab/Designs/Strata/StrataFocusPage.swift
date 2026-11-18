@@ -22,6 +22,8 @@ struct StrataFocusHeader: View {
 struct StrataFocusPage: View {
 
     let session: FocusLabSession
+    let isLocked: Bool
+    let onLockChange: (Bool) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -108,9 +110,9 @@ struct StrataFocusPage: View {
             .buttonStyle(StrataPressStyle())
 
             Button {
-                session.isLocked.toggle()
+                onLockChange(!isLocked)
             } label: {
-                Text(session.isLocked ? "Unlock" : "Lock screen")
+                Text(isLocked ? "Unlock" : "Lock screen")
                     .font(StrataFont.sans(17, .regular))
                     .underline()
                     .foregroundStyle(StrataPalette.ink)

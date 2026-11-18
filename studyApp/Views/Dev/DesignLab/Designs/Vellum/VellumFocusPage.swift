@@ -23,6 +23,8 @@ struct VellumFocusPage: View {
 
     let session: FocusLabSession
     let blend: CGFloat
+    let isLocked: Bool
+    let onLockChange: (Bool) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -115,9 +117,9 @@ struct VellumFocusPage: View {
 
     private var lockButton: some View {
         Button {
-            session.isLocked.toggle()
+            onLockChange(!isLocked)
         } label: {
-            Text(session.isLocked ? "Unlock" : "Lock screen")
+            Text(isLocked ? "Unlock" : "Lock screen")
                 .font(VellumFont.text(15, .regular))
                 .foregroundStyle(VellumPalette.dust)
                 .padding(.horizontal, 20)

@@ -6,10 +6,8 @@ A night sky you fill in. Every five minutes of study lights four more stars. On 
 
 - `backdrop`: `StarsBackdrop`. A midnight-to-indigo gradient, a dawn layer, the star field, the figure, and a status line 44 pt below the timer's centre.
 - `timer`: `FocusLabClock` in Gill Sans Light at a fixed size (already scaled by `@ScaledMetric`), with fixed digit cells.
-- `trackingHeader`: subject name; a subject menu while idle.
-- `trackingBody`: an empty 40 pt status row (the status is in the backdrop), Start/Pause/Resume, End session while paused, and a footer with today's total and friends.
-- `focusHeader`: subject code.
-- `focusBody`: the same empty status row, with the controls (presets, outline Start/End/Finish pill, Lock screen) pushed to the bottom so the figure around the timer stays clear.
+- `header(for:)`: a switch on the page. Tracking is the subject name, with a subject menu while idle. Focus is the subject code.
+- `content(for:)`: a switch on the page. Tracking is an empty 40 pt status row (the status is in the backdrop), Start/Pause/Resume, End session while paused, and a footer with today's total and friends. Focus is the same empty status row, with the controls (presets, outline Start/End/Finish pill, Lock screen) pushed to the bottom so the figure around the timer stays clear. The lock lives on the context: `StarsFocusPage` takes `isLocked` and `onLockChange` from `context.isLocked` and `context.setLocked`.
 - No `slots` override and no `.focusLabChrome`. The design is dark throughout, set by `FocusLabDesign.colorScheme`.
 
 ## What drives it

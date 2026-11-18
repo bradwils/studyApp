@@ -28,6 +28,8 @@ struct MarginFocusHeader: View {
 struct MarginFocusPage: View {
 
     let session: FocusLabSession
+    let isLocked: Bool
+    let onLockChange: (Bool) -> Void
 
     var body: some View {
         lower
@@ -129,9 +131,9 @@ struct MarginFocusPage: View {
             .buttonStyle(MarginPressStyle())
 
             Button {
-                session.isLocked.toggle()
+                onLockChange(!isLocked)
             } label: {
-                Text(session.isLocked ? "Unlock" : "Lock screen")
+                Text(isLocked ? "Unlock" : "Lock screen")
                     .font(MarginFont.sans(16, .regular))
                     .underline()
                     .foregroundStyle(MarginPalette.paper)

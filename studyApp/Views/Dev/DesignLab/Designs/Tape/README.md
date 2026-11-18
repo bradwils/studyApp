@@ -6,10 +6,8 @@ Time as a measuring tape. A white tape slides under a fixed needle at the centre
 
 - `backdrop`: `TapeBackdrop`. Background, the tape (`TapeRibbon`), the needle and a status line just under the timer slot.
 - `timer`: `FocusLabClock` in condensed semibold system type, capped at 88 pt.
-- `trackingHeader`: subject name or a subject menu while idle, with today's total and break count underneath.
-- `trackingBody`: Start/Pause/Resume, End session while paused, the friends line, and a "Swipe left for focus" hint during a session.
-- `focusHeader`: subject code in tape white.
-- `focusBody`: presets, Start focus block / End block / Finish, and Lock screen.
+- `header(for:)`: a switch on the page. Tracking is `TapeTrackingHeader`, subject name or a subject menu while idle, with today's total and break count underneath. Focus is `TapeFocusHeader`, the subject code in tape white.
+- `content(for:)`: a switch on the page. Tracking is `TapeTrackingPage`, Start/Pause/Resume, End session while paused, the friends line, and a "Swipe left for focus" hint during a session. Focus is `TapeFocusPage`, presets, Start focus block / End block / Finish, and Lock screen. The lock state is owned by the context, so the focus page gets `context.isLocked` and `context.setLocked`.
 - Chrome: the design applies `.focusLabChrome` to its backdrop, `.light` below a blend of 0.5 and `.dark` above, because the background goes from fog to slate.
 - No `slots` override.
 
@@ -30,7 +28,7 @@ Time as a measuring tape. A white tape slides under a fixed needle at the centre
 
 ## Notes
 
-- Both bodies start with a clear spacer of `TapeLayout.bodyTopInset` (gap plus tape height) so their controls sit below the tape, which is drawn in the backdrop.
+- Both content views start with a clear spacer of `TapeLayout.bodyTopInset` (gap plus tape height) so their controls sit below the tape, which is drawn in the backdrop.
 - The ribbon redraws on `TimelineView(.animation)` at 15 fps so the tape slides smoothly. Under Reduce Motion it drops to a 1 s periodic tick.
 - The tape, needle and status line stay centred and the tape runs the full width of the screen. Only the focus zoom uses the column width, so on an iPad the flag lands over the controls instead of near the screen edge, and the zoom matches an iPhone.
 - The Canvases copy their values into locals before drawing. `TapeScale.ticks` is capped at 400 ticks.
