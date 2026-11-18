@@ -1,0 +1,67 @@
+import Foundation
+import SwiftData
+
+@Observable
+final class FieldDefinitionFormVM {
+    var name = ""
+    var choice: FieldType = .text
+    var optionsText = ""
+    var isEnabled = true
+
+    private var editing: FieldDefinition?
+
+    var isEditing: Bool { editing != nil }
+
+    var canSave: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && FieldKind(type: editing?.type ?? choice, options: options).config.isValid
+    }
+
+    private var options: [String] {
+        var seen: Set<String> = []
+        return optionsText
+            .split(separator: ",")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty && seen.insert($0).inserted }
+    }
+
+    func load(_ definition: FieldDefinition) {
+        editing = definition
+        name = definition.name
+        choice = definition.type
+        isEnabled = definition.isEnabled
+        optionsText = definition.options.joined(separator: ", ")
+    }
+
+    func save(nextOrder: Int, context: ModelContext) {
+        guard canSave else { return }
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let editing {
+            editing.name = trimmed
+            editing.isEnabled = isEnabled
+            // Kind is locked after creation so existing values can't mismatch their definition
+            if editing.type == .dropdown { editing.options = options }
+        } else {
+            context.insert(FieldDefinition(name: trimmed, type: choice, options: choice == .dropdown ? options : [], order: nextOrder, isEnabled: isEnabled))
+        }
+        try? context.save()
+    }
+
+    func delete(_ definition: FieldDefinition, context: ModelContext) {
+        context.delete(definition)
+        try? context.save()
+    }
+
+    func move(_ definitions: [FieldDefinition], from source: IndexSet, to destination: Int, context: ModelContext) {
+        var reordered = definitions
+        // Array.move(fromOffsets:) lives in SwiftUI, which ViewModels can't import
+        let moving = source.map { reordered[$0] }
+        let insertAt = destination - source.filter { $0 < destination }.count
+        for index in source.reversed() { reordered.remove(at: index) }
+        reordered.insert(contentsOf: moving, at: insertAt)
+        for (index, definition) in reordered.enumerated() {
+            definition.order = index
+        }
+        try? context.save()
+    }
+}
