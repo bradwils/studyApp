@@ -321,6 +321,33 @@ lane defaults above and omit the PR preview. `TESTFLIGHT_TARGET_BRANCH` can
 override the comparison target. Commit titles are not written testing steps;
 consult the PR for testing guidance.
 
+### Reading a build's notes
+
+The first lines of the notes say what was built:
+
+- **Branch/tag** is the ref Xcode Cloud checked out (the PR's source branch for a
+  PR build), not the branch it merges into. Where the build was headed is in the
+  `Comparison` line (`TARGET..build`).
+- **Comparison** shows what the commit list is measured against. `dev..build`
+  means commits not yet in `dev`; `master..build` means not yet in `master`.
+- **Commit** is the full SHA that was built. Match it to the PR's latest commit
+  to confirm the build contains your push.
+
+How to tell the kind of build apart:
+
+| Build | Notes show |
+|---|---|
+| Automatic (`dev`, `UAT-testflight`, `v*` tag) | No PR link; lane-default comparison |
+| `/testflight` PR build | A PR link, and the PR's own target as the comparison |
+| `/testflight` that built a plain branch (action ran an old script, or Apple supplied no PR metadata) | No PR link; lane-default comparison, same as an automatic build |
+
+`/testflight` comments run the workflow and script from the repository's default
+branch, not from the PR's branch, so a change to `.github/scripts/` does not take
+effect for comment triggers until it is merged. Editing the PR description to add
+or keep a `/testflight` line runs the PR's own version. In stacked PRs, a
+`/testflight` on each PR produces a separate build; compare the Branch/tag and
+Commit lines to see which PR a build came from.
+
 ### Generation and storage
 
 Before each xcodebuild invocation, `ci_pre_xcodebuild.sh` stamps the version,
