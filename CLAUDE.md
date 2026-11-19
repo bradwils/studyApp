@@ -253,42 +253,14 @@ checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 
 ## Workflow Configuration Decisions
 
-Before configuring a workflow, read [pipeline.md](pipeline.md) and
-[.github/workflows/README.md](.github/workflows/README.md), inspect the relevant
-branch versions, and identify where the setting actually lives. Choose the
-location, target branch and order of changes based on the workflow type and
-trigger; do not assume every workflow change belongs in `dev`, `master`, or a
-repository commit.
+Use [pipeline.md](pipeline.md) and [.github/workflows/README.md](.github/workflows/README.md)
+to choose the location and order of workflow changes:
 
-- **App work and branch-local build behavior:** start from `dev` and follow the
-  normal promotion path. Xcode Cloud reads `ci_scripts/` and project settings
-  from the branch being built, so ensure the affected build branches receive
-  any required committed changes through the documented promotion/merge flow.
-- **Shared CI/tooling/docs or default-branch automation:** use a `ci/*` branch
-  from `master` for maintenance that must reach the default branch without
-  promoting app work. For example, issue/comment triggers need the workflow on
-  `master`; PR-triggered workflows must be available on the relevant target's
-  merge ref. Determine which branches need the change from the actual event,
-  then carry the same commits back to `UAT-testflight` and `dev` as documented
-  in pipeline.md. Do not duplicate app changes across branches.
-- **Remote Xcode Cloud configuration:** start conditions, branch filters,
-  Xcode pins, clean-build settings and TestFlight distribution live in App
-  Store Connect. Inspect and change them there when that is the actual task;
-  a repository edit cannot apply those settings. Remote-only changes need no
-  artificial code commit. Update pipeline.md when confirmed behavior changes.
-- **Remote prerequisites before repository changes:** if a committed change
-  would rely on a remote workflow or setting that must be created or changed
-  first, prepare the proposed patch and exact remote setup steps, but leave
-  the dependent edits drafted and uncommitted. Confirm the remote setup is
-  saved and usable through live configuration or an appropriate build result
-  before committing/pushing the dependent changes or marking the PR ready.
-  If remote access is unavailable, state the blocker and request confirmation
-  of the specific setup; do not treat a planned change as completed. A draft
-  PR alone does not replace keeping those dependent edits uncommitted.
+- **`dev`:** app/build changes that follow normal promotion.
+- **`master`:** shared CI/tooling/docs or default-branch triggers; use `ci/*` from `master` and merge back per pipeline.md.
+- **Xcode Cloud:** remote settings such as triggers, Xcode versions and distribution; change these in App Store Connect. Remote-only changes need no code commit.
 
-State the chosen location (`dev`, `master`, Xcode Cloud, or a combination),
-whether a commit is needed, any remote prerequisite and its confirmation
-status, and how the change will reach each affected branch. Validate the
-relevant trigger/build behavior where possible and distinguish verified
-results from pending remote checks. Keep CLAUDE.md and AGENTS.md in sync; keep
-workflow tables and confirmed operational details in pipeline.md.
+If remote setup must happen first, draft the dependent edits but leave them
+uncommitted until the setup is confirmed. If you cannot verify it, ask for that
+specific confirmation. State the chosen target, whether a commit is needed,
+and any pending prerequisite. Record confirmed operational changes in pipeline.md.
