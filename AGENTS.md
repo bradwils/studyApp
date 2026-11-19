@@ -202,8 +202,8 @@ Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full detai
 - Feature work always goes on a branch off `dev` and merges back through a PR. Only one-line, straightforward fixes (text replacement, low-importance edits) go straight into `dev`
 - `CLAUDE.md` and `AGENTS.md` are always updated in parallel: a change to one goes into the other in the same commit
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
-- `master` only accepts PRs from `UAT-testflight`, `hotfix/*` or `ci/*` (enforced by the `source-branch` check)
-- `ci/*` is reserved for CI/tooling/docs maintenance: cut it from `master`, then merge master history back into `UAT-testflight` and `dev`. The check validates the branch name; CI-only scope is a review convention, not a changed-file restriction
+- Review master PR sources: use `UAT-testflight`, `hotfix/*` or `ci/*`. This is a review convention; the obsolete `source-branch` gate was retired (#164)
+- `ci/*` is reserved for CI/tooling/docs maintenance: cut it from `master`, then merge master history back into `UAT-testflight` and `dev`. Review both the branch source and CI-only scope; neither has an automated gate
 - Land app changes once, in `dev`, and promote them — never open matching PRs into several branches. CI maintenance uses the `ci/*` exception above
 - Branches are `type/short-slug` (`feat/sub-timer`, `fix/crash-on-launch`), using the Conventional Commits types; `hotfix/*` stays as is
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`. PR titles matter because merge commits take the PR title
@@ -247,6 +247,7 @@ checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
+- Keep workflows that handle PR/merge-ref or push events on every branch that needs those events, including stacked PR targets. Issue/comment events load workflows and checkout code from default `master`; changing dev alone does not update those entry points. See `.github/workflows/README.md` for event/ref ownership. Do not reintroduce the retired `promotion-source.yml` or its required status.
 - Keep `.swiftlint.yml` and `.github/workflows/swiftlint.yml` aligned across `master`, `UAT-testflight` and `dev`. CI explicitly requires the config; validate the PR merge result with SwiftLint 0.65.1 before merging.
 - Build an open PR on demand: put `/testflight` on its own line in the PR description (or in a comment on it, from a collaborator). `.github/workflows/testflight-pr.yml` asks Xcode Cloud to build the PR's branch with the `PR TestFlight` workflow, which distributes to the internal TestFlight group. Editing the description only re-triggers when the body itself changed; comment `/testflight` again to rebuild after new pushes
 - The Settings footer shows `lane · build time (AEST/AEDT) · version (build)`, stamped by CI
