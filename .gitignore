@@ -5,5 +5,7 @@
 build/
 xcuserdata/
 *.xcbkptlist
+build/
+*.xcconfig
 buildServer.json
 /secrets

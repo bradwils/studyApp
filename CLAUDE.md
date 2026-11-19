@@ -245,6 +245,7 @@ rulesets, versioning and release steps. Update that source instead of copying
 workflow tables here. Promotion PRs into `UAT-testflight` and `master` use the
 checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 
+- The lane rows describe automatic builds; eligible PRs from any head branch can also request a PR build. Triggers and requirements are in the [GitHub Actions workflow table](.github/workflows/README.md).
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
 - Keep `.swiftlint.yml` and `.github/workflows/swiftlint.yml` aligned across `master`, `UAT-testflight` and `dev`. CI explicitly requires the config; validate the PR merge result with SwiftLint 0.65.1 before merging.
