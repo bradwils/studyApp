@@ -190,8 +190,8 @@ the build time in Sydney time, and the usual version (build).
 - Fork PRs and closed PRs are skipped; only open PRs from this repository can build.
 - Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
   and `APP_STORE_CONNECT_PRIVATE_KEY`.
-- **One-off setup in Xcode:** create a workflow called `PR TestFlight` whose only
-  start condition is **Manual Start** for *all branches* (Apple refuses an
+- **One-off setup in Xcode:** create a workflow called `PR TestFlight` that permits manual PR builds. Its only
+  start condition should be **Manual Start** for *all branches* (Apple refuses an
   API-started build on a branch the workflow doesn't list, and a Branch Changes
   condition would build every push), a TestFlight Internal
   Testing post-action (distribute to **Self**), and the same environment as
@@ -402,14 +402,45 @@ For master/tag builds, tags on the build's own commit are excluded from baseline
 selection, so rebuilding a release still shows its changes. If there is no
 earlier version tag, the notes explicitly use all reachable history.
 
-The `/testflight` GitHub Action requests a **branch build**, rather than a native
-Xcode Cloud pull-request build. Apple may therefore omit the PR environment
-variables; these builds use the lane defaults above. Set
-`TESTFLIGHT_TARGET_BRANCH` on the Xcode Cloud workflow when its comparison target
-needs to differ. The script does not query GitHub to discover an open PR.
-The comparison label is included in the notes. A branch preview is omitted when
-the PR source and target are unavailable; lane defaults are not presented as PR
-metadata. The listed commit titles are not individually written testing steps.
+The `/testflight` GitHub Action finds the PR in Xcode Cloud's primary repository
+and requests a PR build. The Xcode Cloud workflow must permit manual PR builds;
+if Apple cannot find the open PR, the action fails instead of building a branch.
+PR notes include the PR link when supplied by Xcode Cloud. The comparison uses
+the PR source and target commit snapshots supplied to the build, when available;
+these can differ from the current PR page after further pushes. The PR source
+must be part of the checkout. Branch and UAT builds without PR metadata use the
+lane defaults above and omit the PR preview. `TESTFLIGHT_TARGET_BRANCH` can
+override the comparison target. Commit titles are not written testing steps;
+consult the PR for testing guidance.
+
+### Reading a build's notes
+
+The first lines of the notes say what was built:
+
+- **Branch/tag** is the lane label: for PR builds, the PR's source branch, not
+  its target. The checkout may be a temporary merge commit. The `Comparison`
+  line names the comparison target (`TARGET..build`).
+- **Comparison** shows what the commit list is measured against. `dev..build`
+  means commits not yet in `dev`; `master..build` means not yet in `master`.
+- **Commit** is the full checkout SHA that was built; a temporary merge commit
+  can differ from the PR head. **PR source commit**, when shown, identifies the
+  source snapshot included in that checkout. Compare that with the PR head.
+
+How to tell the kind of build apart:
+
+| Build | Notes show |
+|---|---|
+| Automatic (`dev`, `UAT-testflight`, `v*` tag) | No PR link; lane-default comparison |
+| `/testflight` PR build | A PR link, and the PR's own target as the comparison |
+| `/testflight` that built a plain branch (action ran an old script, or Apple supplied no PR metadata) | No PR link; lane-default comparison, same as an automatic build |
+
+`/testflight` comments run the workflow and script from the repository's default
+branch (`master`), not from the PR's branch, so a change to `.github/scripts/`
+does not take effect for comment triggers until it is merged into master.
+Merging into dev alone does not update the comment entry point. Editing the PR description to add
+or keep a `/testflight` line runs the PR's own version. In stacked PRs, a
+`/testflight` on each PR produces a separate build; compare the Branch/tag and
+Commit lines to see which PR a build came from.
 
 ### Generation and storage
 
@@ -421,7 +452,7 @@ Only the build checkout's Git refs/history are updated; nothing is committed or
 pushed back to the repository.
 
 The pre-build hook saves an ignored `TestFlight/build-metadata.json` snapshot,
-including the selected commit titles and branch containment. One timestamp is
+including the selected commit titles and available PR details. One timestamp is
 used for that snapshot and `StudyAppBuildTime` in the app's Info.plist. This
 keeps the history range stable between pre-build and post-build even if remote
 branches move. The `TestFlight/` folder is created automatically when needed.
@@ -447,7 +478,7 @@ From the repository root:
 ```sh
 python3 ci_scripts/testflight_notes.py preview --version 0.3 --build 24 --lane UAT-testflight
 python3 ci_scripts/testflight_notes.py preview --target dev
-python3 -m unittest discover -s ci_scripts -p 'test_testflight_notes.py'
+python3 -m unittest discover -s ci_scripts -p 'test*.py'
 zsh -n ci_scripts/ci_pre_xcodebuild.sh ci_scripts/ci_post_xcodebuild.sh
 ```
 

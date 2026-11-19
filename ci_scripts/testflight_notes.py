@@ -85,8 +85,13 @@ def metadata(root, version, build, lane, target=None, now=None):
     now = (now or datetime.now(timezone.utc)).astimezone(timezone.utc)
     local = now.astimezone(SYDNEY)
     commit = git(root, "rev-parse", "HEAD")
-    scope, base = comparison(root, commit, lane, target)
-    history = git(root, "log", "--topo-order", "--format=%H%x00%s", commit, *([f"^{base}"] if base else []))
+    source = os.environ.get("CI_PULL_REQUEST_SOURCE_COMMIT")
+    if source:
+        source = git(root, "rev-parse", "--verify", f"{source}^{{commit}}")
+        if git(root, "merge-base", "--is-ancestor", source, commit, optional=True) is None:
+            raise ValueError("PR source commit is not part of the build checkout")
+    scope, base = comparison(root, source or commit, lane, target)
+    history = git(root, "log", "--topo-order", "--format=%H%x00%s", source or commit, *([f"^{base}"] if base else []))
     commits = []
     for line in history.splitlines():
         sha, subject = line.split("\0", 1)
@@ -97,6 +102,8 @@ def metadata(root, version, build, lane, target=None, now=None):
         "lane": text(lane, "lane"),
         "pr_source": os.environ.get("CI_PULL_REQUEST_SOURCE_BRANCH"),
         "pr_target": os.environ.get("CI_PULL_REQUEST_TARGET_BRANCH"),
+        "pr_url": os.environ.get("CI_PULL_REQUEST_HTML_URL"),
+        "pr_source_commit": source,
         "commit": commit,
         "built_at": now.isoformat(),
         "build_time": f"{local.day} {local:%b %Y %H:%M %Z}",
@@ -121,6 +128,10 @@ def render(build):
     ]
     if build.get("pr_source") and build.get("pr_target"):
         lines.append(f"Branch preview: {text(build['pr_source'], 'PR source branch')} → {text(build['pr_target'], 'PR target branch')}")
+    if build.get("pr_url"):
+        lines.append(f"Pull request: {text(build['pr_url'], 'PR URL')}")
+    if build.get("pr_source_commit") and build["pr_source_commit"] != build["commit"]:
+        lines.append(f"PR source commit: {build['pr_source_commit']}")
     lines.append(f"Comparison: {build['comparison']}")
     header = "\n".join(lines) + "\n\nCommits (newest first):\n"
     commits = [f"• {entry['commit'][:12]} {entry['title']}\n" for entry in build["commits"]]
