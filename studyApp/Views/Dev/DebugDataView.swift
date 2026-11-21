@@ -21,6 +21,16 @@ struct DebugDataView: View {
     var body: some View {
         List {
             Section {
+                NavigationLink {
+                    FocusLabListView()
+                } label: {
+                    countLabel("Focus Design Lab", systemImage: "paintpalette", count: FocusLabDesign.allCases.count)
+                }
+            } footer: {
+                Text("Cosmetic study and focus screen experiments.")
+            }
+
+            Section {
                 modelLink(title: "Subjects", systemImage: "book", count: subjects.count) {
                     DebugModelListView(title: "Subjects") { (subject: Subject) in
                         VStack(alignment: .leading, spacing: 4) {

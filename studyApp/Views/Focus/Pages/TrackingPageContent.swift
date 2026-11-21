@@ -2,8 +2,8 @@ import SwiftUI
 import SwiftData
 
 // The tracking page of FocusSessionScreen's pager. Deliberately transparent and
-// timer-less: the container draws the background and the pinned timer behind/over
-// every page, and `FocusPageScaffold` leaves the gap for the timer.
+// timer-less: FocusPagerScaffold draws the background and the pinned timer behind/over
+// every page, and wraps this in a `FocusPageScaffold` under `TrackingPageHeader`.
 struct TrackingPageContent: View {
 
     let vm: StudyTrackingViewModel
@@ -21,58 +21,19 @@ struct TrackingPageContent: View {
     @ScaledMetric(relativeTo: .caption) private var connectionChipVerticalPadding: CGFloat = 8
 
     var body: some View {
-        FocusPageScaffold {
-            headerRow
-        } content: {
-            VStack {
-                controlsSection
+        VStack {
+            controlsSection
 
-                connectionRow
+            connectionRow
 
-                Spacer()
+            Spacer()
 
-                HorizontalContentScrollRow()
-            }
+            HorizontalContentScrollRow()
         }
         .padding(.bottom)
     }
 
     // MARK: - Sections
-
-    private var headerRow: some View {
-        HStack {
-            VStack(alignment: .leading) {
-                Text("Current Subject")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                if vm.hasActiveSession {
-                    Text(vm.activeSubjectName ?? "No subject")
-                        .font(.body)
-                } else {
-                    ActiveSubjectList(
-                        isEnabled: vm.canSelectSubject,
-                        selectedSubject: Binding(
-                            get: { vm.selectedSubject },
-                            set: { vm.selectSubject($0) }
-                        )
-                    )
-                }
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing) {
-                Text("Total")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Text("00:00:00")
-                    .font(.title3.monospacedDigit())
-                    .fontWeight(.medium)
-            }
-        }
-    }
 
     private var connectionRow: some View {
         HStack {
@@ -130,6 +91,47 @@ struct TrackingPageContent: View {
 
 }
 
+// The tracking page's header band: the subject picker and today's total.
+struct TrackingPageHeader: View {
+
+    let vm: StudyTrackingViewModel
+
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text("Current Subject")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                if vm.hasActiveSession {
+                    Text(vm.activeSubjectName ?? "No subject")
+                        .font(.body)
+                } else {
+                    ActiveSubjectList(
+                        isEnabled: vm.canSelectSubject,
+                        selectedSubject: Binding(
+                            get: { vm.selectedSubject },
+                            set: { vm.selectSubject($0) }
+                        )
+                    )
+                }
+            }
+
+            Spacer()
+
+            VStack(alignment: .trailing) {
+                Text("Total")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+
+                Text("00:00:00")
+                    .font(.title3.monospacedDigit())
+                    .fontWeight(.medium)
+            }
+        }
+    }
+}
+
 // MARK: - Preview
 
 #Preview {
@@ -138,14 +140,7 @@ struct TrackingPageContent: View {
         for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
-    let vm = StudyTrackingViewModel()
-    let state = FocusScreenState(pages: [.tracking])
 
-    return ZStack {
-        // The page is deliberately transparent; the shell normally paints this behind it.
-        FocusBackgroundLayer(screenState: state, tracking: vm)
-
-        TrackingPageContent(vm: vm)
-    }
-    .modelContainer(container)
+    return FocusSessionScreen(vm: StudyTrackingViewModel())
+        .modelContainer(container)
 }

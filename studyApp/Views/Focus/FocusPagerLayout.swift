@@ -18,17 +18,10 @@ enum FocusPagerLayout {
     static let timerFontBaseSize: CGFloat = 90
     static let timerSlotBaseHeight: CGFloat = 120
 
+    // A standard iPhone is about 400pt wide, so this only bites on wider screens, where the
+    // page content and the timer sit in a centred column of this width.
+    static let maxContentWidth: CGFloat = 500
+
     static let ringDiameter: CGFloat = 250
     static let ringLineWidth: CGFloat = 8
-}
-
-/// The gap both pages leave where the pinned timer is drawn. Sized off the same
-/// @ScaledMetric base as the timer text so the gap tracks Dynamic Type with it.
-struct PinnedTimerSlot: View {
-    @ScaledMetric(relativeTo: .largeTitle) private var slotHeight: CGFloat = FocusPagerLayout.timerSlotBaseHeight
-
-    var body: some View {
-        Color.clear
-            .frame(height: slotHeight)
-    }
 }
