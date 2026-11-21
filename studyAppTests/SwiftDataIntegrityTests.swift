@@ -42,13 +42,14 @@ struct SwiftDataIntegrityTests {
         try expectGraphCounts(reader, sessions: 3, children: 3)
     }
 
-    @Test("Session deletion cascades only to owned records", arguments: [false, true])
+    @Test("Without an active ID, unfinished session deletion cascades only to owned records", arguments: [false, true])
     func deletingSessionsPreservesUnrelatedRecords(deleteAll: Bool) throws {
         let container = try makeContainer()
         let context = makeContext(container)
         let subject = Subject(name: "Physics", code: "PHYS")
         let first = insertSession(subject: subject, label: "Delete", context: context)
         let second = insertSession(subject: subject, label: "Keep", context: context)
+        first.endedAt = nil
         let retainedID = second.id
         let subjectID = subject.id
         let timestamp = Date(timeIntervalSince1970: 1_700_000_000)
@@ -60,9 +61,9 @@ struct SwiftDataIntegrityTests {
 
         let viewer = SessionViewerViewModel()
         if deleteAll {
-            viewer.removeAllSessions(context: context)
+            viewer.removeAllSessions(activeSessionID: nil, context: context)
         } else {
-            viewer.deleteSessions([first], context: context)
+            viewer.deleteSessions([first], activeSessionID: nil, context: context)
         }
 
         let reader = makeContext(container)
@@ -89,6 +90,43 @@ struct SwiftDataIntegrityTests {
         }
     }
 
+    @Test("Session deletion protects only the owned ID regardless of completion", arguments: [false, true])
+    func deletingSessionsPreservesActiveGraph(deleteAll: Bool) throws {
+        for ownedIsEnded in [false, true] {
+            let container = try makeContainer()
+            let context = makeContext(container)
+            let subject = Subject(name: "Physics", code: "PHYS")
+            let active = insertSession(subject: subject, label: "Active", context: context)
+            if !ownedIsEnded {
+                active.endedAt = nil
+            }
+            let abandoned = insertSession(subject: subject, label: "Abandoned", context: context)
+            abandoned.endedAt = nil
+            let ended = insertSession(subject: subject, label: "Ended", context: context)
+            let activeID = active.id
+            let subjectID = subject.id
+            try context.save()
+
+            let viewer = SessionViewerViewModel()
+            if deleteAll {
+                viewer.removeAllSessions(activeSessionID: activeID, context: context)
+            } else {
+                viewer.deleteSessions([active, abandoned, ended], activeSessionID: activeID, context: context)
+            }
+
+            let reader = makeContext(container)
+            let stored = try reader.fetch(FetchDescriptor<StudySession>())
+            #expect(stored.map(\.id) == [activeID])
+            #expect((stored.first?.endedAt != nil) == ownedIsEnded)
+            #expect(stored.first?.subject?.id == subjectID)
+            #expect(stored.first?.breaks?.count == 1)
+            #expect(stored.first?.sections?.count == 1)
+            #expect(stored.first?.location?.locationLabel == "Active")
+            try expectGraphCounts(reader, sessions: 1, children: 1)
+            #expect(!context.hasChanges)
+        }
+    }
+
     @Test("Cancellation removes the active graph and preserves existing history")
     func cancellingSessionPreservesHistory() throws {
         let container = try makeContainer()
@@ -99,18 +137,19 @@ struct SwiftDataIntegrityTests {
         let subjectID = subject.id
         try context.save()
         let vm = StudyTrackingViewModel()
-        vm.selectedSubject = subject
-        vm.startSession(ctx: context)
-        let active = try #require(vm.activeSession)
+        vm.selectSubject(subject)
+        vm.startSession(context: context)
+        let activeID = try #require(vm.activeSessionID)
+        let active = try #require(try context.fetch(FetchDescriptor<StudySession>(
+            predicate: #Predicate { $0.id == activeID }
+        )).first)
         active.breaks = [StudyBreak(startedAt: active.startedAt, endedAt: active.startedAt)]
-        active.sections = [StudySection(startedAt: active.startedAt, endedAt: active.startedAt)]
         active.location = SessionLocation(locationLabel: "Cancelled")
-        vm.startPureFocusSession(300)
-        vm.focusLockEnabled = true
+        #expect(vm.startFocusTarget(duration: 300))
         try context.save()
         try expectGraphCounts(makeContext(container), sessions: 2, children: 2)
 
-        vm.cancelActiveSession(ctx: context)
+        vm.cancelSession(context: context)
 
         let reader = makeContext(container)
         let sessions = try reader.fetch(FetchDescriptor<StudySession>())
@@ -119,10 +158,9 @@ struct SwiftDataIntegrityTests {
         #expect(sessions.first?.location?.locationLabel == "Previous")
         #expect(try reader.fetch(FetchDescriptor<Subject>()).map(\.id) == [subjectID])
         try expectGraphCounts(reader, sessions: 1, children: 1)
-        #expect(vm.activeSession == nil)
-        #expect(vm.ssw == nil)
-        #expect(vm.activePureFocusSession == nil)
-        #expect(!vm.focusLockEnabled)
+        #expect(vm.activeSessionID == nil)
+        #expect(vm.focusTarget == nil)
+        #expect(vm.phase == .idle)
     }
 
     @Test("Completion saves metadata and relationships without relying on autosave")
@@ -132,35 +170,36 @@ struct SwiftDataIntegrityTests {
         let subject = Subject(name: "Physics", code: "PHYS")
         context.insert(subject)
         let subjectID = subject.id
-        let vm = StudyTrackingViewModel()
-        vm.selectedSubject = subject
-        vm.startSession(ctx: context)
-        let session = try #require(vm.activeSession)
-        #expect(session.endedAt == nil)
-        let sessionID = session.id
         let startedAt = Date(timeIntervalSince1970: 1_700_000_000)
-        session.startedAt = startedAt
+        var current = startedAt
+        let vm = StudyTrackingViewModel(now: { current })
+        vm.selectSubject(subject)
+        vm.startSession(context: context)
+        let sessionID = try #require(vm.activeSessionID)
+        let session = try #require(try context.fetch(FetchDescriptor<StudySession>(
+            predicate: #Predicate { $0.id == sessionID }
+        )).first)
+        #expect(session.endedAt == nil)
         session.notes = "Revision"
         session.studyScore = 8
         session.friends = ["friend"]
         session.location = SessionLocation(locationLabel: "Library")
-        vm.studyBreaks = [StudyBreak(startedAt: startedAt.addingTimeInterval(60),
-                                    endedAt: startedAt.addingTimeInterval(90))]
-        vm.studySections = [StudySection(startedAt: startedAt, endedAt: startedAt.addingTimeInterval(60))]
+        current.addTimeInterval(60)
+        vm.pauseSession(context: context)
+        current.addTimeInterval(30)
+        vm.resumeSession(context: context)
         vm.addInterruption()
-        vm.startPureFocusSession(300)
-        vm.focusLockEnabled = true
-        let beforeEnding = Date.now
+        #expect(vm.startFocusTarget(duration: 300))
+        current.addTimeInterval(30)
 
-        vm.endSession(context: context)
+        vm.finishSession(context: context)
 
-        let afterEnding = Date.now
         let reader = makeContext(container)
         let stored = try #require(try reader.fetch(FetchDescriptor<StudySession>()).first)
         let endedAt = try #require(stored.endedAt)
         #expect(stored.id == sessionID)
         #expect(stored.startedAt == startedAt)
-        #expect(endedAt >= beforeEnding && endedAt <= afterEnding)
+        #expect(endedAt == current)
         #expect(stored.subject?.id == subjectID)
         #expect(stored.subjectName == "Physics")
         #expect(stored.notes == "Revision")
@@ -170,14 +209,16 @@ struct SwiftDataIntegrityTests {
         #expect(stored.totalBreakDuration == 30)
         #expect(stored.totalActiveDuration == endedAt.timeIntervalSince(startedAt) - 30)
         #expect(stored.breaks?.first?.duration == 30)
-        #expect(stored.sections?.first?.duration == 60)
+        #expect(stored.sections?.map(\.duration).sorted() == [30, 60])
         #expect(stored.location?.locationLabel == "Library")
-        try expectGraphCounts(reader, sessions: 1, children: 1)
+        #expect(try reader.fetchCount(FetchDescriptor<StudySession>()) == 1)
+        #expect(try reader.fetchCount(FetchDescriptor<StudyBreak>()) == 1)
+        #expect(try reader.fetchCount(FetchDescriptor<StudySection>()) == 2)
+        #expect(try reader.fetchCount(FetchDescriptor<SessionLocation>()) == 1)
         #expect(!context.hasChanges)
-        #expect(vm.activeSession == nil)
-        #expect(vm.ssw == nil)
-        #expect(vm.activePureFocusSession == nil)
-        #expect(!vm.focusLockEnabled)
+        #expect(vm.activeSessionID == nil)
+        #expect(vm.focusTarget == nil)
+        #expect(vm.phase == .idle)
     }
 
     @Test("Finishing without an active session preserves existing history")
@@ -191,8 +232,8 @@ struct SwiftDataIntegrityTests {
         previous.notes = "Unsaved edit"
         let vm = StudyTrackingViewModel()
 
-        vm.endSession(context: context)
-        vm.cancelActiveSession(ctx: context)
+        vm.finishSession(context: context)
+        vm.cancelSession(context: context)
 
         let reader = makeContext(container)
         let sessions = try reader.fetch(FetchDescriptor<StudySession>())
@@ -252,7 +293,7 @@ struct SwiftDataIntegrityTests {
             #expect(session.location?.latitude == -33.86)
             #expect(session.location?.longitude == 151.21)
             try expectGraphCounts(reader, sessions: 1, children: 1)
-            SessionViewerViewModel().deleteSessions([session], context: reader)
+            SessionViewerViewModel().deleteSessions([session], activeSessionID: nil, context: reader)
         }
 
         try autoreleasepool {
@@ -263,6 +304,67 @@ struct SwiftDataIntegrityTests {
             #expect(subjects.first?.sessions.isEmpty == true)
             try expectGraphCounts(reader, sessions: 0, children: 0)
         }
+    }
+
+    @Test("Clear All with the tracking model's ID spares the live session until it finishes or is cancelled",
+          arguments: [false, true])
+    func clearAllFollowsTrackingOwnership(cancel: Bool) throws {
+        let container = try makeContainer()
+        let context = makeContext(container)
+        let subject = Subject(name: "Physics", code: "PHYS")
+        insertSession(subject: subject, label: "Ended", context: context)
+        let abandoned = insertSession(subject: subject, label: "Abandoned", context: context)
+        abandoned.endedAt = nil
+        try context.save()
+
+        let vm = StudyTrackingViewModel()
+        vm.selectSubject(subject)
+        vm.startSession(context: context)
+        let liveID = try #require(vm.activeSessionID)
+        let viewer = SessionViewerViewModel()
+
+        viewer.removeAllSessions(activeSessionID: vm.activeSessionID, context: context)
+
+        #expect(try makeContext(container).fetch(FetchDescriptor<StudySession>()).map(\.id) == [liveID])
+
+        if cancel {
+            vm.cancelSession(context: context)
+        } else {
+            vm.finishSession(context: context)
+        }
+        #expect(vm.activeSessionID == nil)
+
+        viewer.removeAllSessions(activeSessionID: vm.activeSessionID, context: context)
+
+        try expectGraphCounts(makeContext(container), sessions: 0, children: 0)
+    }
+
+    @Test("Clear All with an ID matching no record deletes everything without crashing")
+    func clearAllWithUnknownIDDeletesEverything() throws {
+        let container = try makeContainer()
+        let context = makeContext(container)
+        let subject = Subject(name: "Physics", code: "PHYS")
+        insertSession(subject: subject, label: "One", context: context)
+        insertSession(subject: subject, label: "Two", context: context)
+        try context.save()
+
+        SessionViewerViewModel().removeAllSessions(activeSessionID: UUID(), context: context)
+
+        try expectGraphCounts(makeContext(container), sessions: 0, children: 0)
+    }
+
+    @Test("Deleting an empty selection is a no-op")
+    func deletingEmptySelectionPreservesHistory() throws {
+        let container = try makeContainer()
+        let context = makeContext(container)
+        let subject = Subject(name: "Physics", code: "PHYS")
+        let session = insertSession(subject: subject, label: "Kept", context: context)
+        let sessionID = session.id
+        try context.save()
+
+        SessionViewerViewModel().deleteSessions([], activeSessionID: sessionID, context: context)
+
+        try expectGraphCounts(makeContext(container), sessions: 1, children: 1)
     }
 
     private func makeContainer(at storeURL: URL? = nil) throws -> ModelContainer {
