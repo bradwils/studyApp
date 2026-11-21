@@ -3,7 +3,6 @@ name: PR title
 # Merge commits take the PR title, so the title is what lands in history.
 on:
   pull_request:
-    branches: [dev]
     types: [opened, edited, synchronize, reopened]
 
 permissions: {}

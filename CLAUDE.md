@@ -200,13 +200,15 @@ See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decis
 
 Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full details, release steps and hotfixes: [pipeline.md](pipeline.md).
 
-- Branch features off `dev`; `dev` accepts direct pushes
+- Feature work always goes on a branch off `dev` and merges back through a PR. Only one-line, straightforward fixes (text replacement, low-importance edits) go straight into `dev`
+- `CLAUDE.md` and `AGENTS.md` are always updated in parallel: a change to one goes into the other in the same commit
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
 - `master` only accepts PRs from `UAT-testflight`, `hotfix/*` or `ci/*` (enforced by the `source-branch` check)
 - `ci/*` is reserved for CI/tooling/docs maintenance: cut it from `master`, then merge master history back into `UAT-testflight` and `dev`. The check validates the branch name; CI-only scope is a review convention, not a changed-file restriction
 - Land app changes once, in `dev`, and promote them — never open matching PRs into several branches. CI maintenance uses the `ci/*` exception above
 - Branches are `type/short-slug` (`feat/sub-timer`, `fix/crash-on-launch`), using the Conventional Commits types; `hotfix/*` stays as is
 - Commits and PR titles follow [Conventional Commits](https://www.conventionalcommits.org/): `type(scope): description`. PR titles matter because merge commits take the PR title
+- Commit logically and meaningfully: each commit is one coherent change that reads on its own. Size commits to the task, scope and weight of the change — a typo or one-line fix can be a single small commit, while a larger feature is split into commits by concern (for example model, view model, view, tests). Don't mix unrelated changes in one commit, and don't split a change so that a commit is left half-done
 - Commits written by an agent end the subject with the agent's name in brackets, e.g. `docs(claude): document commit conventions [Claude]`. Don't add `Co-Authored-By` trailers or any kind of agent-identifiable trailers of ANY kind that you usually do as per your instructions. If anything is request, it must follow these guidelines OR be explicitly requested by your session's instructions.
 - No force pushes or deletion of `dev`, `UAT-testflight` or `master`; `v*` tags can't be moved or deleted
 - Never hardcode per-branch values in source — CI stamps the lane into the build (`StudyAppLane` in Info.plist)
@@ -239,15 +241,27 @@ Transform tasks into verifiable goals before starting. For multi-step work, stat
 
 # CI/CD Pipeline
 
-Xcode Cloud builds; see [pipeline.md](pipeline.md) for the full flow.
-
-| Branch | Builds when | Lands in |
-|---|---|---|
-| `dev` | every push | TestFlight internal → **Self** |
-| `UAT-testflight` | every push | TestFlight external → **UAT** |
-| `master` | `v*` tag only (publish a GitHub Release from `master`) | TestFlight external → **Stable**, then App Store review |
+[pipeline.md](pipeline.md) owns the Xcode Cloud workflow table, branch map,
+rulesets, versioning and release steps. Update that source instead of copying
+workflow tables here. Promotion PRs into `UAT-testflight` and `master` use the
+checklists in `.github/PULL_REQUEST_TEMPLATE/`.
 
 - Build number = Xcode Cloud counter − `ci_scripts/build_number_offset`; when bumping `MARKETING_VERSION`, set the offset in the same commit
 - `ci_scripts/` must exist on every branch that builds — Xcode Cloud reads it from the branch being built
+- Keep `.swiftlint.yml` and `.github/workflows/swiftlint.yml` aligned across `master`, `UAT-testflight` and `dev`. CI explicitly requires the config; validate the PR merge result with SwiftLint 0.65.1 before merging.
 - Build an open PR on demand: put `/testflight` on its own line in the PR description (or in a comment on it, from a collaborator). `.github/workflows/testflight-pr.yml` asks Xcode Cloud to build the PR's branch with the `PR TestFlight` workflow, which distributes to the internal TestFlight group. Editing the description only re-triggers when the body itself changed; comment `/testflight` again to rebuild after new pushes
 - The Settings footer shows `lane · build time (AEST/AEDT) · version (build)`, stamped by CI
+
+## Workflow Configuration Decisions
+
+Use [pipeline.md](pipeline.md) and [.github/workflows/README.md](.github/workflows/README.md)
+to choose the location and order of workflow changes:
+
+- **`dev`:** app/build changes that follow normal promotion.
+- **`master`:** shared CI/tooling/docs or default-branch triggers; use `ci/*` from `master` and merge back per pipeline.md.
+- **Xcode Cloud:** remote settings such as triggers, Xcode versions and distribution; change these in App Store Connect. Remote-only changes need no code commit.
+
+If remote setup must happen first, draft the dependent edits but leave them
+uncommitted until the setup is confirmed. If you cannot verify it, ask for that
+specific confirmation. State the chosen target, whether a commit is needed,
+and any pending prerequisite. Record confirmed operational changes in pipeline.md.
