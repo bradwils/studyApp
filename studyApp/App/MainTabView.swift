@@ -1,9 +1,6 @@
 import SwiftUI
 import OSLog
-
-#if DEBUG
 import SwiftData
-#endif
 
 enum AppTab: Hashable {
     case focus, debug, social, groups, sessions
