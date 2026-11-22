@@ -160,6 +160,7 @@ final class StudyTrackingViewModel {
         save(context)
     }
 
+    /// Starts a focus target during active study when no target is set and the duration is valid.
     @discardableResult
     func startFocusTarget(duration: TimeInterval) -> Bool {
         let now = now()
@@ -171,6 +172,7 @@ final class StudyTrackingViewModel {
         return true
     }
 
+    /// Clears the countdown while preserving the study session and its elapsed time.
     func resetFocusTarget() {
         focusTarget = nil
     }

@@ -15,7 +15,8 @@ enum FocusBackgroundStyle {
 /// enum FocusPagePolicy
 /// ```
 ///
-/// Both answers are exhaustive switches, so adding a ``FocusPage`` forces a decision here.
+/// Session phase determines the ordered page list. When adding a page, update
+/// availability explicitly and assign a backdrop style in the exhaustive page switch.
 enum FocusPagePolicy {
     /// The page every list contains and every removal falls back to.
     static let fallbackPage: FocusPage = .tracking
