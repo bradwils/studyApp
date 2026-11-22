@@ -9,3 +9,4 @@ build/
 *.xcconfig
 buildServer.json
 /secrets
+*.pyc

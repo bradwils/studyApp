@@ -43,7 +43,7 @@ studyApp/
 
 ## Features
 - **Social**: Feed of study activity with user profiles
-- **Focus**: Focus mode tools and timers
+- **Focus**: Focus mode tools and timers. See the [Focus pager layout and design guide](FocusPager.md).
 - **Groups**: Collaborative study groups
 - **Modes**: Configurable study modes
 - **Settings**: App settings and subject management
