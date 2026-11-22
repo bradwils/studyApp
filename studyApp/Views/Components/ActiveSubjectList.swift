@@ -21,6 +21,14 @@ struct ActiveSubjectList: View {
 
     @Binding var selectedSubject: Subject? // the selected subject
 
+    // A deleted subject leaves the view model holding a stale reference; fall back to the first one.
+    private func repairSelection() {
+        guard isEnabled else { return }
+        if let selectedSubject, subjects.contains(selectedSubject) { return }
+        selectedSubject = subjects.first
+        logger.log("Repaired subject selection, is now \(selectedSubject?.name ?? "nil")")
+    }
+
     var body: some View {
         Group {
             if subjects.isEmpty {
@@ -37,17 +45,9 @@ struct ActiveSubjectList: View {
                 }
                 .pickerStyle(.menu)
                 .disabled(!isEnabled)
-                .onAppear { //update the view before it appears
-                    if selectedSubject == nil {
-                        selectedSubject = subjects.first
-                        logger.log("Overrode nil subject selection, is now \(selectedSubject?.name ?? "nil")")
-                    }
-                }
-                .onChange(of: subjects) { _, new in
-                    if selectedSubject == nil, let fallback = new.first {
-                        selectedSubject = fallback
-                    }
-                }
+                .onAppear(perform: repairSelection)
+                .onChange(of: subjects) { repairSelection() }
+                .onChange(of: isEnabled) { repairSelection() }
             }
         }
     }
