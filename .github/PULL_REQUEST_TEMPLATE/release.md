@@ -8,7 +8,7 @@
 
 ## Before merging
 
-- [ ] Source branch is `UAT-testflight` (or `hotfix/*` for a hotfix) — verify manually; there is no source-branch status check
+- [ ] Source branch is `UAT-testflight` (or `hotfix/*` for a hotfix)
 - [ ] Current-head checks pass and the UAT build was tested (or the hotfix candidate was tested)
 - [ ] Version/tag and build-number offset reviewed
 - [ ] TestFlight "What to Test" instructions reviewed; release notes do not replace them
