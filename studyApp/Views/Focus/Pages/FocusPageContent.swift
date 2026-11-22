@@ -6,9 +6,9 @@
 import SwiftUI
 import SwiftData
 
-// The focus page of FocusSessionScreen's pager. Transparent and timer-less: the
-// container draws the gradient and the pinned timer, and `FocusPageScaffold` leaves
-// the gap for it.
+// The focus page of FocusSessionScreen's pager. Transparent and timer-less:
+// FocusPagerScaffold draws the gradient and the pinned timer, and wraps this in a
+// `FocusPageScaffold` under `FocusPageHeader`.
 struct FocusPageContent: View {
 
     let vm: StudyTrackingViewModel
@@ -20,14 +20,10 @@ struct FocusPageContent: View {
 
     var body: some View {
         // TODO: CustomBottomSheet — in a wider orientation move it to the side and re-align PureFocusView (VStack vs HStack by horizontalSizeClass).
-        FocusPageScaffold(horizontalPadding: 24) {
-            subjectCodeHeader
-        } content: {
-            VStack {
-                timerControlsSection
+        VStack {
+            timerControlsSection
 
-                Spacer()
-            }
+            Spacer()
         }
     }
 
@@ -62,8 +58,14 @@ struct FocusPageContent: View {
             .padding(.top, 10)
         }
     }
+}
 
-    private var subjectCodeHeader: some View {
+// The focus page's header band: the subject code.
+struct FocusPageHeader: View {
+
+    let vm: StudyTrackingViewModel
+
+    var body: some View {
         Text(vm.displayedSubjectCode ?? "—")
             .font(.system(size: 35))
             .lineLimit(1)
@@ -79,15 +81,7 @@ struct FocusPageContent: View {
     let vm = StudyTrackingViewModel()
     vm.startSession(context: container.mainContext)
     vm.startFocusTarget(duration: 25 * 60)
-    let state = FocusScreenState(pages: [.tracking, .focus])
-    state.updatePosition(raw: 1)
 
-    return ZStack {
-        // FocusPageContent is deliberately transparent — FocusSessionScreen normally
-        // paints this behind it. Without it the preview is just a blank white page.
-        FocusBackgroundLayer(screenState: state, tracking: vm)
-
-        FocusPageContent(vm: vm, isLocked: false, onLockChange: { _ in })
-    }
-    .modelContainer(container)
+    return FocusSessionScreen(vm: vm)
+        .modelContainer(container)
 }
