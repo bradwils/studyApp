@@ -17,6 +17,12 @@ Safe top  │ Study header │ Focus header │  swipe
 
 One page fills the viewport at rest. Tracking holds the study session actions and has room for a design’s own content. Pure Focus lets someone set a timed focus block within that same study session. Idle offers Tracking alone. Running and paused offer both pages. The lock disables swiping.
 
+## Paging and lock state
+
+[FocusPagePolicy](../studyApp/ViewModels/Focus/FocusPagePolicy.swift) chooses the ordered pages for each phase and maps each page to a backdrop style. The live screen and the lab host each own a [FocusScreenState](../studyApp/ViewModels/Focus/FocusScreenState.swift). The scaffold reconciles page availability and unlocks on a session ID change.
+
+Use `scrolledPage` to request navigation, `settledPage` for decisions about the committed page, and `position` for drawing during the swipe. [FocusPagerMath](../studyApp/ViewModels/Focus/FocusPagePolicy.swift) clamps the offset in page units and calculates weights. With Reduce Motion enabled, the weights select the nearest page as you drag. The committed page still updates when scrolling settles.
+
 ## Layout
 
 - **Width.** The pager and backdrop span the viewport. Center readable content and the timer in a column capped at 500 pt. Live page insets are 16 pt for Tracking and 24 pt for Pure Focus. Lab designs can supply their own insets.

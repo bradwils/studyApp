@@ -6,6 +6,16 @@
 
 import SwiftUI
 
+/// Geometry shared by the full-bleed backdrop and the safe-area pager.
+///
+/// ## Declaration
+///
+/// ```swift
+/// struct FocusPagerStageMetrics: Equatable
+/// ```
+///
+/// The content column is capped and centred within the safe area. Convert its
+/// rectangles before using them to position artwork in the backdrop.
 struct FocusPagerStageMetrics: Equatable {
 
     /// Size of the safe area — the space the pager's pages are laid out in.
@@ -20,7 +30,7 @@ struct FocusPagerStageMetrics: Equatable {
         )
     }
 
-    // Capped and centred so a wide screen gets a column; the backdrop and the pager still span the full width.
+    /// The centred content column in safe-area coordinates.
     var contentRect: CGRect {
         let width = min(safeSize.width, FocusPagerLayout.maxContentWidth)
         return CGRect(x: (safeSize.width - width) / 2, y: 0, width: width, height: safeSize.height)
@@ -31,6 +41,7 @@ struct FocusPagerStageMetrics: Equatable {
         pageX + insets.leading
     }
 
+    /// Converts a safe-area rectangle to full-bleed backdrop coordinates.
     func backdropRect(_ pageRect: CGRect) -> CGRect {
         pageRect.offsetBy(dx: insets.leading, dy: insets.top)
     }

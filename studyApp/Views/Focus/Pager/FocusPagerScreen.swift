@@ -7,10 +7,16 @@
 
 import SwiftUI
 
-/// The heights of the two fixed bands at the top of every page.
+/// The shared header and timer heights for every page.
 ///
-/// Every page and the pinned timer read one value of this type, so the timer gap sits at the
-/// same offset on each page.
+/// ## Declaration
+///
+/// ```swift
+/// struct FocusPagerSlots: Equatable
+/// ```
+///
+/// The scaffold applies the same heights to the pages and the pinned timer.
+/// The standard timer height scales with Dynamic Type.
 struct FocusPagerSlots: Equatable {
     /// The band above the timer that holds each page's header.
     var headerHeight: CGFloat
@@ -52,7 +58,7 @@ struct FocusPagerContext {
         screenState.weight(of: page, reduceMotion: reduceMotion)
     }
 
-    /// 0 on the tracking page, 1 on the focus page, continuous while a swipe is in flight.
+    /// The focus-page weight from 0 to 1, snapped to the nearest page under Reduce Motion.
     var blend: CGFloat { CGFloat(weight(of: .focus)) }
 
     var isLocked: Bool { screenState.isLocked }
@@ -76,7 +82,7 @@ struct FocusPagerContext {
     var timerBackdropRect: CGRect { metrics.backdropRect(timerRect) }
 }
 
-/// The content of a focus screen: one page per available ``FocusPage`` around one pinned timer.
+/// Supplies the visual layers and page content around a shared timer.
 ///
 /// ## Declaration
 ///
@@ -89,19 +95,8 @@ struct FocusPagerContext {
 /// It refines `DynamicProperty` so a screen can keep `@ScaledMetric` and `@Environment`
 /// properties, which SwiftUI installs because the scaffold stores the screen.
 ///
-/// `header(for:_:)` and `content(for:_:)` switch over ``FocusPage``, so a new page fails to
-/// compile in every screen until each one decides what it shows there.
-///
-/// ```swift
-/// struct MyScreen: FocusPagerScreen {
-///     let vm: StudyTrackingViewModel
-///     var phase: SessionPhase { vm.phase }
-///     var sessionID: UUID? { vm.activeSessionID }
-///     func backdrop(_ context: FocusPagerContext) -> some View { Color.black }
-///     func timer(_ context: FocusPagerContext) -> some View { PinnedTimerView(display: vm.timerDisplay) }
-///     // header(for:_:), content(for:_:)
-/// }
-/// ```
+/// Use exhaustive page switches in the header and content implementations so adding
+/// a page exposes the layouts that need updating.
 ///
 /// > Note: The timer is drawn once, outside the pages, so it cannot move during a swipe.
 /// > Pages never draw it; they only get the gap.
@@ -134,7 +129,7 @@ protocol FocusPagerScreen: DynamicProperty {
     /// Inset applied to both the header and the content of `page`. Defaults to 16.
     func horizontalPadding(for page: FocusPage) -> CGFloat
 
-    /// Returns the band heights for this screen. The default keeps `standard`, the real screen's sizes.
+    /// Overrides the shared band heights. Keep the standard timer height to inherit Dynamic Type scaling.
     func slots(standard: FocusPagerSlots) -> FocusPagerSlots
 }
 
