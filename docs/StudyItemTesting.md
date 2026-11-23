@@ -3,6 +3,26 @@
 The final suite uses the field-configuration implementation from #188 and #190.
 It does not use the optional-value-slot APIs from the older V2 branch.
 
+## Choosing an existing check
+
+Use these sources to choose checks for the behavior being changed. Listed tests
+describe coverage, not a passing result for the current commit.
+
+| Change or failure | Existing check and scope |
+| --- | --- |
+| StudyItem defaults, field configuration, relationships or deletion | [StudyItem suites](../studyAppTests/StudyItems/): the retained coverage below; persistence reads use a fresh context in the same in-memory container, not a reopened disk store. |
+| Session timing or transitions | [SessionTimingTests](../studyAppTests/SessionTimingTests.swift) and [StudySessionTests](../studyAppTests/StudySessionTests.swift): injected times, pause/resume, completion and countdown bounds. |
+| Session saves, ownership or data loss | [SwiftDataIntegrityTests](../studyAppTests/SwiftDataIntegrityTests.swift): autosave disabled, fresh readers, active-session preservation and disk-store reopening. |
+| Focus page selection or animation weights | [FocusPagerTests](../studyAppTests/FocusPagerTests.swift): page reconciliation, locking, overscroll and reduced motion; these do not render the UI. |
+| Model/ViewModel layer imports | [SwiftLint rules](../.swiftlint.yml): prohibited imports fail lint; warnings do not fail the [CI job](../.github/workflows/swiftlint.yml). |
+| TestFlight notes or PR build selection | [Python script tests](../ci_scripts/): `python3 -m unittest discover -s ci_scripts -p 'test*.py'`; these do not compile the app or prove delivery in Apple. |
+
+The [shared test plan](../studyApp.xctestplan) disables UI tests. Use the manual
+checks below for StudyItem editing and relaunch behavior, and consult
+[pipeline.md](../pipeline.md) for current-head build/test evidence and promotion
+checks. App builds and test compilation require the owner's explicit request,
+as described in [AGENTS.md](../AGENTS.md).
+
 ## Retained coverage
 
 | Suite | Behaviour checked |
@@ -11,7 +31,6 @@ It does not use the optional-value-slot APIs from the older V2 branch.
 | Relationships | Inverses for items, subjects, definitions and tags; field/tag reload |
 | Persistence | All five content types, definition reconstruction, graphs and duplicate-tag reuse |
 | Deletion | Cascades, nullification, shared records and the actual developer Delete All action |
-| Editing regressions | Completion/reopening, custom-content timestamps, duplicate values and dropdown normalization/type locking |
 
 Tests use the app's `AppSchema.models` list with in-memory storage, CloudKit off
 and autosave disabled. Persistence assertions read through fresh contexts.
