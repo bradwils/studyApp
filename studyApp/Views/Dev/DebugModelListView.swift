@@ -55,7 +55,7 @@ struct DebugModelListView<Model: PersistentModel, RowContent: View>: View {
             titleVisibility: .visible
         ) {
             Button("Delete All \(title)", role: .destructive) {
-                try? modelContext.delete(model: Model.self)
+                for item in items { modelContext.delete(item) }
                 try? modelContext.save()
             }
             Button("Cancel", role: .cancel) {}
