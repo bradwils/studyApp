@@ -50,6 +50,9 @@ Cloud ran it. Trigger details for each workflow are in
 SwiftLint checks its [custom-rule fixtures](docs/SwiftLint.md) with the pinned
 0.65.1 executable before linting the app and test sources. The fixture runner
 needs Python 3, which the lint container installs; this check does not build the app.
+Every PR reports the unconditional `swiftlint` check, including docs-only PRs;
+only direct pushes to `dev` retain file filters, so required PR checks cannot be
+filtered away by changed paths.
 
 ---
 

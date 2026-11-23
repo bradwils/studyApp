@@ -2,7 +2,6 @@ name: SwiftLint
 
 on:
   pull_request:
-    paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml', 'ci_scripts/test_swiftlint_rules.py', 'ci_scripts/swiftlint_fixtures.json']
   push:
     branches: [dev]
     paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml', 'ci_scripts/test_swiftlint_rules.py', 'ci_scripts/swiftlint_fixtures.json']

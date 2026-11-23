@@ -45,11 +45,11 @@ swiftlint lint --config .swiftlint.yml --no-cache
 Pass `--swiftlint /path/to/swiftlint` to select a local executable. A standalone
 binary that skips SourceKit-dependent rules fails the fixtures. CI uses
 `ghcr.io/realm/swiftlint:0.65.1` and installs Python 3 in that container. It checks
-fixtures before the normal repository lint. PRs into any branch are checked so
-stacked PRs receive verification of their actual merge result. This adds lint
-runs for matching changes in feature-target PRs; it keeps direct push runs limited
-to `dev` and retains file filters. New fixture-only or runner-only changes also
-trigger the workflow.
+fixtures before the normal repository lint. Every PR into any branch is checked,
+including docs-only changes, so the stable `swiftlint` check always reports on
+the merge result. Filtering PRs by file path could leave a required check pending.
+This adds lint runs for all PR changes; direct pushes remain limited to `dev`
+and retain the Swift, config, workflow, fixture and runner file filters.
 
 `ci_scripts/swiftlint_fixtures.json` contains source snippets with the same
 directory paths the real config inspects. The Python runner copies the unchanged
