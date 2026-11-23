@@ -21,7 +21,7 @@ struct ActiveSubjectList: View {
 
     @Binding var selectedSubject: Subject? // the selected subject
 
-    // A deleted subject leaves the view model holding a stale reference; fall back to the first one.
+    // A deleted subject leaves the view model holding a stale reference; use the first survivor or nil.
     private func repairSelection() {
         guard isEnabled else { return }
         if let selectedSubject, subjects.contains(selectedSubject) { return }
@@ -45,10 +45,10 @@ struct ActiveSubjectList: View {
                 }
                 .pickerStyle(.menu)
                 .disabled(!isEnabled)
-                .onAppear(perform: repairSelection)
-                .onChange(of: subjects) { repairSelection() }
-                .onChange(of: isEnabled) { repairSelection() }
             }
         }
+        .onAppear(perform: repairSelection)
+        .onChange(of: subjects) { repairSelection() }
+        .onChange(of: isEnabled) { repairSelection() }
     }
 }
