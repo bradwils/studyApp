@@ -1,0 +1,40 @@
+name: TestFlight tooling tests
+
+on:
+  pull_request:
+    paths:
+      - 'ci_scripts/testflight_notes.py'
+      - 'ci_scripts/test_testflight_notes.py'
+      - 'ci_scripts/test_xcode_cloud_pr.py'
+      - 'ci_scripts/ci_pre_xcodebuild.sh'
+      - 'ci_scripts/ci_post_xcodebuild.sh'
+      - 'ci_scripts/build_number_offset'
+      - '.github/scripts/start_xcode_cloud_build.py'
+      - '.github/workflows/testflight-pr.yml'
+      - '.github/workflows/testflight-tooling-tests.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testflight-tooling-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  testflight-tooling:
+    # The archive-hook fixture needs BSD sed, PlistBuddy and zsh.
+    runs-on: macos-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check hook syntax
+        run: |
+          zsh -n ci_scripts/ci_pre_xcodebuild.sh
+          zsh -n ci_scripts/ci_post_xcodebuild.sh
+      - name: Run tooling regression tests
+        run: python3 -m unittest -v ci_scripts.test_testflight_notes ci_scripts.test_xcode_cloud_pr

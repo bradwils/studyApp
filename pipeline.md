@@ -42,9 +42,11 @@ both branch off `master` and are merged back down afterwards.
 App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
 `claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint),
 `pr-title.yml` (Conventional Commits PR titles), `promotion-source.yml` (guards
-what can merge into `master`) and `testflight-pr.yml` (asks Xcode Cloud to
-build a PR on request, see [PR builds](#pr-builds)). If an app build runs, Xcode
-Cloud ran it. Trigger details for each workflow are in
+what can merge into `master`), `testflight-pr.yml` (asks Xcode Cloud to
+build a PR on request, see [PR builds](#pr-builds)) and
+`testflight-tooling-tests.yml` (tests the release scripts without building the
+app). If an app build runs, Xcode Cloud ran it. Trigger details for each workflow
+are in
 [.github/workflows/README.md](.github/workflows/README.md).
 
 ---
@@ -478,8 +480,9 @@ From the repository root:
 ```sh
 python3 ci_scripts/testflight_notes.py preview --version 0.3 --build 24 --lane UAT-testflight
 python3 ci_scripts/testflight_notes.py preview --target dev
-python3 -m unittest discover -s ci_scripts -p 'test*.py'
-zsh -n ci_scripts/ci_pre_xcodebuild.sh ci_scripts/ci_post_xcodebuild.sh
+python3 -m unittest -v ci_scripts.test_testflight_notes ci_scripts.test_xcode_cloud_pr
+zsh -n ci_scripts/ci_pre_xcodebuild.sh
+zsh -n ci_scripts/ci_post_xcodebuild.sh
 ```
 
 Preview prints to stdout without creating files or accessing the network.
@@ -489,6 +492,11 @@ over a local branch. Python 3.9+ with the standard library and Sydney timezone
 data is required. Fixture checks use temporary local Git repositories and do
 not compile Swift or contact any service. The archive-hook integration fixture
 requires macOS (`sed`, PlistBuddy and zsh); portable fixtures still run on Linux.
+
+The [TestFlight tooling tests](.github/workflows/testflight-tooling-tests.yml)
+Action runs the two suites and checks both hooks on PR changes to release
+tooling. See the [workflow table](.github/workflows/README.md) for trigger,
+runner and dependency details.
 
 After an app build is explicitly authorized, inspect its Xcode Cloud post-build
 log and TestFlight's “What to Test” field. Confirm the version/build, branch/tag,

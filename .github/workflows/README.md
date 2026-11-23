@@ -13,12 +13,22 @@ the PR's own merge ref, so they need the workflow on the PR's target branch too.
 | [Promotion source](promotion-source.yml) | Rejects source branch names other than `UAT-testflight`, `hotfix/*`, or `ci/*`. | PR opened, synchronized, reopened, edited, or marked ready for review. | PRs targeting `master` only; the `source-branch` check is required by the master ruleset. It checks the name, not where the branch was cut. |
 | [SwiftLint](swiftlint.yml) | Lints Swift with SwiftLint 0.65.1; errors fail the job, warnings are annotated. | PR opened, synchronized, or reopened; pushes to `dev`. Both require changes to `**/*.swift`, `.swiftlint.yml`, or this workflow file. | PRs targeting `dev`, `UAT-testflight`, or `master`; direct pushes to `dev` only. |
 | [TestFlight PR build](testflight-pr.yml) | Requests an Xcode Cloud PR build for TestFlight. | PR opened/reopened or its description edited, or a new PR comment, with `/testflight` on its own line (case-insensitive). | Open, same-repository PRs targeting any branch; forks are excluded. Comment requests require author association `OWNER`, `MEMBER`, or `COLLABORATOR`. |
+| [TestFlight tooling tests](testflight-tooling-tests.yml) | Checks hook syntax and runs the two TestFlight Python regression suites, including the archive-hook fixture. | PR opened, synchronized, or reopened, with changes to the notes generator, the two suites, the pre/post-build hooks, build number offset, `.github/scripts/start_xcode_cloud_build.py`, `testflight-pr.yml`, or this test workflow. | PRs targeting any branch, including forks. One short macOS job; no secrets, package installs, app build or distribution. |
 
-TestFlight requires the App Store Connect secrets `APP_STORE_CONNECT_KEY_ID`,
-`APP_STORE_CONNECT_ISSUER_ID`, and `APP_STORE_CONNECT_PRIVATE_KEY`. It selects
+The TestFlight PR build workflow requires the App Store Connect secrets
+`APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`, and
+`APP_STORE_CONNECT_PRIVATE_KEY`. It selects
 the Xcode Cloud workflow named by `XCODE_CLOUD_PR_WORKFLOW` (repository variable),
 defaulting to `PR TestFlight`, for bundle ID `personal.studyBud`.
 
-All five Actions workflows run on Ubuntu. App builds and TestFlight distribution
-run in Xcode Cloud; its start conditions and distribution settings are managed
-there. See [Pipeline](../../pipeline.md) for the branch promotion and release flow.
+The tooling tests use macOS for BSD `sed`, PlistBuddy and zsh, which the
+archive-hook fixture requires. The single job is path-filtered and cancels
+superseded PR runs to limit macOS runner cost. Python 3.12 is selected explicitly;
+the suites use local Git fixtures and mock App Store Connect calls, so they need
+no PyJWT or cryptography install. Both suites are named explicitly so unrelated
+tooling tests do not run in this job. Other Actions workflows run on Ubuntu.
+
+No remote setup is required for the tooling tests. They do not verify App Store
+Connect authentication or distribution. App builds and distribution run in
+Xcode Cloud; see [Pipeline](../../pipeline.md) for workflow ownership, promotion
+and default-branch `/testflight` comment activation.
