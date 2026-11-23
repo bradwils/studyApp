@@ -1,422 +1,208 @@
 # Testing SwiftData: Patterns & Examples
 
-This guide shows how to write tests for SwiftData models and ViewModels using in-memory containers for isolation and speed.
+These examples use the current app APIs and Swift Testing in the `studyAppTests`
+target. Use the existing tests as the source of truth; this guide describes
+patterns, not a passing test result for the current commit.
 
----
+## Reuse the test fixtures
 
-## Foundation: Test Helper
+[TestContainer](../studyAppTests/StudyItems/Support/TestContainer.swift) and
+[Fixtures](../studyAppTests/StudyItems/Support/Fixtures.swift) are available
+throughout the unit-test target, despite living in the StudyItems folder.
 
-Create `TestHelpers.swift` in your test bundle. This is reusable across all tests.
+- Create a fresh **container** for each test with `try TestContainer.makeContainer()`.
+  A second context on the same container shares its store.
+- The helper uses the full [AppSchema.models](../studyApp/App/AppSchema.swift)
+  list, an in-memory store, CloudKit disabled and `mainContext.autosaveEnabled = false`.
+  Reuse it as the model graph evolves instead of copying a partial schema.
+- The helper retains containers because a context alone does not keep its
+  container alive. `TestContainer.make()` is also available for tests that only
+  need the writer context.
+- `Fixtures` inserts models and connects relationships; it leaves saving to the
+  test or the command under test.
+- Use `@MainActor`, throwing test functions, `try` and `try #require(...)` so
+  setup/fetch failures become test failures rather than forced-try crashes.
+
+## Verify a ViewModel's save
+
+A fetch on the writing context can see pending changes. For a save contract,
+disable writer autosave, invoke the command and read through a fresh context
+without adding a test-side save after the command. The fixture already disables
+autosave on `mainContext`.
+
+This complete example can be added to a Swift file in `studyAppTests`. The current
+[SubjectsEditorVM](../studyApp/ViewModels/Settings/SubjectsEditorVM.swift) accepts
+a nonempty name of at most 32 characters and a nonempty code of at most four.
+Validation-only tests can instantiate the VM without any container.
+
+```swift
+import SwiftData
+import Testing
+@testable import studyApp
+
+@MainActor
+struct SubjectPersistenceExamples {
+    @Test("Adding a subject saves it and clears the form")
+    func addingSubjectSaves() throws {
+        let container = try TestContainer.makeContainer()
+        let context = container.mainContext
+        let vm = SubjectsEditorVM()
+        vm.newSubjectName = "Physics"
+        vm.newSubjectCode = "phys"
+        #expect(vm.canAddSubject)
+
+        vm.addSubject(context: context)
+
+        let reader = ModelContext(container)
+        let subjects = try reader.fetch(FetchDescriptor<Subject>())
+        #expect(subjects.count == 1)
+        let stored = try #require(subjects.first)
+        #expect(stored.name == "Physics")
+        #expect(stored.code == "PHYS")
+        #expect(vm.newSubjectName.isEmpty)
+        #expect(vm.newSubjectCode.isEmpty)
+        #expect(!context.hasChanges)
+    }
+}
+```
+
+Use the same arrangement for a delete command: insert and explicitly save the
+seed records, call the command, then fetch from a fresh context. A save between
+the command and the reader could hide a missing save in the implementation.
+
+## Use current session APIs and an injected clock
+
+[StudyTrackingViewModel](../studyApp/ViewModels/StudyTrackingViewModel.swift)
+owns session transitions. Use `startSession(context:)`, `pauseSession(context:)`,
+`resumeSession(context:)` and `finishSession(context:)`. Sessions store
+`startedAt` and optional `endedAt`; an unfinished record has `endedAt == nil`.
+Advance the injected clock to test elapsed time deterministically.
 
 ```swift
 import Foundation
 import SwiftData
-import XCTest
-
-/// Creates an in-memory SwiftData container for testing.
-/// Use this in setUp() for every test to ensure isolation and speed.
-func createTestModelContainer() -> ModelContainer {
-    // isStoredInMemoryOnly: true means data is NOT saved to disk.
-    // Each test gets a fresh, empty database. Tests don't interfere.
-    let config = ModelConfiguration(isStoredInMemoryOnly: true)
-    
-    // Include ALL models your app uses (or just the ones being tested).
-    // SwiftData needs to know about every @Model you'll persist.
-    return try! ModelContainer(
-        for: Subject.self, StudySession.self, StudyGroup.self,
-        configurations: [config]
-    )
-}
-
-/// Creates a ModelContext from a test container.
-/// Use this to insert/query data in your tests.
-func createTestContext(container: ModelContainer? = nil) -> ModelContext {
-    let container = container ?? createTestModelContainer()
-    return ModelContext(container)
-}
-```
-
-**Why?**
-- `isStoredInMemoryOnly: true` keeps tests fast (no disk I/O) and isolated (no real data touched)
-- Fresh container per test = no test pollution (test A's data doesn't affect test B)
-- Centralizing this helper means you change it once if SwiftData patterns shift
-
----
-
-## Example 1: Testing a ViewModel's CRUD Logic
-
-Let's test `SubjectsEditorVM` (add, remove, validation).
-
-```swift
-import XCTest
+import Testing
 @testable import studyApp
 
-class SubjectsEditorVMTests: XCTestCase {
-    // Set up fresh ViewModel and context for each test
-    var vm: SubjectsEditorVM!
-    var context: ModelContext!
-    
-    override func setUp() {
-        super.setUp()
-        // Fresh context = fresh database for this test
-        context = createTestContext()
-        // Initialize ViewModel (it holds UI state, not persistence logic)
-        vm = SubjectsEditorVM()
-    }
-    
-    // MARK: - Validation Tests (no database needed)
-    
-    /// Test that canAddSubject is false when form is empty.
-    /// Validation logic doesn't touch the database—test it in isolation.
-    func testCanAddSubjectWhenEmpty() {
-        XCTAssertFalse(vm.canAddSubject, "canAddSubject should be false initially")
-    }
-    
-    /// Test that form state updates as user types.
-    /// This tests the ViewModel's UI state tracking.
-    func testCanAddSubjectWhenNameProvided() {
-        vm.newSubjectName = "Mathematics"
-        // Code is still empty, so canAddSubject should still be false
-        XCTAssertFalse(vm.canAddSubject, "canAddSubject is false without code")
-        
-        vm.newSubjectCode = "MATH101"
-        // Now both fields are filled
-        XCTAssertTrue(vm.canAddSubject, "canAddSubject is true when both fields filled")
-    }
-    
-    // MARK: - Persistence Tests (uses ModelContext)
-    
-    /// Test that addSubject saves to the database.
-    /// ViewModel method accepts context as a parameter (dependency injection).
-    /// We verify by querying the database afterward.
-    func testAddSubjectSavesToDatabase() {
-        // Set up the form
-        vm.newSubjectName = "Physics"
-        vm.newSubjectCode = "PHYS101"
-        
-        // Call the ViewModel method, passing the test context
-        vm.addSubject(context: context)
-        
-        // Verify it was actually saved: fetch all subjects
-        let descriptor = FetchDescriptor<Subject>()
-        let allSubjects = try! context.fetch(descriptor)
-        XCTAssertEqual(allSubjects.count, 1, "Should have inserted one subject")
-        XCTAssertEqual(allSubjects[0].name, "Physics", "Saved subject should have correct name")
-        XCTAssertEqual(allSubjects[0].code, "PHYS101", "Saved subject should have correct code")
-    }
-    
-    /// Test that the form clears after successful add.
-    /// This is ViewModel behavior: after saving, reset the UI fields.
-    func testAddSubjectClearsForm() {
-        vm.newSubjectName = "Chemistry"
-        vm.newSubjectCode = "CHEM101"
-        
-        vm.addSubject(context: context)
-        
-        // Form should be reset so user can add another subject
-        XCTAssertEqual(vm.newSubjectName, "", "newSubjectName should be cleared")
-        XCTAssertEqual(vm.newSubjectCode, "", "newSubjectCode should be cleared")
-    }
-    
-    /// Test that removing a subject deletes it from the database.
-    /// Verify using a fetch afterward.
-    func testRemoveSubjectDeletesFromDatabase() {
-        // First, add a subject to remove
-        let newSubject = Subject(name: "Biology", code: "BIO101")
-        context.insert(newSubject)
-        try! context.save()
-        
-        // Verify it exists
-        var descriptor = FetchDescriptor<Subject>()
-        var subjects = try! context.fetch(descriptor)
-        XCTAssertEqual(subjects.count, 1)
-        
-        // Remove via ViewModel
-        vm.removeSubject(newSubject, context: context)
-        
-        // Verify it's gone
-        subjects = try! context.fetch(descriptor)
-        XCTAssertEqual(subjects.count, 0, "Subject should be deleted")
+@MainActor
+struct SessionPersistenceExamples {
+    @Test("Finishing saves the session and its closed section")
+    func finishingSessionSaves() throws {
+        let container = try TestContainer.makeContainer()
+        let context = container.mainContext
+        let subject = Fixtures.subject("Physics", in: context)
+        try context.save() // Seed setup, before the commands under test.
+        let subjectID = subject.id
+        let start = Date(timeIntervalSinceReferenceDate: 1_000)
+        var current = start
+        let vm = StudyTrackingViewModel(now: { current })
+        vm.selectSubject(subject)
+        vm.startSession(context: context)
+        let sessionID = try #require(vm.activeSessionID)
+        current.addTimeInterval(60)
+
+        vm.finishSession(context: context)
+
+        let reader = ModelContext(container)
+        let sessions = try reader.fetch(FetchDescriptor<StudySession>())
+        #expect(sessions.count == 1)
+        let stored = try #require(sessions.first)
+        #expect(stored.id == sessionID)
+        #expect(stored.startedAt == start)
+        #expect(stored.endedAt == current)
+        #expect(stored.subject?.id == subjectID)
+        #expect(stored.subjectName == "Physics")
+        #expect(stored.sections?.count == 1)
+        #expect(stored.sections?.first?.endedAt == current)
+        #expect(vm.activeSessionID == nil)
+        #expect(vm.saveErrorMessage == nil)
+        #expect(!context.hasChanges)
     }
 }
 ```
 
-**Key Patterns:**
-- **Fresh context per test:** `setUp()` creates a clean database
-- **Dependency injection:** Pass `context` to ViewModel methods; ViewModel doesn't store it
-- **Fetch to verify:** After calling ViewModel methods, query the database to confirm persistence
-- **Validation without DB:** Test computed properties (`canAddSubject`) without touching the database—they're just Swift logic
+See [SwiftDataIntegrityTests](../studyAppTests/SwiftDataIntegrityTests.swift),
+particularly `completingSessionSavesGraph()`, for pause/resume, metadata, breaks
+and location checks using a fresh reader with no extra save after completion.
 
----
+## Save fixtures explicitly for model and query tests
 
-## Example 2: Testing with Predicates & Filtering
-
-SwiftData queries use predicates for filtering. Test that your queries return the right data.
+When testing raw model persistence or a fetch descriptor, the test itself owns
+the save. This example uses stored `FieldDefinition.order` for deterministic
+ordering. SwiftData to-many relationship arrays are unordered; sort them
+explicitly when checking display order.
 
 ```swift
-class StudySessionVMTests: XCTestCase {
-    var vm: StudySessionVM!
-    var context: ModelContext!
-    
-    override func setUp() {
-        super.setUp()
-        context = createTestContext()
-        vm = StudySessionVM()
-    }
-    
-    /// Test that fetching today's sessions filters correctly.
-    /// Predicates are how you ask "give me only sessions from today".
-    func testFetchTodaysSessions() {
-        let today = Date()
-        let tomorrow = Calendar.current.date(byAdding: .day, value: 1, to: today)!
-        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: today)!
-        
-        // Insert sessions across different dates
-        let todaySession = StudySession(subject: "Math", startTime: today, duration: 30)
-        let tomorrowSession = StudySession(subject: "Physics", startTime: tomorrow, duration: 45)
-        let yesterdaySession = StudySession(subject: "Chemistry", startTime: yesterday, duration: 20)
-        
-        context.insert(todaySession)
-        context.insert(tomorrowSession)
-        context.insert(yesterdaySession)
-        try! context.save()
-        
-        // Fetch only today's sessions using a predicate.
-        // The #Predicate macro is SwiftData's type-safe way to filter.
-        let calendar = Calendar.current
-        let startOfDay = calendar.startOfDay(for: today)
-        let endOfDay = calendar.date(byAdding: .day, value: 1, to: startOfDay)!
-        
-        let descriptor = FetchDescriptor<StudySession>(
-            predicate: #Predicate { session in
-                session.startTime >= startOfDay && session.startTime < endOfDay
-            }
+import Foundation
+import SwiftData
+import Testing
+@testable import studyApp
+
+@MainActor
+struct QueryExamples {
+    @Test("Definitions filter and sort by their stored order")
+    func definitionsFilterAndSort() throws {
+        let container = try TestContainer.makeContainer()
+        let context = container.mainContext
+        for order in [2, 0, 1] {
+            _ = Fixtures.definition("Field \(order)", order: order, in: context)
+        }
+        try context.save()
+
+        let minimumOrder = 1
+        let descriptor = FetchDescriptor<FieldDefinition>(
+            predicate: #Predicate { $0.order >= minimumOrder },
+            sortBy: [SortDescriptor(\FieldDefinition.order)]
         )
-        let todaysSessions = try! context.fetch(descriptor)
-        
-        XCTAssertEqual(todaysSessions.count, 1, "Should fetch only today's session")
-        XCTAssertEqual(todaysSessions[0].subject, "Math")
-    }
-    
-    /// Test sorting: verify sessions are returned in the order you expect.
-    /// The sort parameter in FetchDescriptor controls order.
-    func testSessionsSortedByDurationDescending() {
-        let session1 = StudySession(subject: "Math", startTime: Date(), duration: 30)
-        let session2 = StudySession(subject: "Physics", startTime: Date(), duration: 60)
-        let session3 = StudySession(subject: "Chemistry", startTime: Date(), duration: 15)
-        
-        context.insert(session1)
-        context.insert(session2)
-        context.insert(session3)
-        try! context.save()
-        
-        // FetchDescriptor with sort: descending by duration
-        let descriptor = FetchDescriptor<StudySession>(
-            sortBy: [SortDescriptor(\StudySession.duration, order: .reverse)]
-        )
-        let sorted = try! context.fetch(descriptor)
-        
-        // Verify order: longest first
-        XCTAssertEqual(sorted[0].duration, 60)
-        XCTAssertEqual(sorted[1].duration, 30)
-        XCTAssertEqual(sorted[2].duration, 15)
-    }
-    
-    /// Test combining predicate and sort.
-    /// You often need both: filter AND order the results.
-    func testFetchActiveSessionsSortedByRecency() {
-        let now = Date()
-        
-        let activeRecent = StudySession(subject: "Math", startTime: now, duration: 45, isActive: true)
-        let activeOld = StudySession(subject: "Physics", startTime: Calendar.current.date(byAdding: .day, value: -1, to: now)!, duration: 30, isActive: true)
-        let inactiveRecent = StudySession(subject: "Chemistry", startTime: now, duration: 60, isActive: false)
-        
-        context.insert(activeRecent)
-        context.insert(activeOld)
-        context.insert(inactiveRecent)
-        try! context.save()
-        
-        // Fetch active sessions, sorted newest first
-        let descriptor = FetchDescriptor<StudySession>(
-            predicate: #Predicate { $0.isActive },
-            sortBy: [SortDescriptor(\StudySession.startTime, order: .reverse)]
-        )
-        let results = try! context.fetch(descriptor)
-        
-        XCTAssertEqual(results.count, 2, "Should fetch 2 active sessions")
-        XCTAssertEqual(results[0].subject, "Math", "Newest active should be first")
-        XCTAssertEqual(results[1].subject, "Physics")
+        let reader = ModelContext(container)
+        let stored = try reader.fetch(descriptor)
+        #expect(stored.map(\.order) == [1, 2])
     }
 }
 ```
 
-**Key Patterns:**
-- **#Predicate macro:** Type-safe way to filter data. Compiler checks your logic.
-- **SortDescriptor:** Controls the order of results (ascending/descending)
-- **Combined:** Use both predicate and sort together for complex queries
-- **Verify with assertions:** Check count and order to confirm the query works as expected
+[StudyItemPersistenceTests](../studyAppTests/StudyItems/Store/StudyItemPersistenceTests.swift)
+extends this pattern to all five field-content types, optional properties and
+graphs. Use `try #require` before inspecting optional relationships or dates,
+and compare explicit IDs/sets when order has no meaning.
 
----
+## Test the declared relationship rules
 
-## Example 3: Testing Relationships
+Read the model's `@Relationship` declarations and assert both the removed rows
+and the records that must survive. The current rules include:
 
-If your models have relationships (e.g., Subject has many StudySessions), test that associations work.
+| Delete | Expected result | Existing examples |
+| --- | --- | --- |
+| Subject | Sessions and items remain; their optional `subject` becomes `nil`, with `subjectName` retained. | `deletingSubjectPreservesHistory()` in [SwiftDataIntegrityTests](../studyAppTests/SwiftDataIntegrityTests.swift); `deletingSubjectKeepsItem()` in [StudyItemDeletionTests](../studyAppTests/StudyItems/Store/StudyItemDeletionTests.swift). |
+| StudySession | Its breaks, sections and location cascade; its subject and unrelated records remain. | `deletingSessionsPreservesUnrelatedRecords(deleteAll:)` in [SwiftDataIntegrityTests](../studyAppTests/SwiftDataIntegrityTests.swift). |
+| StudyItem or FieldDefinition | Owned field values cascade; shared records remain. | `deletingItemCascadesToValues()` and `deletingDefinitionCascadesToValues()` in [StudyItemDeletionTests](../studyAppTests/StudyItems/Store/StudyItemDeletionTests.swift). |
+| Tag | Items and field values remain; their tag references clear. | `deletingTagNullifiesReferences()` in [StudyItemDeletionTests](../studyAppTests/StudyItems/Store/StudyItemDeletionTests.swift). |
 
-```swift
-class StudySessionRelationshipTests: XCTestCase {
-    var context: ModelContext!
-    
-    override func setUp() {
-        super.setUp()
-        context = createTestContext()
-    }
-    
-    /// Test that creating a session linked to a subject works.
-    /// Relationships are how models reference each other in SwiftData.
-    func testSessionLinkedToSubject() {
-        let subject = Subject(name: "Mathematics", code: "MATH101")
-        let session = StudySession(subject: subject, duration: 45)
-        
-        context.insert(subject)
-        context.insert(session)
-        try! context.save()
-        
-        // Fetch the session and verify the relationship is intact
-        let descriptor = FetchDescriptor<StudySession>()
-        let sessions = try! context.fetch(descriptor)
-        
-        XCTAssertEqual(sessions.count, 1)
-        XCTAssertEqual(sessions[0].subject.name, "Mathematics", "Session should reference correct subject")
-    }
-    
-    /// Test cascade delete: if a subject is deleted, related sessions are also deleted.
-    /// This depends on your @Relationship configuration (e.g., deleteRule: .cascade).
-    func testDeleteSubjectCascadesToSessions() {
-        let subject = Subject(name: "Physics", code: "PHYS101")
-        let session = StudySession(subject: subject, duration: 60)
-        
-        context.insert(subject)
-        context.insert(session)
-        try! context.save()
-        
-        // Verify both exist
-        var subjectDescriptor = FetchDescriptor<Subject>()
-        var sessionDescriptor = FetchDescriptor<StudySession>()
-        XCTAssertEqual(try! context.fetch(subjectDescriptor).count, 1)
-        XCTAssertEqual(try! context.fetch(sessionDescriptor).count, 1)
-        
-        // Delete the subject
-        context.delete(subject)
-        try! context.save()
-        
-        // If cascade is configured, the session should also be gone
-        XCTAssertEqual(try! context.fetch(subjectDescriptor).count, 0)
-        XCTAssertEqual(try! context.fetch(sessionDescriptor).count, 0, "Session should be cascade-deleted with subject")
-    }
-}
-```
+Those examples have different scopes: some inspect the deleting context, and
+`deletingSubjectPreservesHistory()` explicitly saves after its VM call. Use it
+for relationship expectations; use the command/reader arrangement above when
+the VM's own save is the behavior under test. For inverse checks, see
+[StudyItemRelationshipTests](../studyAppTests/StudyItems/Model/StudyItemRelationshipTests.swift).
 
-**Key Patterns:**
-- **Insert related models:** Insert both the parent and related model
-- **Verify relationships:** After inserting, fetch and check that the reference is correct
-- **Test delete rules:** Verify cascade/orphan delete behavior works as expected
+## Choose the persistence boundary
 
----
+- **Same writer:** proves immediate model/VM state; pending changes may be visible.
+- **Fresh context, same container:** checks a save into that store. The examples
+  above use an isolated in-memory store.
+- **Reopened disk container:** checks durable storage beyond one container's
+  lifetime. `savedGraphAndDeletionSurviveReopeningStore()` in
+  [SwiftDataIntegrityTests](../studyAppTests/SwiftDataIntegrityTests.swift) uses a
+  unique temporary directory, deferred cleanup and scoped writers/readers so
+  their models, contexts and containers are released before reopening.
 
-## Best Practices
+Disk reopening covers neither an app-process relaunch nor a schema migration.
+Use a dedicated temporary store for disk checks; keep the app's store isolated.
 
-| Do | Don't |
-|----|-------|
-| Use `isStoredInMemoryOnly: true` in tests | Use the real, disk-based container in tests |
-| Fresh context per test (in `setUp()`) | Reuse the same context across multiple tests |
-| Pass `context` to ViewModel methods | Store `context` in the ViewModel itself |
-| Test ViewModel logic, then verify via fetch | Trust that the ViewModel saved correctly without checking |
-| Use `#Predicate` for filtering | Fetch all data and filter in Swift (slow and error-prone) |
-| Test validation separately from persistence | Combine validation and database tests in one test |
-| Create seed data in the test (or setUp) | Rely on data existing from a previous test run |
-
----
-
-## Common Patterns
-
-### Pattern 1: Verify Insert
-```swift
-// Set up, call ViewModel method, then fetch to verify
-let initialCount = try! context.fetch(FetchDescriptor<Subject>()).count
-vm.addSubject(context: context)
-let finalCount = try! context.fetch(FetchDescriptor<Subject>()).count
-XCTAssertEqual(finalCount, initialCount + 1)
-```
-
-### Pattern 2: Verify Update
-```swift
-let subject = Subject(name: "Math", code: "MATH101")
-context.insert(subject)
-try! context.save()
-
-subject.name = "Advanced Math"  // Modify
-try! context.save()  // Persist the change
-
-// Fetch and verify
-let fetched = try! context.fetch(FetchDescriptor<Subject>()).first
-XCTAssertEqual(fetched?.name, "Advanced Math")
-```
-
-### Pattern 3: Verify Delete
-```swift
-let subject = Subject(name: "Physics", code: "PHYS101")
-context.insert(subject)
-try! context.save()
-
-context.delete(subject)
-try! context.save()
-
-let count = try! context.fetch(FetchDescriptor<Subject>()).count
-XCTAssertEqual(count, 0)
-```
-
-### Pattern 4: Verify Predicate
-```swift
-// Insert data
-let math = Subject(name: "Math", code: "MATH101")
-let physics = Subject(name: "Physics", code: "PHYS101")
-context.insert(math)
-context.insert(physics)
-try! context.save()
-
-// Fetch with predicate
-let descriptor = FetchDescriptor<Subject>(
-    predicate: #Predicate { $0.name.contains("Math") }
-)
-let results = try! context.fetch(descriptor)
-XCTAssertEqual(results.count, 1)
-```
-
----
-
-## Debugging Test Failures
-
-**Test fails: "Could not find any element matching the predicate"**
-- Your predicate is too strict. Print what's in the database:
-  ```swift
-  let allItems = try! context.fetch(FetchDescriptor<Item>())
-  print("All items: \(allItems.map { $0.name })")
-  ```
-
-**Test passes, but data doesn't persist in the real app**
-- You forgot to call `try! context.save()` in your ViewModel after insert/delete/update.
-
-**Tests pass individually but fail when run together**
-- Each test should have a fresh context. Check your `setUp()` method creates a new container.
-
-**"ModelContext not configured" error**
-- You forgot `.modelContainer(for: Model.self, inMemory: true)` in your preview or test.
-
----
-
-## Next Steps
-
-1. Copy `TestHelpers.swift` to your test bundle
-2. Write a test for your most critical ViewModel (e.g., `StudySessionVM`)
-3. Start with validation tests (no database), then add persistence tests
-4. Expand predicates and relationships as you add more complex queries
+For the next explicitly authorized test run, open `studyApp.xcodeproj` in Xcode,
+select the `studyApp` scheme and an available iOS simulator, then run the named
+suite from the Test navigator. The [shared plan](../studyApp.xctestplan) includes
+unit tests and disables UI tests. See [StudyItems verification](StudyItemTesting.md)
+for existing check selection, evidence limits and manual relaunch checks.
+App builds and test compilation require an explicit request under
+[AGENTS.md](../AGENTS.md); source review alone does not establish that examples
+compile or tests pass.
