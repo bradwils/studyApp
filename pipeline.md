@@ -47,6 +47,10 @@ build a PR on request, see [PR builds](#pr-builds)). If an app build runs, Xcode
 Cloud ran it. Trigger details for each workflow are in
 [.github/workflows/README.md](.github/workflows/README.md).
 
+SwiftLint checks its [custom-rule fixtures](docs/SwiftLint.md) with the pinned
+0.65.1 executable before linting the app and test sources. The fixture runner
+needs Python 3, which the lint container installs; this check does not build the app.
+
 ---
 
 ## Reference

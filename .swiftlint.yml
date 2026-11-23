@@ -34,13 +34,42 @@ identifier_name:
 custom_rules:
   no_swiftui_in_viewmodels:
     name: "ViewModels must not import SwiftUI"
-    regex: '^import SwiftUI'
-    included: 'studyApp/ViewModels/.*\.swift'
-    message: "ViewModels don't know they're powering UI - see CLAUDE.md layer rules"
+    regex: '^[ \t]*(?:(?:@\w+(?:\([^\r\n)]*\))?|public|package|internal|fileprivate|private)[ \t]+)*(import)[ \t]+(?:(?:typealias|struct|class|enum|protocol|let|var|func)[ \t]+)?SwiftUI\b'
+    capture_group: 1
+    excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
+    included: '(^|/)studyApp/ViewModels/.*\.swift$'
+    message: "Keep ViewModels independent of SwiftUI; move UI code to Views (see AGENTS.md)."
     severity: error
   no_swiftui_in_models:
-    name: "Models must not import SwiftUI/os"
-    regex: '^import (SwiftUI|os)\b'
-    included: 'studyApp/Models/.*\.swift'
-    message: "Models are pure data - no SwiftUI or logging imports"
+    name: "Models must not import UI or logging frameworks"
+    regex: '^[ \t]*(?:(?:@\w+(?:\([^\r\n)]*\))?|public|package|internal|fileprivate|private)[ \t]+)*(import)[ \t]+(?:(?:typealias|struct|class|enum|protocol|let|var|func)[ \t]+)?(?:SwiftUI|os|OSLog)\b'
+    capture_group: 1
+    excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
+    included: '(^|/)studyApp/Models/.*\.swift$'
+    message: "Keep Models free of UI and logging imports; move that behavior to Views or ViewModels (see AGENTS.md)."
+    severity: error
+  no_batch_delete_owned_records:
+    name: "Delete owned records individually"
+    regex: '\.\s*(delete)\s*\(\s*model\s*:\s*(?:studyApp\s*\.\s*)?(?:StudySession|StudyItem)\s*\.\s*self\b'
+    capture_group: 1
+    excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
+    included: '(^|/)studyApp/.*\.swift$'
+    excluded: '(^|/)studyApp/Views/Dev/DebugModelListView\.swift$'
+    message: "Fetch StudySession/StudyItem records and delete each instance so owned children follow relationship delete rules (see docs/SwiftLint.md)."
+    severity: error
+  no_batch_delete_in_model_inspector:
+    name: "Delete inspected records individually"
+    regex: '\.\s*(delete)\s*\(\s*model\s*:'
+    capture_group: 1
+    excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
+    included: '(^|/)studyApp/Views/Dev/DebugModelListView\.swift$'
+    message: "Delete each queried item so the generic inspector preserves relationship deletion for sessions and StudyItems (see docs/SwiftLint.md)."
+    severity: error
+  injected_session_clock:
+    name: "Use the session's injected clock"
+    regex: '(?<![\w.])(?:Foundation\s*\.\s*)?(Date)\s*(?:\.\s*now\b|\(\s*\)|\.\s*init\s*\(\s*\))'
+    capture_group: 1
+    excluded_match_kinds: [comment, comment.mark, comment.url, doccomment, doccomment.field, string]
+    included: '(^|/)studyApp/ViewModels/(StudyTrackingViewModel|Focus/(SessionTiming|FocusTarget))\.swift$'
+    message: "Read now() in the session owner or accept a Date in timing values; direct wall-clock reads bypass the injected test clock (see docs/SwiftLint.md)."
     severity: error

@@ -2,11 +2,10 @@ name: SwiftLint
 
 on:
   pull_request:
-    branches: [dev, UAT-testflight, master]
-    paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml']
+    paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml', 'ci_scripts/test_swiftlint_rules.py', 'ci_scripts/swiftlint_fixtures.json']
   push:
     branches: [dev]
-    paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml']
+    paths: ['**/*.swift', '.swiftlint.yml', '.github/workflows/swiftlint.yml', 'ci_scripts/test_swiftlint_rules.py', 'ci_scripts/swiftlint_fixtures.json']
 
 permissions:
   contents: read
@@ -18,5 +17,10 @@ jobs:
       image: ghcr.io/realm/swiftlint:0.65.1
     steps:
       - uses: actions/checkout@v4
+      - name: Verify custom rule fixtures
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends python3
+          python3 ci_scripts/test_swiftlint_rules.py
       # Warnings are annotated on the PR but don't fail the job; errors do.
       - run: swiftlint lint --config .swiftlint.yml --reporter github-actions-logging

@@ -1,0 +1,518 @@
+[
+  {
+    "name": "vm_plain_import",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "import SwiftUI\n",
+    "expected": [
+      [
+        "no_swiftui_in_viewmodels",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "vm_indented_import",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "#if DEBUG\n    import SwiftUI\n#endif\n",
+    "expected": [
+      [
+        "no_swiftui_in_viewmodels",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "vm_attributed_import",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "@preconcurrency import SwiftUI\n",
+    "expected": [
+      [
+        "no_swiftui_in_viewmodels",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "vm_declaration_import",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "import struct SwiftUI.Color\n",
+    "expected": [
+      [
+        "no_swiftui_in_viewmodels",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "vm_multiline_attribute",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "@preconcurrency\nimport SwiftUI\n",
+    "expected": [
+      [
+        "no_swiftui_in_viewmodels",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "vm_module_prefix_near_miss",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "import SwiftUIX\nimport SwiftUIHelpers\n",
+    "expected": []
+  },
+  {
+    "name": "vm_comment",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "// import SwiftUI\n/*\nimport SwiftUI\n*/\n",
+    "expected": []
+  },
+  {
+    "name": "vm_string",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "let example = \"\"\"\nimport SwiftUI\n\"\"\"\n",
+    "expected": []
+  },
+  {
+    "name": "vm_foundation_and_logging_allowed",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "import Foundation\nimport SwiftData\nimport os\nimport OSLog\n",
+    "expected": []
+  },
+  {
+    "name": "view_swiftui_allowed",
+    "path": "studyApp/Views/Example.swift",
+    "source": "import SwiftUI\n",
+    "expected": []
+  },
+  {
+    "name": "test_swiftui_allowed",
+    "path": "studyAppTests/ExampleTests.swift",
+    "source": "import SwiftUI\n",
+    "expected": []
+  },
+  {
+    "name": "model_swiftui",
+    "path": "studyApp/Models/Example.swift",
+    "source": "import SwiftUI\n",
+    "expected": [
+      [
+        "no_swiftui_in_models",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "model_os",
+    "path": "studyApp/Models/Example.swift",
+    "source": "import os\n",
+    "expected": [
+      [
+        "no_swiftui_in_models",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "model_oslog",
+    "path": "studyApp/Models/Example.swift",
+    "source": "import OSLog\n",
+    "expected": [
+      [
+        "no_swiftui_in_models",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "model_indented_attributed_logging",
+    "path": "studyApp/Models/Example.swift",
+    "source": "  @preconcurrency import OSLog\n",
+    "expected": [
+      [
+        "no_swiftui_in_models",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "model_declaration_logging",
+    "path": "studyApp/Models/Example.swift",
+    "source": "import struct os.Logger\n",
+    "expected": [
+      [
+        "no_swiftui_in_models",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "model_submodule_logging",
+    "path": "studyApp/Models/Example.swift",
+    "source": "import os.log\n",
+    "expected": [
+      [
+        "no_swiftui_in_models",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "model_module_prefix_near_miss",
+    "path": "studyApp/Models/Example.swift",
+    "source": "import OSLogger\nimport osmosis\nimport SwiftUIX\n",
+    "expected": []
+  },
+  {
+    "name": "model_comment_and_string",
+    "path": "studyApp/Models/Example.swift",
+    "source": "// import OSLog\n/* import SwiftUI */\nlet example = \"import os\"\n",
+    "expected": []
+  },
+  {
+    "name": "model_data_imports_allowed",
+    "path": "studyApp/Models/Example.swift",
+    "source": "import Foundation\nimport SwiftData\n",
+    "expected": []
+  },
+  {
+    "name": "similarly_named_directory_allowed",
+    "path": "studyApp/ModelsBackup/Example.swift",
+    "source": "import SwiftUI\nimport OSLog\n",
+    "expected": []
+  },
+  {
+    "name": "batch_original_session_regression",
+    "path": "studyApp/ViewModels/SessionViewerViewModel.swift",
+    "source": "func removeAllSessions(context: ModelContext) {\n    try? context.delete(model: StudySession.self)\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_owned_records",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "batch_original_studyitem_regression",
+    "path": "studyApp/ViewModels/Dev/StudyItemDebugVM.swift",
+    "source": "func deleteAll(context: ModelContext) {\n    try? context.delete(model: StudyItem.self)\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_owned_records",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "batch_multiline",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "func removeAll(context: ModelContext) throws {\n    try context\n        .delete(\n            model: StudySession.self,\n            where: #Predicate { $0.endedAt != nil }\n        )\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_owned_records",
+        3,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "batch_qualified_model_and_spacing",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "func removeAll(context: ModelContext) throws {\n    try context.delete (model : studyApp.StudyItem . self)\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_owned_records",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "batch_view_cannot_bypass_guard",
+    "path": "studyApp/Views/Example.swift",
+    "source": "func removeAll(context: ModelContext) throws {\n    try context.delete(model: StudySession.self)\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_owned_records",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "batch_individual_deletion_allowed",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "func remove(_ sessions: [StudySession], context: ModelContext) {\n    for session in sessions { context.delete(session) }\n    try? context.save()\n}\n",
+    "expected": []
+  },
+  {
+    "name": "batch_original_generic_inspector_regression",
+    "path": "studyApp/Views/Dev/DebugModelListView.swift",
+    "source": "func reset<Model: PersistentModel>(_ model: Model.Type, context: ModelContext) throws {\n    try context.delete(model: Model.self)\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_in_model_inspector",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "batch_other_model_allowed",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "func removeAll(context: ModelContext) throws {\n    try context.delete(model: Subject.self)\n}\n",
+    "expected": []
+  },
+  {
+    "name": "batch_longer_type_name_near_miss",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "func removeAll(context: ModelContext) throws {\n    try context.delete(model: StudySessionSnapshot.self)\n}\n",
+    "expected": []
+  },
+  {
+    "name": "batch_delete_method_near_miss",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "func removeAll(context: ModelContext) throws {\n    try context.softdelete(model: StudySession.self)\n}\n",
+    "expected": []
+  },
+  {
+    "name": "batch_comment_and_string",
+    "path": "studyApp/ViewModels/Settings/ExampleVM.swift",
+    "source": "// context.delete(model: StudySession.self)\n/* context.delete(model: StudyItem.self) */\nlet example = \"context.delete(model: StudySession.self)\"\n",
+    "expected": []
+  },
+  {
+    "name": "batch_tests_outside_production_scope",
+    "path": "studyAppTests/RegressionTests.swift",
+    "source": "func reproduce(context: ModelContext) throws {\n    try context.delete(model: StudySession.self)\n}\n",
+    "expected": []
+  },
+  {
+    "name": "clock_original_transition_regression",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "func pauseSession(context: ModelContext) {\n    let now = Date()\n}\n",
+    "expected": [
+      [
+        "injected_session_clock",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "clock_original_elapsed_regression",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "var elapsed: TimeInterval {\n    Date.now.timeIntervalSince(startedAt)\n}\n",
+    "expected": [
+      [
+        "injected_session_clock",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "clock_explicit_init",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "let current = Date.init()\n",
+    "expected": [
+      [
+        "injected_session_clock",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "clock_qualified_foundation",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "let current = Foundation.Date.now\n",
+    "expected": [
+      [
+        "injected_session_clock",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "clock_multiline",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "let current = Date\n    .now\n",
+    "expected": [
+      [
+        "injected_session_clock",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "clock_timing_value",
+    "path": "studyApp/ViewModels/Focus/SessionTiming.swift",
+    "source": "func activeElapsed() -> TimeInterval {\n    Date().timeIntervalSince(startedAt)\n}\n",
+    "expected": [
+      [
+        "injected_session_clock",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "clock_target_value",
+    "path": "studyApp/ViewModels/Focus/FocusTarget.swift",
+    "source": "func remaining() -> TimeInterval {\n    deadline.timeIntervalSince(Date.now)\n}\n",
+    "expected": [
+      [
+        "injected_session_clock",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "clock_injection_and_fixed_dates_allowed",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "final class Example {\n    private let now: () -> Date\n    init(now: @escaping () -> Date = Date.init) { self.now = now }\n    func pause() { let timestamp = now() }\n    let fixed = Date(timeIntervalSinceReferenceDate: 1000)\n}\n",
+    "expected": []
+  },
+  {
+    "name": "clock_date_parameters_allowed",
+    "path": "studyApp/ViewModels/Focus/SessionTiming.swift",
+    "source": "func activeElapsed(at date: Date) -> TimeInterval {\n    max(0, date.timeIntervalSince(startedAt))\n}\n",
+    "expected": []
+  },
+  {
+    "name": "clock_comment_and_string",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "// Date.now\n/* Date() */\nlet example = \"Date.init()\"\n",
+    "expected": []
+  },
+  {
+    "name": "clock_other_identifier_near_miss",
+    "path": "studyApp/ViewModels/StudyTrackingViewModel.swift",
+    "source": "let first = FakeDate()\nlet second = Date.nowhere\nlet third = custom.Date()\n",
+    "expected": []
+  },
+  {
+    "name": "clock_lab_wall_clock_allowed",
+    "path": "studyApp/ViewModels/Dev/FocusLabSession.swift",
+    "source": "let current = Date.now\n",
+    "expected": []
+  },
+  {
+    "name": "clock_model_defaults_allowed",
+    "path": "studyApp/Models/StudySession.swift",
+    "source": "init(startedAt: Date = Date()) { self.startedAt = startedAt }\n",
+    "expected": []
+  },
+  {
+    "name": "clock_preview_wall_clock_allowed",
+    "path": "studyApp/Views/Focus/FocusSessionScreen.swift",
+    "source": "#Preview {\n    let start = Date.now\n    FocusSessionScreen(vm: StudyTrackingViewModel(now: { start }))\n}\n",
+    "expected": []
+  },
+  {
+    "name": "clock_test_wall_clock_allowed",
+    "path": "studyAppTests/StudySessionTests.swift",
+    "source": "let current = Date()\n",
+    "expected": []
+  },
+  {
+    "name": "inspector_instance_delete_all_allowed",
+    "path": "studyApp/Views/Dev/DebugModelListView.swift",
+    "source": "func reset<Model: PersistentModel>(_ items: [Model], context: ModelContext) {\n    for item in items { context.delete(item) }\n    try? context.save()\n}\n",
+    "expected": []
+  },
+  {
+    "name": "inspector_concrete_batch_reports_once",
+    "path": "studyApp/Views/Dev/DebugModelListView.swift",
+    "source": "func reset(context: ModelContext) throws {\n    try context.delete(model: StudySession.self)\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_in_model_inspector",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "inspector_multiline_generic_batch",
+    "path": "studyApp/Views/Dev/DebugModelListView.swift",
+    "source": "func reset<Model: PersistentModel>(_ type: Model.Type, context: ModelContext) throws {\n    try context.delete(\n        model: Model.self\n    )\n}\n",
+    "expected": [
+      [
+        "no_batch_delete_in_model_inspector",
+        2,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "inspector_comment_and_string",
+    "path": "studyApp/Views/Dev/DebugModelListView.swift",
+    "source": "// context.delete(model: Model.self)\nlet example = \"context.delete(model: StudySession.self)\"\n",
+    "expected": []
+  },
+  {
+    "name": "generic_batch_other_path_outside_scope",
+    "path": "studyApp/Views/Dev/OtherInspector.swift",
+    "source": "func reset<Model: PersistentModel>(_ type: Model.Type, context: ModelContext) throws {\n    try context.delete(model: Model.self)\n}\n",
+    "expected": []
+  },
+  {
+    "name": "vm_raw_regex_allowed",
+    "path": "studyApp/ViewModels/ExampleVM.swift",
+    "source": "let pattern = #/import SwiftUI/#\n",
+    "expected": []
+  },
+  {
+    "name": "model_raw_regex_allowed",
+    "path": "studyApp/Models/Example.swift",
+    "source": "let pattern = #/import OSLog/#\n",
+    "expected": []
+  },
+  {
+    "name": "vm_spi_attributed_import",
+    "path": "studyApp/ViewModels/ExampleVM.swift",
+    "source": "@_spi(Internal) import SwiftUI\n",
+    "expected": [
+      [
+        "no_swiftui_in_viewmodels",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "vm_access_qualified_import",
+    "path": "studyApp/ViewModels/ExampleVM.swift",
+    "source": "public import SwiftUI\n",
+    "expected": [
+      [
+        "no_swiftui_in_viewmodels",
+        1,
+        "Error"
+      ]
+    ]
+  },
+  {
+    "name": "batch_intentional_local_disable",
+    "path": "studyApp/ViewModels/ExampleVM.swift",
+    "source": "func removeAll(context: ModelContext) throws {\n    // swiftlint:disable:next no_batch_delete_owned_records\n    try context.delete(model: StudySession.self)\n}\n",
+    "expected": []
+  }
+]
