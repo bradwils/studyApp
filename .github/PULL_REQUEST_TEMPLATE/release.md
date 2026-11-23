@@ -15,7 +15,7 @@
 
 ## After merging
 
-Merging builds nothing. Publish a GitHub Release to cut the build:
+Publish a GitHub Release to create the tag that triggers the release build.
 
 - [ ] Releases → Draft a new release
 - [ ] Choose tag `vX.Y.Z`, *Create new tag on publish* (1–3 dot-separated integers: `v1.2.3`, `v1.2` or `v2`; the tag sets `MARKETING_VERSION`)

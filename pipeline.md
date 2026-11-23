@@ -53,15 +53,15 @@ Cloud ran it. Trigger details for each workflow are in
 
 ### Branch map
 
-| Branch | Holds | Builds when | Lands in | Xcode |
-|---|---|---|---|---|
-| `feature/*` | work in progress | [PR tests](#xcode-cloud-workflows) where configured; [TestFlight on request](#pr-builds) | no automatic distribution | — |
-| `dev` | integrated, unverified | every push | TestFlight internal → **Self** | Latest Release |
-| `UAT-testflight` | ready to test, may be rough | every push | TestFlight external → **UAT** | pinned (26.6) |
-| `master` | shipped | `v*` tag only | TestFlight external → **Stable**, then App Store review | pinned (26.6) |
+| Branch or ref | Automatic start | TestFlight |
+|---|---|---|
+| PR targeting `dev` | Swift-file changes start an internal archive and can also start tests for matching source prefixes | Internal → **Self** |
+| `dev` | Swift-file changes on the branch | Internal → **Self** |
+| `UAT-testflight` | Swift-file changes on the branch | External → **UAT** |
+| `v*` tag | Tag changes. Publish the release tag from `master` | External → **Stable** |
 
-The **UAT** and **Stable** groups have no testers yet — builds land there and
-wait. Add testers in App Store Connect → TestFlight when testing starts.
+See [Xcode Cloud workflows](#xcode-cloud-workflows) for the full triggers and
+build environments, and [PR builds](#pr-builds) for on-demand archives.
 
 ### Branch rules (GitHub rulesets)
 
@@ -132,13 +132,8 @@ branch-specific values in source — it makes every promotion conflict.
 
 ### Xcode versions
 
-`dev` builds with **Latest Release**, so a new Xcode shows up there first.
-`UAT-testflight` and `master` are pinned to a known-good version. Once `dev` has
-built cleanly on a new Xcode, move the pins up in each workflow's Environment
-settings.
-
-`master` and `UAT-testflight` build clean for reproducibility. `dev` reuses
-caches for speed.
+**Latest Release** follows Apple's current selection. `UAT-testflight` pins
+Xcode to 26.6. The workflow table below lists Xcode and Clean settings.
 
 The Xcode version is separate from the oldest iOS the app supports
 (`IPHONEOS_DEPLOYMENT_TARGET`, currently 26.0). Always build with a recent
@@ -151,52 +146,49 @@ APIs with `if #available(iOS 26, *)`.
 
 ### Xcode Cloud workflows
 
-The owner recorded these workflow names and start conditions on `dev` in
-`83156ac`. They are managed in App Store Connect, not in GitHub Actions:
+All six workflows below were enabled in
+[App Store Connect](https://appstoreconnect.apple.com/teams/e08757ec-22cd-4952-b6de-e307fd6f1fc8/xcode-cloud/products/C4F54545-E295-4304-A95E-3B9BF44E1F39/workflows)
+when reviewed on 23–24 November 2026. All use **Latest Release** for macOS.
 
-| Workflow | Branch / source | Starts on | Result |
-| --- | --- | --- | --- |
-| dev testflight | `dev` | Every push | TestFlight internal → **Self** |
-| Master Changes | `master` | `v*` tag changes | TestFlight external → **Stable**; App Store review is a separate submission |
-| PR TestFlight | PR head branch | Manual/API request from [the GitHub workflow](#pr-builds) | TestFlight internal → **Self** |
-| UAT-testflight | `UAT-testflight` | Every push | TestFlight external → **UAT** |
-| Test /feat & /refactor branches | Owner's recorded filters: `test/*` and `refactor/*` | PR changes | Build/test feedback; no TestFlight distribution |
+| Workflow | Start condition | Xcode / Clean | iOS action and distribution |
+|---|---|---|---|
+| `dev testflight` | Branch Changes on `dev`, Swift-file filter, auto-cancel on | Latest Release / off | Internal TestFlight archive → **Self** |
+| `Master Change` | Tag Changes for tags beginning with `v`, any file changes, auto-cancel on | Latest Release / on | App Store Connect archive → external TestFlight **Stable**. Submit for App Store review separately |
+| `PR TestFlight` | Manual Start on any branch. Manual PR and tag starts are disabled | Latest Release / off | Internal TestFlight archive → **Self** |
+| `Targeting Dev PR` | Pull Request Changes from any source branch into `dev`, Swift-file filter, auto-cancel on | Latest Release / on | Internal TestFlight archive → **Self** |
+| `test /feat & /refactor branches` | Pull Request Changes from branches beginning with `feat` or `refactor` into `dev`, Swift-file filter, auto-cancel on | Latest Release / on | Test using the `studyApp` scheme settings. The action must pass. No distribution post-action |
+| `UAT-testflight` | Branch Changes on `UAT-testflight`, Swift-file filter, auto-cancel on | 26.6 (17F113) / on | App Store Connect archive → external TestFlight **UAT** |
 
-The last workflow's name mentions `/feat`, while the recorded filter says
-`test/*`. Confirm the actual filters in App Store Connect before relying on
-coverage for `feat/*`. A workflow existing does not establish that its current
-unit suite passes. Runner migration and required-check coverage remain #186.
+App Store Connect displays the Swift-file filter as file type `swift` with a
+blank folder. A matching `feat` or `refactor` PR into `dev` can start both an
+internal archive and a separate test run. The test action's **Required to Pass**
+setting applies to that Xcode Cloud workflow. Current-head results and GitHub
+required-check coverage remain tracked in #186.
 
 ### PR builds
 
-PR test workflows do not distribute a build. To get a feature branch onto your phone, put
-`/testflight` on its own line (any case) in the PR description, or in a comment
-on the PR (owner, members and collaborators only).
+Put `/testflight` on its own line (any case) in an open PR's description or
+in a comment from an owner, member or collaborator. This requests a build
+independently of the automatic `Targeting Dev PR` workflow.
 
-`testflight-pr.yml` then calls the App Store Connect API and starts a build of
-the PR's head branch on the Xcode Cloud workflow named **PR TestFlight**
-(override with the repo variable `XCODE_CLOUD_PR_WORKFLOW`). That workflow
-archives and distributes to the internal TestFlight group. Because the build is
-started on the branch itself, the Settings footer shows the real branch name,
-the build time in Sydney time, and the usual version (build).
+`testflight-pr.yml` calls the App Store Connect API with the workflow named by
+`XCODE_CLOUD_PR_WORKFLOW`, which defaults to **PR TestFlight**.
 
-- Triggers: PR opened/reopened, PR description edited (only if the body
-  changed), or a new comment. Pushes do not rebuild; comment `/testflight`
-  again.
-- **Comment activation:** GitHub runs `issue_comment` workflows from the default
-  branch (`master`). Having this workflow on `dev` alone does not activate
-  `/testflight` comments; promote it to `master` before relying on comment
-  triggers.
-- Fork PRs and closed PRs are skipped; only open PRs from this repository can build.
-- Uses the secrets `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID`
-  and `APP_STORE_CONNECT_PRIVATE_KEY`.
-- **One-off setup in Xcode:** create a workflow called `PR TestFlight` that permits manual PR builds. Its only
-  start condition should be **Manual Start** for *all branches* (Apple refuses an
-  API-started build on a branch the workflow doesn't list, and a Branch Changes
-  condition would build every push), a TestFlight Internal
-  Testing post-action (distribute to **Self**), and the same environment as
-  `dev`. The workflow must run `ci_scripts/`, so the PR's branch has to include
-  that folder.
+| GitHub event | Script revision | Build requested |
+|---|---|---|
+| New PR comment | Default branch (`master`) | The PR's head branch. This matches the default workflow's manual branch setting |
+| PR opened, reopened or description changed | PR merge ref | The starter on `dev` requests a PR-associated build. The starter on `master` and `UAT-testflight` requests a head-branch build. The PR's changes can also affect the script on the merge ref |
+
+The default **PR TestFlight** workflow has manual PR starts disabled. A
+PR-associated request requires a workflow that allows manual PR starts.
+The repository variable, if set, can select a different workflow.
+
+- To request another on-demand build after adding commits, post a fresh
+  `/testflight` comment.
+- The Action accepts open, same-repository PRs.
+- The Action uses `APP_STORE_CONNECT_KEY_ID`, `APP_STORE_CONNECT_ISSUER_ID` and
+  `APP_STORE_CONNECT_PRIVATE_KEY`.
+- The source checkout must contain `ci_scripts/` for the build hooks to run.
 
 ---
 
@@ -218,8 +210,9 @@ git pull
 git checkout -b feat/my-feature
 ```
 
-Push freely. Xcode Cloud PR tests run where configured; TestFlight archives
-for feature branches require an explicit request (see [PR builds](#pr-builds)).
+A Swift-file change in a PR targeting `dev` can start an automatic internal
+TestFlight archive. Matching source prefixes can also trigger tests. See
+[PR builds](#pr-builds) for on-demand builds.
 
 ### `feature/*` → `dev`
 
@@ -238,7 +231,7 @@ Before you merge:
   `MARKETING_VERSION` and the build number offset in the same commit. See
   [Versions](#versions).
 
-On merge, `dev` builds and lands in the **Self** TestFlight group.
+A merge matching the Swift-file filter starts an internal build for **Self**.
 
 ### `dev` → `UAT-testflight`
 
@@ -253,8 +246,7 @@ aren't you. Before merging:
 - [ ] Preview the generated [TestFlight notes](#testflight-notes) for the
   destination lane and provide testing instructions in the PR.
 
-On merge, `UAT-testflight` builds and goes to the **UAT** group. Every push
-here builds, so merge once, deliberately.
+A merge matching the Swift-file filter starts an external build for **UAT**.
 
 ### `UAT-testflight` → `master`
 
@@ -263,9 +255,8 @@ a merge commit**. The `source-branch` check rejects a PR from anything other
 than `UAT-testflight`, `hotfix/*` or `ci/*`. The latter two are exceptions for
 production fixes and CI maintenance, respectively.
 
-**Merging does not start a release build.** The `master` release workflow starts
-only on a version tag. Merging and releasing are separate decisions; an eligible
-PR may also request a separate PR workflow build.
+The release workflow starts when a tag beginning with `v` changes. An
+eligible PR can request an internal build before it merges.
 
 To cut the release, publish a GitHub Release:
 
@@ -310,8 +301,8 @@ not a changed-file restriction.
 
 After merging, merge `master` into `UAT-testflight` through a merge-commit PR
 and back into `dev`, preserving each target's current changes. This carries the
-same commits through all lanes. UAT and dev still build on push; no release tag
-is needed for a CI-only change.
+same commits through all lanes. The Swift-file filters on `dev` and
+`UAT-testflight` still apply. CI-only changes can land without a release tag.
 
 ---
 
@@ -323,7 +314,7 @@ being built, not from `master`.
 
 **A workflow builds when you didn't expect it to.** Start conditions are OR'd,
 not AND'd. A workflow with both "Branch Changes" and "Tag Changes" builds on
-*either*. That's why `master` has only the tag condition.
+*either*. `Master Change` has only the tag condition.
 
 **A Save button spins forever in the Xcode Cloud workflow editor.** The App
 Store Connect sign-in has lapsed — the real error is only in the browser
@@ -335,8 +326,9 @@ dot-separated integers after the `v`. See [Versions](#versions).
 **The build fails immediately on the build number.** `build_number_offset` is
 too high or isn't a whole number. See [Versions](#versions).
 
-**`/testflight` in a comment does nothing.** `testflight-pr.yml` has to be on
-`master` for comment triggers. See [PR builds](#pr-builds).
+**An on-demand build fails to start.** Check the GitHub Actions run summary.
+Confirm which ref supplied the starter and whether the selected workflow allows
+that manual start type. See [PR builds](#pr-builds).
 
 ---
 
@@ -345,9 +337,8 @@ too high or isn't a whole number. See [Versions](#versions).
 Known gaps, in rough priority order:
 
 1. **Verify Xcode Cloud unit-test coverage** (#186). A feature/refactor PR test
-   workflow is recorded above, but passing the current suite, trigger coverage,
-   result visibility and required statuses must be verified before runner
-   migration is complete. Historical passing runs do not validate a newer head.
+   workflow is configured. Verify current-head results, trigger coverage,
+   result visibility and required statuses before completing runner migration.
 2. UI tests are slow and flaky per PR. Run them on a nightly schedule against
    `UAT-testflight` instead.
 3. **Verify generated TestFlight notes in Apple** after rollout (#203). Git
@@ -402,9 +393,10 @@ For master/tag builds, tags on the build's own commit are excluded from baseline
 selection, so rebuilding a release still shows its changes. If there is no
 earlier version tag, the notes explicitly use all reachable history.
 
-The `/testflight` GitHub Action finds the PR in Xcode Cloud's primary repository
-and requests a PR build. The Xcode Cloud workflow must permit manual PR builds;
-if Apple cannot find the open PR, the action fails instead of building a branch.
+The PR-associated starter finds the PR in Xcode Cloud's primary repository
+before requesting a build. The selected workflow must allow manual PR starts.
+If Apple cannot find the PR, the request fails. See [PR builds](#pr-builds)
+for the starter used by each event.
 PR notes include the PR link when supplied by Xcode Cloud. The comparison uses
 the PR source and target commit snapshots supplied to the build, when available;
 these can differ from the current PR page after further pushes. The PR source
@@ -430,17 +422,12 @@ How to tell the kind of build apart:
 
 | Build | Notes show |
 |---|---|
-| Automatic (`dev`, `UAT-testflight`, `v*` tag) | No PR link; lane-default comparison |
-| `/testflight` PR build | A PR link, and the PR's own target as the comparison |
-| `/testflight` that built a plain branch (action ran an old script, or Apple supplied no PR metadata) | No PR link; lane-default comparison, same as an automatic build |
+| Branch or tag build, including a branch-based `/testflight` request | Lane-default comparison |
+| Automatic or on-demand PR build with PR metadata | PR link when available, and the PR target as the default comparison |
 
-`/testflight` comments run the workflow and script from the repository's default
-branch (`master`), not from the PR's branch, so a change to `.github/scripts/`
-does not take effect for comment triggers until it is merged into master.
-Merging into dev alone does not update the comment entry point. Editing the PR description to add
-or keep a `/testflight` line runs the PR's own version. In stacked PRs, a
-`/testflight` on each PR produces a separate build; compare the Branch/tag and
-Commit lines to see which PR a build came from.
+In stacked PRs, a successful `/testflight` request on each PR starts a
+separate build. Compare the Branch/tag and Commit lines to identify the
+source of a build.
 
 ### Generation and storage
 
