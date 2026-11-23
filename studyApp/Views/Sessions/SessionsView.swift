@@ -5,6 +5,7 @@ struct SessionsView: View {
     let activeSessionID: UUID?
     
     @State private var vm = SessionViewerViewModel()
+    @State private var isShowingRemoveAllConfirmation = false
     
     @Environment(\.modelContext) private var context: ModelContext
     
@@ -34,10 +35,34 @@ struct SessionsView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Remove Sessions", role: .destructive) {
-                    vm.removeAllSessions(activeSessionID: activeSessionID, context: context)
+                    isShowingRemoveAllConfirmation = true
                 }
+                .disabled(!hasRemovableSessions)
             }
         }
+        .confirmationDialog(
+            "Remove session history?",
+            isPresented: $isShowingRemoveAllConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Remove Session History", role: .destructive) {
+                vm.removeAllSessions(activeSessionID: activeSessionID, context: context)
+            }
+            .disabled(!hasRemovableSessions)
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("All completed and unfinished sessions and their breaks, study sections and locations will be permanently removed. Your current active session, if any, is kept. This can't be undone.")
+        }
+        .onChange(of: activeSessionID) { _, _ in
+            isShowingRemoveAllConfirmation = false
+        }
+        .onChange(of: sessions.map(\.id)) { _, _ in
+            isShowingRemoveAllConfirmation = false
+        }
+    }
+
+    private var hasRemovableSessions: Bool {
+        sessions.contains { $0.id != activeSessionID }
     }
 
     private func sessionRow(_ session: StudySession) -> some View {
