@@ -87,6 +87,11 @@ The `source-branch` check remains required by the `master` ruleset. Full
 retirement is tracked in #164 and requires removing that live status
 requirement before deleting the workflow.
 
+An optional [dev merge-gate proposal](docs/DevVerificationGate.md) describes
+requiring the existing `swiftlint` check after its always-run PR prerequisite
+is proven. Its checked-in ruleset is disabled; merging it does not change the
+current branch rules above.
+
 ### Versions
 
 Two numbers, two jobs:
