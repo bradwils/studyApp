@@ -5,23 +5,19 @@ It does not use the optional-value-slot APIs from the older V2 branch.
 
 ## Choosing an existing check
 
-Use these sources to choose checks for the behavior being changed. Listed tests
-describe coverage, not a passing result for the current commit.
-
-| Change or failure | Existing check and scope |
+| Change or failure | Where to check |
 | --- | --- |
-| StudyItem defaults, field configuration, relationships or deletion | [StudyItem suites](../studyAppTests/StudyItems/): the retained coverage below; persistence reads use a fresh context in the same in-memory container, not a reopened disk store. |
-| Session timing or transitions | [SessionTimingTests](../studyAppTests/SessionTimingTests.swift) and [StudySessionTests](../studyAppTests/StudySessionTests.swift): injected times, pause/resume, completion and countdown bounds. |
-| Session saves, ownership or data loss | [SwiftDataIntegrityTests](../studyAppTests/SwiftDataIntegrityTests.swift): autosave disabled, fresh readers, active-session preservation and disk-store reopening. |
-| Focus page selection or animation weights | [FocusPagerTests](../studyAppTests/FocusPagerTests.swift): page reconciliation, locking, overscroll and reduced motion; these do not render the UI. |
-| Model/ViewModel layer imports | [SwiftLint rules](../.swiftlint.yml): prohibited imports fail lint; warnings do not fail the [CI job](../.github/workflows/swiftlint.yml). |
-| TestFlight notes or PR build selection | [Python script tests](../ci_scripts/): `python3 -m unittest discover -s ci_scripts -p 'test*.py'`; these do not compile the app or prove delivery in Apple. |
+| StudyItem fields, relationships or deletion | [StudyItem suites](../studyAppTests/StudyItems/) exercise the model graph and read saved values from a fresh context in the same in-memory container. |
+| Session timing or transitions | [SessionTimingTests](../studyAppTests/SessionTimingTests.swift) and [StudySessionTests](../studyAppTests/StudySessionTests.swift) cover pause, resume, completion and countdown bounds with controlled dates. |
+| Session saves, ownership or data loss | [SwiftDataIntegrityTests](../studyAppTests/SwiftDataIntegrityTests.swift) disables autosave, reads through fresh contexts, checks active-session preservation and reopens a disk store. |
+| Focus page selection or animation weights | [FocusPagerTests](../studyAppTests/FocusPagerTests.swift) exercises page reconciliation, locking, overscroll and reduced motion. |
+| Model and ViewModel imports | The [SwiftLint config](../.swiftlint.yml) defines the layer rules. Errors fail the [CI job](../.github/workflows/swiftlint.yml). |
+| TestFlight notes or PR build selection | Run the [Python suites](../ci_scripts/) with `python3 -m unittest discover -s ci_scripts -p 'test*.py'`. |
 
-The [shared test plan](../studyApp.xctestplan) disables UI tests. Use the manual
-checks below for StudyItem editing and relaunch behavior, and consult
-[pipeline.md](../pipeline.md) for current-head build/test evidence and promotion
-checks. App builds and test compilation require the owner's explicit request,
-as described in [AGENTS.md](../AGENTS.md).
+The [shared test plan](../studyApp.xctestplan) disables UI tests. The manual checks
+below cover editing and relaunch behavior. [The pipeline](../pipeline.md) lists
+the evidence to collect for promotion, and [AGENTS.md](../AGENTS.md) describes
+when to run an app build.
 
 ## Retained coverage
 
@@ -29,18 +25,14 @@ as described in [AGENTS.md](../AGENTS.md).
 | --- | --- |
 | Defaults | Initial values, all field types/configurations, normalized tag keys |
 | Relationships | Inverses for items, subjects, definitions and tags; field/tag reload |
-| Persistence | All five content types, definition reconstruction, graphs and duplicate-tag reuse |
-| Deletion | Cascades, nullification, shared records and the actual developer Delete All action |
+| Persistence | All five content types, definition reconstruction, shared tags and field ordering |
+| Deletion | Cascades, nullification, shared records and deleting all items individually |
 
 Tests use the app's `AppSchema.models` list with in-memory storage, CloudKit off
-and autosave disabled. Persistence assertions read through fresh contexts.
-Deletion tests primarily inspect the deleting context; Delete All additionally
-reads through a fresh context without an extra save, exercising the VM's save.
-The existing session integrity tests from current `dev` remain included.
-
-The older V2 tests in #183 were reviewed for transferable behaviour. The bulk-delete
-regression is retained against the current VM, and field/tag deletion coverage is
-extended. The payload-free slot tests do not apply to the selected model.
+and autosave disabled. The round-trip tests fetch through a fresh context.
+Most deletion tests inspect the deleting context. X7 deletes each fetched item
+and explicitly saves before a fresh reader checks which records survived.
+The manual Delete All check below exercises the editor action itself.
 
 ## Evidence
 
