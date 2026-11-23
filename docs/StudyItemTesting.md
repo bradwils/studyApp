@@ -34,6 +34,18 @@ Most deletion tests inspect the deleting context. X7 deletes each fetched item
 and explicitly saves before a fresh reader checks which records survived.
 The manual Delete All check below exercises the editor action itself.
 
+## Editing regressions
+
+[StudyItemEditingTests](../studyAppTests/StudyItems/StudyItemEditingTests.swift)
+calls the actual developer VM for completion, repeated status selection,
+reopening, re-completion, subject assignment/clearing and all five content types.
+Historical timestamp markers verify updates and no-ops without sleeps.
+
+Field attachment reads through fresh contexts without an extra save after the VM
+call; duplicate attachment must retain the existing value, content and edit date.
+Status, subject and content methods do not save, so their assertions inspect the
+edited models. These tests do not render SwiftUI bindings or cover relaunch.
+
 ## Evidence
 
 PR #190 records 35 unit tests passing on iPhone 17 / iOS 26.5 on 12 November 2026
