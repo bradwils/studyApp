@@ -15,6 +15,12 @@
 
 <!-- outline changes in the codebase appropriately -->
 
+## TestFlight notes
+
+<!-- Notes are generated from Git commit titles and build metadata.
+Review the commit titles and comparison target; see pipeline.md, "TestFlight notes".
+No manual summary or JSON entry is required. -->
+
 ## Tested
 
 <!-- Tick everything you ran -->
