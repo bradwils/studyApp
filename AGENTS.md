@@ -202,7 +202,7 @@ Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full detai
 - Feature work always goes on a branch off `dev` and merges back through a PR. Only one-line, straightforward fixes (text replacement, low-importance edits) go straight into `dev`
 - `CLAUDE.md` and `AGENTS.md` are always updated in parallel: a change to one goes into the other in the same commit
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
-- `master` only accepts PRs from `UAT-testflight`, `hotfix/*` or `ci/*` (enforced by the `source-branch` check)
+- `master` only accepts PRs from `UAT-testflight`, `hotfix/*`, `ci/*`, `chore/*` or `revert/*` (enforced by the `source-branch` check)
 - `ci/*` is reserved for CI/tooling/docs maintenance: cut it from `master`, then merge master history back into `UAT-testflight` and `dev`. The check validates the branch name; CI-only scope is a review convention, not a changed-file restriction
 - Land app changes once, in `dev`, and promote them — never open matching PRs into several branches. CI maintenance uses the `ci/*` exception above
 - Branches are `type/short-slug` (`feat/sub-timer`, `fix/crash-on-launch`), using the Conventional Commits types; `hotfix/*` stays as is
