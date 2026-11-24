@@ -25,7 +25,7 @@ flowchart LR
     U -->|PR, merge commit| M[master]
     M -->|"publish v* release"| T(("v* tag"))
     H["hotfix/*"] -.->|PR| M
-    C["ci/*"] -.->|PR| M
+    C["ci/*, chore/*, revert/*"] -.->|PR| M
     M -.->|merge back| U
     M -.->|merge back| D
 
@@ -35,8 +35,9 @@ flowchart LR
 ```
 
 Direction is always `feature/*` → `dev` → `UAT-testflight` → `master`. Nothing
-skips a step except a [hotfix](#hotfixes) or [CI maintenance](#ci-maintenance);
-both branch off `master` and are merged back down afterwards.
+skips a step except a [hotfix](#hotfixes), [CI maintenance](#ci-maintenance),
+or a `chore/*` or `revert/*` PR. Branch these exceptions off `master` and merge
+master back down afterwards.
 
 App builds run on **Xcode Cloud**. GitHub Actions only does repo housekeeping:
 `claude.yml` (the `@claude` mention bot), `swiftlint.yml` (lint),
@@ -68,7 +69,7 @@ wait. Add testers in App Store Connect → TestFlight when testing starts.
 |---|---|---|---|---|
 | `dev` | ✅ | no | any | no force-push, no deletion |
 | `UAT-testflight` | ❌ | yes | merge commit only | no force-push, no deletion |
-| `master` | ❌ | yes, from `UAT-testflight`, `hotfix/*` or `ci/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
+| `master` | ❌ | yes, from `UAT-testflight`, `hotfix/*`, `ci/*`, `chore/*` or `revert/*` | merge commit only | `source-branch` check must pass; no force-push, no deletion |
 | `v*` tags | — | — | — | can't be moved or deleted once created |
 
 Approvals required: 0 (you can't approve your own PR). Head branches are
@@ -82,9 +83,9 @@ promotion conflicts.
 **Land an app change once.** Make it on `dev` and promote it. Opening matching PRs
 into `dev` and `master` is what caused the earlier drift.
 
-The `source-branch` check remains required by the `master` ruleset. Full
-retirement is tracked in #164 and requires removing that live status
-requirement before deleting the workflow.
+The `source-branch` check remains required by the `master` ruleset. It checks
+branch names, not their ancestry or contents. Branches that target `master`
+directly should start from `master` and be merged back into UAT and dev.
 
 ### Versions
 
@@ -259,8 +260,9 @@ here builds, so merge once, deliberately.
 
 Open a PR from `UAT-testflight` targeting `master`, and merge it with **Create
 a merge commit**. The `source-branch` check rejects a PR from anything other
-than `UAT-testflight`, `hotfix/*` or `ci/*`. The latter two are exceptions for
-production fixes and CI maintenance, respectively.
+than `UAT-testflight`, `hotfix/*`, `ci/*`, `chore/*` or `revert/*`. These
+exceptions allow production fixes, CI maintenance, chores and reverts to target
+`master` directly.
 
 **Merging does not build anything.** `master` only builds on a version tag.
 That's deliberate: merging and releasing are separate decisions.
@@ -353,4 +355,3 @@ Known gaps, in rough priority order:
    change is integrated and Apple ingestion is verified, review and provide
    the notes manually. GitHub Release notes and TestFlight testing instructions
    serve different purposes.
-4. Retire the `source-branch` check and `promotion-source.yml` (#164).

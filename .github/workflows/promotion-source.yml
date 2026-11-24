@@ -1,7 +1,7 @@
 name: Promotion source
 
 # Required by the master ruleset: master only takes promotions from
-# UAT-testflight, or hotfix/* and ci/* branches cut from master itself.
+# UAT-testflight, or hotfix/*, ci/*, chore/* and revert/* branches.
 on:
   pull_request:
     branches: [master]
@@ -18,6 +18,6 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
         run: |
           case "$HEAD_REF" in
-            UAT-testflight|hotfix/*|ci/*) echo "ok: $HEAD_REF -> master" ;;
-            *) echo "::error::master only accepts PRs from UAT-testflight, hotfix/* or ci/*, not '$HEAD_REF'"; exit 1 ;;
+            UAT-testflight|hotfix/*|ci/*|chore/*|revert/*) echo "ok: $HEAD_REF -> master" ;;
+            *) echo "::error::master only accepts PRs from UAT-testflight, hotfix/*, ci/*, chore/* or revert/*, not '$HEAD_REF'"; exit 1 ;;
           esac
