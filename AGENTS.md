@@ -39,6 +39,18 @@ xcrun devicectl device process launch --device $UDID --console $BUNDLE_ID
 xcodebuild test -project studyApp.xcodeproj -scheme studyApp
 ```
 *later,we'll update this to only include core tests. UI tests are effectivley useless, except for specific flows.*
+
+**Simulator memory (simslim):**
+Slim a simulator before running the app on it. `simslim` disables Apple background daemons the app doesn't need, which cuts simulator memory use. Slimming persists until `off`, and `on` reboots the simulator once.
+```bash
+# 1. find the simulator and copy its UDID
+simslim list --json
+
+# 2. slim it
+simslim on <udid>
+```
+- Check what a slim boot disables with `simslim profiles`. The app sources use no CloudKit, push, StoreKit, sign-in, HealthKit, Contacts, Calendar or location APIs, so the default profile should be fine. If a feature needs a category, leave it enabled with `simslim on <udid> --except <category>`, or keep one daemon with `--keep <label>`.
+- If the simulator misbehaves (won't boot, hangs, or a feature stops responding), restore it with `simslim off <udid>` and retest. `simslim doctor <udid>` checks slimmed features against a booted simulator.
 ---
 
 ## Architecture Overview
