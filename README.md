@@ -39,7 +39,7 @@ flowchart LR
     M -.-> D
 ```
 
-`dev` builds go to TestFlight internal (Self). `UAT-testflight` builds go to TestFlight external (UAT). `master` builds only on a `v*` tag, which goes to TestFlight external (Stable) and then App Store review.
+Swift-file changes on `dev` and in PRs targeting `dev` can start internal TestFlight archives. Matching changes on `UAT-testflight` start external UAT builds. Release tags beginning with `v` start the external Stable build. See the [Xcode Cloud workflow table](pipeline.md#xcode-cloud-workflows) for filters and distribution.
 
 See [pipeline.md](pipeline.md) for the full flow, and its [Procedures](pipeline.md#procedures) for step-by-step promotions.
 
