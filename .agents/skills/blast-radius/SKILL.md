@@ -83,7 +83,7 @@ Check only the rows the diff touches.
 
 **Release pipeline**
 - Changes to `ci_scripts/`, `Info.plist` stamps, `MARKETING_VERSION`, or build number offset affect Xcode Cloud builds and TestFlight notes on every lane.
-- Docs that must change with the code: `AGENTS.md` (CLAUDE.md only imports it), `pipeline.md` and the workflow docs.
+- Docs that must change with the code: `AGENTS.md` (CLAUDE.md is a symlink to it), `pipeline.md` and the workflow docs.
 
 ## What to hand back
 

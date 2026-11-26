@@ -1,6 +1,6 @@
 # AGENTS.md
 
-This file provides guidance to coding agents (Codex, Claude Code and others) when working with code in this repository. It is the single source: `CLAUDE.md` only imports it.
+This file provides guidance to agents (Claude Code / Codex) when working with code in this repository. It is the single source: `CLAUDE.md` is a symlink to it.
 
 ---
 
@@ -215,7 +215,7 @@ See [todos/engineering-todo.md](todos/engineering-todo.md) for deferred UI decis
 Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full details, release steps and hotfixes: [pipeline.md](pipeline.md).
 
 - Feature work always goes on a branch off `dev` and merges back through a PR. Only one-line, straightforward fixes (text replacement, low-importance edits) go straight into `dev`
-- `AGENTS.md` is the only agent instruction file to edit. `CLAUDE.md` imports it with `@AGENTS.md` and holds nothing else. Skills live in `.agents/skills/`. `.claude/skills` is a symlink to that folder, so Claude Code and Codex load the same skills
+- `AGENTS.md` is the only agent instruction file to edit. `CLAUDE.md` is a symlink to it, so never replace it with a regular file. Skills live in `.agents/skills/`. `.claude/skills` is a symlink to that folder, so Claude Code and Codex load the same skills
 - `UAT-testflight` and `master` accept PRs only, merged with **Create a merge commit** — squash or rebase breaks the shared history promotions rely on
 - `master` only accepts PRs from `UAT-testflight`, `hotfix/*` or `ci/*` (enforced by the `source-branch` check)
 - `ci/*` is reserved for CI/tooling/docs maintenance: cut it from `master`, then merge master history back into `UAT-testflight` and `dev`. The check validates the branch name; CI-only scope is a review convention, not a changed-file restriction
@@ -325,7 +325,7 @@ If remote setup must happen first, draft the dependent edits but leave them
 uncommitted until the setup is confirmed. If you cannot verify it, ask for that
 specific confirmation. State the chosen target, whether a commit is needed,
 and any pending prerequisite. Record confirmed operational changes in pipeline.md.
-Edit AGENTS.md only, since CLAUDE.md imports it. Keep workflow tables and confirmed
+Edit AGENTS.md only, since CLAUDE.md is a symlink to it. Keep workflow tables and confirmed
 operational details in pipeline.md.
 
 ---

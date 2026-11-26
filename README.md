@@ -48,7 +48,7 @@ See [pipeline.md](pipeline.md) for the full flow, and its [Procedures](pipeline.
 | File | What it covers |
 | --- | --- |
 | [pipeline.md](pipeline.md) | Branch flow, releases, hotfixes and CI maintenance |
-| [AGENTS.md](AGENTS.md) | Conventions for contributors and agents (CLAUDE.md imports it): architecture, layer rules, git workflow |
+| [AGENTS.md](AGENTS.md) | Conventions for contributors and agents (CLAUDE.md is a symlink to it): architecture, layer rules, git workflow |
 | [.github/workflows/README.md](.github/workflows/README.md) | GitHub Actions workflows and their triggers |
 | [docs/AppOverview.md](docs/AppOverview.md) | App structure, features and navigation |
 | [docs/AppSettings.md](docs/AppSettings.md) | App settings, environment injection and themes |
