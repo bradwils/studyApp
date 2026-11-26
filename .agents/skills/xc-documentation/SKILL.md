@@ -91,7 +91,11 @@ var subject: Subject?
 
 ## Project rules that apply
 
-- Follows [CLAUDE.md](../../../CLAUDE.md): comments explain non-obvious *why*. Doc comments are an explicit exception **only when this skill is invoked**.
+- Follows [AGENTS.md](../../../AGENTS.md): comments explain non-obvious *why*. Doc comments are an explicit exception **only when this skill is invoked**.
+- Dev-only types, meaning anything under `Views/Dev/` or `ViewModels/Dev/` and dev-only controls inside real screens, carry this callout in their DocC instead of a `// DEV ONLY` line comment. When documenting such a type, replace any `// DEV ONLY` header with it:
+  ```swift
+  /// > Important: Dev only. Not part of any user flow; see "Developer-Only Views" in AGENTS.md.
+  ```
 - Models stay pure data: documenting must not add logging or logic.
 - Don't build to check rendering unless asked; say a doc build wasn't run. For a preview: Product → Build Documentation (⌃⇧⌘D), or `xcodebuild docbuild -scheme studyApp -destination generic/platform=iOS`.
 
