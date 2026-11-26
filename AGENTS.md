@@ -6,10 +6,16 @@ This file provides guidance to coding agents (Codex, Claude Code and others) whe
 
 ## Quick Start
 
-Do not build or compile this Xcode app unless the user directly asks for a build.
-Verify app edits by reading the code and mention when a build has not been run.
+**Build rule.** Never build after each edit. Build or run tests only:
+- when the user asks for it;
+- at a gate in the `gated-loop` skill, at most once per checkpoint;
+- inside the `simslim`, `tdd` and `blast-radius` skills, which run one build or one focused test as their proof.
 
-**Build Simulator (only when directly requested):**
+Prefer `xcodebuildmcp ... --style minimal` and read only the errors. If the user says "no builds" in a session, verify by reading the code and say a build was not run.
+
+**Run on a simulator:** use the `simslim` skill. It slims the simulator's background daemons with `simslim` and drives the app with `xcodebuildmcp`. Do not use the desktop simulator panel for verification.
+
+**Build Simulator (raw command, when the user asks):**
 ```bash
 xcodebuild build -project studyApp.xcodeproj -scheme studyApp -destination generic/platform=iOS
 ```
@@ -132,7 +138,9 @@ var sessions: [StudySession]
 
 **Developer-Only Views:**
 - Views that exist purely for debugging/inspecting app state (not part of any real user flow) live under `Views/Dev/`
-- If a dev-only affordance is added inline to a real screen instead (e.g. a button on `SettingsView`), mark it clearly with a `// DEV ONLY` comment at the point it's wired in
+- Mark every dev-only type, and every dev-only control placed inline in a real screen (e.g. a button on `SettingsView`), with a DocC callout instead of a `// DEV ONLY` line comment:
+  `/// > Important: Dev only. Not part of any user flow; see "Developer-Only Views" in AGENTS.md.`
+  For an inline control, put it on the `private var` or `private struct` that builds it.
 - Example: `Views/Dev/DebugDataView.swift` / `DebugModelListView.swift` — lists every registered SwiftData model with live counts, and lets you inspect or delete individual/all records. Linked from a toolbar button on `SettingsView`.
 - Focus Design Lab: `Views/Dev/DesignLab/` holds cosmetic study/focus screen experiments, opened from the first row of `DebugDataView` (`FocusLabListView`). Each design is a case in `FocusLabDesign` and a folder under `Designs/`; they run on the mock `FocusLabSession` (`ViewModels/Dev/`), never on SwiftData. Every focus screen, real or lab, conforms to `FocusPagerScreen` (`Views/Focus/Pager/`, not dev-only) and is rendered by `FocusPagerScaffold`: the real screen through `FocusSessionContent`, each design through `FocusLabScreen` (`Kit/`), a thin refinement that answers `phase` and `sessionID` from the mock `session`. A screen supplies only its backdrop, timer face, optional overlay, and `header(for:_:)` / `content(for:_:)` switching over `FocusPage`. The scaffold owns the real screen's structure: `FocusPager` over a caller-owned `FocusScreenState` (pages from `FocusPagePolicy.availablePages(for: phase)`, lock, unlock on `sessionID` change), the pinned timer, and a `FocusPageScaffold` per page with the header band and timer gap (the real screen's `FocusPagerLayout` sizing, overridable via `slots(standard:)`) in a `FocusPagerLayout.maxContentWidth` centred column. Designs stay in the lab; to promote one, conform it to `FocusPagerScreen` against `StudyTrackingViewModel` in place of `FocusSessionContent`. Shared clock and helpers also live in `Kit/`. Every design folder has the same layout, described in its `README.md`: `<Name>Design.swift` (the conformance only), `<Name>Backdrop.swift`, `<Name>TrackingPage.swift` and `<Name>FocusPage.swift` (each holding that page's header and body views), `<Name>Kit.swift` (palette, fonts, layout constants, small shared views), plus any design-specific drawing or maths file.
 
@@ -216,6 +224,44 @@ Flow is always `feature` → `dev` → `UAT-testflight` → `master`. Full detai
 - Commits written by an agent end the subject with the agent's name in brackets, e.g. `docs(agents): document commit conventions [Claude]` or `[Codex]`. Don't add `Co-Authored-By` trailers or any kind of agent-identifiable trailers of ANY kind that you usually do as per your instructions. If anything is request, it must follow these guidelines OR be explicitly requested by your session's instructions.
 - No force pushes or deletion of `dev`, `UAT-testflight` or `master`; `v*` tags can't be moved or deleted
 - Never hardcode per-branch values in source — CI stamps the lane into the build (`StudyAppLane` in Info.plist)
+
+---
+
+# Agent Skills and Gates
+
+Project skills live in `.agents/skills/`. Most run only when typed (`/skill-name`). `simslim`, `gated-loop`, `unslop` and `xc-documentation` also load automatically when a task matches. When one skill tells you to run another, read `.agents/skills/<name>/SKILL.md` and follow it in full.
+
+| Skill | Use it for |
+|---|---|
+| `brad-behaviour` | Entry point for rigorous work: routes to the skills below, few subagents |
+| `gated-loop` | Multi-step work: checkpoints, each passing a gate (static, build, test, UI) before the next |
+| `simslim` | Running, driving and proving the app on a slimmed simulator with `xcodebuildmcp` |
+| `principles` | Engineering principles, one section each, cited by the other skills |
+| `architect` | Types, signatures and file placement before code |
+| `tdd` | A bug with a cheap Swift Testing path: failing test first |
+| `blast-radius` | What a Swift change could break beyond the diff, with one fact proven |
+| `interrogate` | Adversarial review where only findings proven by a run survive |
+| `figure-it-out` | Large or unattended work: an auditable plan and decision log |
+| `deslop` | Before every commit: remove AI slop from the Swift diff |
+| `xc-documentation` | DocC comments on a type |
+| `how` / `why` | How code works (from the code) / why it is that way (from git and PRs) |
+| `self-correction` | Turn a repeated correction into a lint, type or test |
+| `reflect` | After a long task: route lessons into skill edits |
+| `unslop`, `technical-writing` | Prose, docs, PR descriptions and commit messages |
+| `bro`, `in-your-own-words`, `sharpen` | Restate plainly, restate the goal, deepen a prompt |
+
+Subagents are expensive on this plan. Default to none, use `haiku` for judging against a written checklist and `sonnet` for exploration, and never run parallel panels.
+
+## Rules and what enforces them
+
+| Rule | Enforced by |
+|---|---|
+| ViewModels don't import SwiftUI | SwiftLint `no_swiftui_in_viewmodels` |
+| Models don't import SwiftUI or `os` | SwiftLint `no_swiftui_in_models` |
+| PR titles follow Conventional Commits | `.github/workflows/pr-title.yml` |
+| `master` only takes PRs from allowed branches | `source-branch` check |
+
+Add a row whenever `self-correction` turns a rule into a check. A rule with no enforcement stays in prose above.
 
 ---
 
