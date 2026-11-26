@@ -15,11 +15,11 @@ The app opens on the **Focus** tab. Elsewhere, tap the **Focus** tab.
 ## Driving it with xcodebuildmcp
 
 1. Wait for `startPauseButton` to exist, then snapshot it and check its label is `Start`.
-2. If a subject list is shown, tap a subject row.
-3. Tap `startPauseButton`. Wait until its label is `Pause`:
+2. The current subject shows as a button labelled `Subject, <name>` at the top left. With no subjects, it reads "No subjects yet", so add one through the [subjects editor](subjects-editor.md) first.
+3. Press (`touch`) `startPauseButton`. Wait until its label is `Pause`:
    `wait-for-ui --predicate textContains --identifier startPauseButton --text Pause`
 4. Wait at least 3 seconds, then tap `startPauseButton`. The label becomes `Resume`, and `endSessionButton` appears.
-5. Tap `endSessionButton`.
+5. Press (`touch`) `endSessionButton`.
 
 ## Proof
 

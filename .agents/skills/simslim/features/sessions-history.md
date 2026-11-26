@@ -13,9 +13,9 @@ Tap the **Sessions** tab. The navigation title is `Sessions`.
 
 ## Driving it with xcodebuildmcp
 
-1. Tap the `Sessions` tab, then wait for the `Sessions` navigation title.
-2. Snapshot it, tap the first row, and wait for the detail view.
-3. Go back. To test removal, tap **Remove Sessions**, and confirm if a dialog appears.
+1. Press (`touch`) the `Sessions` tab, then wait for the `Sessions` navigation title.
+2. Snapshot it, press the first row (`touch`), and wait for the detail view.
+3. Go back. To test removal, press **Remove Sessions** (`touch`), and confirm if a dialog appears.
 
 ## Proof
 

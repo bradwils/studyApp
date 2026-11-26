@@ -70,18 +70,27 @@ xcodebuildmcp ui-automation snapshot-ui --simulator-id "$UDID"
 Always snapshot, then act on an element reference from that snapshot, then wait for the result. Never tap by coordinates. Element references go stale after navigation, so take a fresh snapshot after every screen change.
 
 ```bash
-xcodebuildmcp ui-automation snapshot-ui --simulator-id "$UDID"
-xcodebuildmcp ui-automation tap --simulator-id "$UDID" --element-ref <ref>
-xcodebuildmcp ui-automation type-text --simulator-id "$UDID" --element-ref <ref> --text "Maths" --replace-existing
-xcodebuildmcp ui-automation swipe --simulator-id "$UDID" --within-element-ref <ref> --direction up
-xcodebuildmcp ui-automation wait-for-ui --simulator-id "$UDID" --predicate exists --label "Sessions" --role tab
+M=(--simulator-id "$UDID" --style minimal)   # zsh does not split a plain string variable; use an array
+xcodebuildmcp ui-automation snapshot-ui $M
+xcodebuildmcp ui-automation touch $M --element-ref <ref> --down --up --delay 0.15
+xcodebuildmcp ui-automation key-sequence $M --key-codes 16 4 23 11 --delay 0.05
+xcodebuildmcp ui-automation swipe $M --within-element-ref <ref> --direction up
+xcodebuildmcp ui-automation wait-for-ui $M --predicate exists --identifier <id> --timeout-ms 8000
 ```
+
+What the first run (iOS 27.0, xcodebuildmcp 2.7.0) showed:
+
+- **Press with `touch`, not `tap`.** `tap` reports success, but the press is dropped on tab bar items and ordinary buttons. `touch --down --up --delay 0.15` registers.
+- **Focus a text field before typing.** `touch` the field first. `type-text` into an unfocused field reports success and types nothing. After typing, check the field's value in a fresh snapshot.
+- **Fall back to HID key codes for text.** `key-sequence` sends USB HID usage codes and needs no snapshot: `a`=4 to `z`=29, `1`–`9`=30–38, `0`=39, Return=40, Space=44. The field's own autocapitalisation applies.
+- **Press the button rather than Return.** Return can be used up accepting the keyboard's predictive suggestion instead of submitting.
+- **Run one `ui-automation` call at a time.** A call queued behind a slow one can time out after 30 s and then run later. If a call hangs for more than a minute, run `pkill -f "axe describe-ui --udid $UDID"` and retry. macOS has no `timeout` command, so do not wrap calls in it.
 
 Stable handles in the app:
 
 | Handle | Where |
 |---|---|
-| Tab labels `Focus`, `Debug`, `Social`, `Groups`, `Sessions` | `App/MainTabView.swift` |
+| Tab labels `Focus`, `Debug`, `Social`, `Groups`, `Sessions`. In a snapshot, a tab's id is its SF Symbol name, and its value is `1` when selected. | `App/MainTabView.swift` |
 | `startPauseButton`, `endSessionButton` | `Views/Focus/Components/SessionControls.swift` |
 | `editSubjectsButton` | `Views/Settings/SettingsView.swift` |
 | `subjectNameField`, `subjectCodeField`, `addSubjectButton`, `subjectRow_<CODE>` | `Views/Settings/SubjectsEditor.swift` |
@@ -97,11 +106,11 @@ A proof is the action plus the resulting state, captured from the running app.
 
 ```bash
 mkdir -p .verify/<run>
-xcodebuildmcp simulator screenshot --simulator-id "$UDID" --return-format path
+xcrun simctl io "$UDID" screenshot --type=jpeg .verify/<run>/<step>.jpg
 xcodebuildmcp ui-automation snapshot-ui --simulator-id "$UDID" --output json > .verify/<run>/<step>-snapshot.json
 ```
 
-Copy each screenshot from the returned path into `.verify/<run>/<step>.png`.
+`simctl io` writes the screenshot straight to the evidence folder. `xcodebuildmcp simulator screenshot` also works, but it returns a compressed JPEG in a temporary folder that has to be copied over.
 
 - Capture before and after for every step a check depends on.
 - Drive the real user path. Do not use debug-only setters to reach a state, unless the feature file says the Debug tab is the route.
