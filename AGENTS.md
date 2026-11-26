@@ -235,7 +235,7 @@ Project skills live in `.agents/skills/`. Most run only when typed (`/skill-name
 
 | Skill | Use it for |
 |---|---|
-| `brad-behaviour` | Entry point for rigorous work: routes to the skills below, few subagents |
+| `brad-behaviour` | Typed for rigorous work: adds the principles map, pause points and reply style on top of the always-on rules |
 | `gated-loop` | Multi-step work: checkpoints, each passing a gate (static, build, test, UI) before the next |
 | `simslim` | Running, driving and proving the app on a slimmed simulator with `xcodebuildmcp` |
 | `principles` | Engineering principles, one section each, cited by the other skills |
@@ -253,6 +253,22 @@ Project skills live in `.agents/skills/`. Most run only when typed (`/skill-name
 | `bro`, `in-your-own-words`, `sharpen` | Restate plainly, restate the goal, deepen a prompt |
 
 Subagents are expensive on this plan. Default to none, use `haiku` for judging against a written checklist and `sonnet` for exploration or a second opinion the user asked for, and never run parallel panels.
+
+## Always-on rules
+
+These apply in every session, whether or not `brad-behaviour` was typed. To run a skill named here, read `.agents/skills/<name>/SKILL.md` and follow it.
+
+- **More than one step:** run `gated-loop`. Each checkpoint passes its gate before the next starts.
+- **Crossing a type or layer boundary:** run `architect` before writing code.
+- **A choice an experiment can settle:** run it, observe, then recommend. Don't ask the user to decide it.
+- **UI change:** prove it on the simulator with `simslim`. Compiling is not proof.
+- **Bug:** use `tdd` when a cheap unit-test path exists. Otherwise find the root cause before patching.
+- **A change you don't trust:** run `blast-radius`.
+- **Large, multi-part or unattended work:** run `figure-it-out`.
+- **Before a commit:** run `deslop` over the diff.
+- **Prose:** apply `unslop`. Docs, PR descriptions and commit messages also get `technical-writing`.
+- **Review comments, bot or human:** judge each on its merits.
+- **The same correction twice:** run `self-correction`.
 
 ## Rules and what enforces them
 

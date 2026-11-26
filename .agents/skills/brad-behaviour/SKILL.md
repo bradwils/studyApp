@@ -6,22 +6,15 @@ disable-model-invocation: true
 
 # Brad behaviour
 
-The entry point for rigorous work. It picks the skills a task needs and runs them in order. Every skill it names lives in `.agents/skills/<name>/SKILL.md` in this repo. Most of them only load when typed, so to run one, read that file and follow it. If a step names a skill that is not there, skip the step and say so in one line.
+Extra rigour on top of the always-on rules in AGENTS.md. Type it once per session. Every skill it names lives in `.agents/skills/<name>/SKILL.md` in this repo. Most of them only load when typed, so to run one, read that file and follow it. If a step names a skill that is not there, skip the step and say so in one line.
 
 ## Non-negotiables
 
+The **Always-on rules** in AGENTS.md already apply: gates, architect, simslim, tdd, blast-radius, figure-it-out, deslop, unslop and self-correction. This skill adds:
+
 - **First message.** Restate the goal and the smallest change that meets it, then proceed. Open the PR `## Why` and the final report with the goal.
-- **Run the work through gates.** Any task with more than one step runs the **gated-loop** skill. Each checkpoint ends in a check that passes before the next one starts.
-- **Name the data shape before writing code.** For work that crosses a type or layer boundary, run **architect** first.
-- **A choice you can settle by running something.** Try it, observe the result, then recommend. Do not ask the user to decide what an experiment can decide.
-- **Prose, including your reply.** Apply **unslop**. Docs, PR descriptions and commit messages also get **technical-writing**.
-- **Before a commit.** Run **deslop** over the diff.
-- **UI change.** Prove it on a slimmed simulator with **simslim**. Never claim a UI works because it compiles.
-- **Bug.** Use **tdd** when a cheap test path exists. Otherwise use the **fix-root-causes** section of **principles**.
-- **A change you do not trust.** Run **blast-radius**.
-- **Bot or human review comments.** Judge each one on its merits.
-- **Large, multi-part or unattended work.** Run **figure-it-out**.
-- **A repeated correction.** Run **self-correction**.
+- **Principles.** Read the section that fits before deciding, as below.
+- **Pauses, subagents and replies.** Follow the sections below.
 
 ## Principles
 
