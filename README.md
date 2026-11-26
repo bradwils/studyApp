@@ -24,7 +24,7 @@ xcodebuild test -project studyApp.xcodeproj -scheme studyApp -destination 'platf
 
 Replace `<installed simulator name>` with an available simulator from `xcrun simctl list devices available`.
 
-For building and installing on a device, see the [Quick Start in CLAUDE.md](CLAUDE.md#quick-start).
+For building and installing on a device, see the [Quick Start in AGENTS.md](AGENTS.md#quick-start).
 
 ## Branches and releases
 
@@ -48,7 +48,7 @@ See [pipeline.md](pipeline.md) for the full flow, and its [Procedures](pipeline.
 | File | What it covers |
 | --- | --- |
 | [pipeline.md](pipeline.md) | Branch flow, releases, hotfixes and CI maintenance |
-| [CLAUDE.md](CLAUDE.md) | Conventions for contributors and agents: architecture, layer rules, git workflow |
+| [AGENTS.md](AGENTS.md) | Conventions for contributors and agents (CLAUDE.md imports it): architecture, layer rules, git workflow |
 | [.github/workflows/README.md](.github/workflows/README.md) | GitHub Actions workflows and their triggers |
 | [docs/AppOverview.md](docs/AppOverview.md) | App structure, features and navigation |
 | [docs/AppSettings.md](docs/AppSettings.md) | App settings, environment injection and themes |
@@ -62,4 +62,4 @@ See [pipeline.md](pipeline.md) for the full flow, and its [Procedures](pipeline.
 - Branch off `dev` using `type/short-slug`, for example `feat/sub-timer` or `fix/crash-on-launch`.
 - Write commits and PR titles in [Conventional Commits](https://www.conventionalcommits.org/) form, `type(scope): description`.
 - Merge commits only: `UAT-testflight` and `master` accept PRs merged with **Create a merge commit**.
-- Full rules are in [CLAUDE.md's Git Workflow](CLAUDE.md#git-workflow).
+- Full rules are in [AGENTS.md's Git Workflow](AGENTS.md#git-workflow).
