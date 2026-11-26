@@ -10,7 +10,7 @@ When a bug has a clear, cheap test path, make the broken behaviour executable be
 
 Do not force a test when it would be impractical. Use the closest useful check instead if a test would need:
 - broad setup or brittle mocks;
-- a UI test;
+- a UI test. AGENTS.md forbids writing one unless the user asks;
 - production-only state;
 - vague reproduction steps.
 

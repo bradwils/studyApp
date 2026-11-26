@@ -45,6 +45,8 @@ xcrun devicectl device process launch --device $UDID --console $BUNDLE_ID
 xcodebuild test -project studyApp.xcodeproj -scheme studyApp
 ```
 *later,we'll update this to only include core tests. UI tests are effectivley useless, except for specific flows.*
+
+**UI tests.** Never write or edit UI tests (`studyAppUITests/`) unless the user explicitly asks. They are reserved for end-to-end testing later in the dev cycle. Cover logic with Swift Testing unit tests in `studyAppTests/`, and prove UI changes on the simulator with the `simslim` skill.
 ---
 
 ## Architecture Overview

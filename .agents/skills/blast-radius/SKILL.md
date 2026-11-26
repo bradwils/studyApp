@@ -26,7 +26,7 @@ For each fact the change's safety depends on, get it as far down this list as is
 4. You ran it. A test or script that calls the real code and fails loud if you're wrong.
 5. You reproduced it in the running app (simulator or device), including a relaunch or an upgrade over an old install when the risk is persistence.
 
-Step 4 is usually one small Swift Testing case (XCTest only for UI tests in `studyAppUITests/`) that uses the real model types with an isolated in-memory `ModelContainer` and an injected clock, like the existing ones in `studyAppTests/`. For pure logic with no SwiftData or UIKit, a standalone `swift script.swift` run is cheaper.
+Step 4 is usually one small Swift Testing case in `studyAppTests/` that uses the real model types with an isolated in-memory `ModelContainer` and an injected clock, like the existing ones in `studyAppTests/`. For pure logic with no SwiftData or UIKit, a standalone `swift script.swift` run is cheaper. Never write a UI test as proof unless the user asks; AGENTS.md reserves them for end-to-end testing.
 
 **Build rule.** Running the proof test is a gate, so the build rule in AGENTS.md allows it. Run it once, focused on the one suite:
 
