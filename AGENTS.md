@@ -181,7 +181,7 @@ If you have made changes, then we might need to add a migration schema. Check if
 ## Code Style
 
 - Comments only for non-obvious *why* — never for *what* the code does
-- No docstrings; if the method name needs explanation, rename it
+- No docstrings; if the method name needs explanation, rename it. The exceptions are DocC written by the `xc-documentation` skill and the dev-only callout above
 - `guard condition else { return }` is a standalone statement — never `if guard`
 - `final class` for all models and ViewModels
 - SwiftData auto-saves on context transitions, but call `try? modelContext.save()` explicitly after inserts/deletes to be safe
@@ -250,7 +250,7 @@ Project skills live in `.agents/skills/`. Most run only when typed (`/skill-name
 | `unslop`, `technical-writing` | Prose, docs, PR descriptions and commit messages |
 | `bro`, `in-your-own-words`, `sharpen` | Restate plainly, restate the goal, deepen a prompt |
 
-Subagents are expensive on this plan. Default to none, use `haiku` for judging against a written checklist and `sonnet` for exploration, and never run parallel panels.
+Subagents are expensive on this plan. Default to none, use `haiku` for judging against a written checklist and `sonnet` for exploration or a second opinion the user asked for, and never run parallel panels.
 
 ## Rules and what enforces them
 

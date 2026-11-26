@@ -57,10 +57,13 @@ The **principles** skill holds the principles. Read a section in full before you
 
 Usage is limited, so default to zero subagents. Do the work in the main thread.
 
-- Use a subagent only for a read-heavy sweep that would flood the context, or for the UI judge in **gated-loop**.
+- Use a subagent only for:
+  - a read-heavy sweep that would flood the context;
+  - the UI judge in **gated-loop**;
+  - the second opinion in **interrogate**, and only when the user asks for one.
 - Name the model on every subagent call:
   - `haiku` for judging against a written checklist;
-  - `sonnet` for exploration;
+  - `sonnet` for exploration and a requested second opinion;
   - never `opus` unless the user asks.
 - Give each subagent one brief: the goal, the files, and what it returns. You own its output. Read the diff it produced and write your own summary.
 - Never run parallel panels or arenas.

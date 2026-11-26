@@ -25,7 +25,7 @@ Touch only lines this diff added or changed. Leave pre-existing code alone, even
   - silent `catch {}` blocks;
   - clamps or retries that hide a bug instead of handling a legitimate state.
 
-  Keep checks at real boundaries: decoding, user input, `UserDefaults` and launch arguments.
+  Keep checks at real boundaries: decoding, user input, `UserDefaults` and launch arguments. Keep `try? modelContext.save()` after inserts and deletes, as AGENTS.md requires.
 - **Forcing past the type system.** Fix the type rather than force it. This covers `!`, `as!` and `try!` added to make code compile, `AnyView` used to dodge a `some View` return, and `Any` or `AnyObject` parameters.
 - **Nesting.** Flatten nested `if` statements into `guard ... else { return }` early exits. AGENTS.md says `guard` is always a standalone statement.
 - **One-caller wrappers.** Inline a helper, extension or protocol with one caller that adds nothing.
