@@ -10,3 +10,6 @@ build/
 buildServer.json
 /secrets
 *.pyc
+
+# Agent verification evidence (simslim skill)
+.verify/
