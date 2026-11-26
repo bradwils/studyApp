@@ -24,8 +24,8 @@ Use the cheapest gate that can fail for the reason you care about. Higher gates 
 | Gate | Runs | Cost | Command |
 |---|---|---|---|
 | G0 static | Every checkpoint | Free | See G0 below |
-| G1 build | When a unit changes Swift signatures, models or project files, and at the final checkpoint | About a minute; no model tokens beyond the output | `xcodebuildmcp simulator build --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --style minimal` |
-| G2 tests | When a unit changes logic that has or needs a test | Minutes | `xcodebuildmcp simulator test --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --extra-args "-only-testing:studyAppTests/<Suite>" --style minimal` |
+| G1 build | When a unit changes Swift signatures, models or project files, and at the final checkpoint | About a minute; no model tokens beyond the output | `xcodebuildmcp simulator build --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --use-latest-os --style minimal` |
+| G2 tests | When a unit changes logic that has or needs a test | Minutes | `xcodebuildmcp simulator test --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --use-latest-os --extra-args "-only-testing:studyAppTests/<Suite>" --style minimal` |
 | G3 UI | Only for a substantial UI change, at most once per checkpoint | Simulator time, plus one Haiku call | The **simslim** skill, then the Haiku judge below |
 
 G0 is two commands. Both must print no errors:

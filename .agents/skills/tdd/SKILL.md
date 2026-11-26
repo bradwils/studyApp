@@ -21,7 +21,7 @@ Do not force a test when it would be impractical. Use the closest useful check i
 3. **Write the failing test first.** Encode the intended behaviour, not the current implementation. See **test-behaviour** in **principles**.
 4. **Run it before fixing,** and confirm it fails for the intended reason:
    ```bash
-   xcodebuildmcp simulator test --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --extra-args "-only-testing:studyAppTests/<Suite>" --style minimal
+   xcodebuildmcp simulator test --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --use-latest-os --extra-args "-only-testing:studyAppTests/<Suite>" --style minimal
    ```
    If it passes, or fails for another reason, fix the test before touching the implementation.
 5. **Fix the bug** with the smallest production change.

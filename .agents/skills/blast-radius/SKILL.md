@@ -31,7 +31,7 @@ Step 4 is usually one small Swift Testing or XCTest case that uses the real mode
 **Build rule.** Running the proof test is a gate, so the build rule in AGENTS.md allows it. Run it once, focused on the one suite:
 
 ```bash
-xcodebuildmcp simulator test --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --extra-args "-only-testing:studyAppTests/<Suite>" --style minimal
+xcodebuildmcp simulator test --project-path studyApp.xcodeproj --scheme studyApp --simulator-name "iPhone 17" --use-latest-os --extra-args "-only-testing:studyAppTests/<Suite>" --style minimal
 ```
 
 If the user has said not to build in this session, write the test, show the command, and mark the fact "proven by test, not run", which is step 3 at best. For step 5, use the **simslim** skill.
