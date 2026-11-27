@@ -9,6 +9,7 @@ enum AppTab: Hashable {
 struct MainTabView: View {
 //	let tabViewLogger = Logger(subsystem: "com.studyApp", category: "tabView")
     @Environment(AppSession.self) private var appSession
+    @Environment(\.modelContext) private var modelContext
 
     let tracking: StudyTrackingViewModel
 
@@ -47,6 +48,7 @@ struct MainTabView: View {
                 }
             }
         }
+        .task { PlacesEditorVM.seedBuiltIns(context: modelContext) }
 //		.onChange(of: appSession.selectedTab) { oldValue, newValue in
 //			tabViewLogger.log("Moved from \(String(describing: oldValue)) to \(String(describing: newValue))")
 //		}
@@ -57,7 +59,7 @@ struct MainTabView: View {
 	MainTabView(tracking: StudyTrackingViewModel())
 		.environment(AppSession())
 		.modelContainer(
-			for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self],
+			for: AppSchema.models,
 			inMemory: true
 		)
 }
