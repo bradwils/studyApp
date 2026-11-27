@@ -47,7 +47,14 @@ struct SessionsView: View {
             Text("\(session.startedAt.formatted(date: .abbreviated, time: .shortened)) · \(formattedDuration(session.totalDuration))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            if session.endedAt == nil {
+            if let endedAt = session.endedAt, endedAt > session.startedAt {
+                SessionStudyBar(
+                    spans: StudyTimeline.spans(for: session, now: endedAt),
+                    range: session.startedAt...endedAt,
+                    isCompact: true
+                )
+                .padding(.top, 2)
+            } else if session.endedAt == nil {
                 Text(session.id == activeSessionID ? "In progress" : "Unfinished")
                     .font(.caption)
                     .foregroundStyle(.secondary)
