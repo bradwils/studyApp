@@ -6,9 +6,9 @@ struct SessionDetailView: View {
         List {
 			Section() {
                 LabeledContent("Subject", value: session.subjectName ?? "subjectName missing")
-                LabeledContent("Started", value: session.startedAt.formatted(date: .abbreviated, time: .shortened))
+                LabeledContent("Started", value: formattedTimestamp(session.startedAt))
                 if let endedAt = session.endedAt {
-                    LabeledContent("Ended", value: endedAt.formatted(date: .abbreviated, time: .shortened))
+                    LabeledContent("Ended", value: formattedTimestamp(endedAt))
                 } else {
                     LabeledContent("Status", value: "In progress")
                 }
@@ -42,7 +42,7 @@ struct SessionDetailView: View {
                 Section("Breaks (\(breaks.count))") {
                     ForEach(breaks) { studyBreak in
                         VStack(alignment: .leading) {
-                            Text(studyBreak.startedAt.formatted(date: .omitted, time: .shortened))
+                            Text(formattedTime(studyBreak.startedAt))
                             Text(formattedDuration(studyBreak.duration))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -55,7 +55,7 @@ struct SessionDetailView: View {
                 Section("Sections (\(sections.count))") {
                     ForEach(sections) { section in
                         VStack(alignment: .leading) {
-                            Text(section.startedAt.formatted(date: .omitted, time: .shortened))
+                            Text(formattedTime(section.startedAt))
                             Text(formattedDuration(section.duration))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -86,6 +86,18 @@ struct SessionDetailView: View {
             }
         }
         .navigationTitle(session.subjectName ?? "Session")
+    }
+
+    private func formattedTimestamp(_ date: Date) -> String {
+        let text = formattedTime(date, dateStyle: .abbreviated)
+        let zone = session.timeZone()
+        guard zone.identifier != TimeZone.current.identifier,
+              let abbreviation = zone.abbreviation(for: date) else { return text }
+        return "\(text) \(abbreviation)"
+    }
+
+    private func formattedTime(_ date: Date, dateStyle: Date.FormatStyle.DateStyle = .omitted) -> String {
+        date.formatted(Date.FormatStyle(date: dateStyle, time: .shortened, timeZone: session.timeZone()))
     }
 
     private func formattedDuration(_ interval: TimeInterval) -> String {
