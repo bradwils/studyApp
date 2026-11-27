@@ -97,6 +97,9 @@ final class StudySession: Identifiable {
     @Relationship(deleteRule: .cascade) //delete break --> delete connected SessionLocations
     var location: SessionLocation?
 
+    @Relationship(deleteRule: .cascade)
+    var focusBlocks: [FocusBlock] = []
+
     var friends: [String]?           // placeholder for other users in the session
     var studyScore: Int?             // 0...10 rating at completion
     var notes: String?

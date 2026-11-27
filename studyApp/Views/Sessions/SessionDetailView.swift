@@ -1,7 +1,11 @@
 import SwiftUI
+import SwiftData
 
 struct SessionDetailView: View {
-    let session: StudySession
+    @Bindable var session: StudySession
+
+    @Environment(\.modelContext) private var modelContext
+
     var body: some View {
         List {
 			Section() {
@@ -26,16 +30,17 @@ struct SessionDetailView: View {
 				}
 			}
 
+            studyTimeSection
+
             if let studyScore = session.studyScore {
                 Section("Score") {
                     LabeledContent("Study score", value: "\(studyScore)/10")
                 }
             }
 
-            if let notes = session.notes, !notes.isEmpty {
-                Section("Notes") {
-                    Text(notes)
-                }
+            Section("Notes") {
+                TextField("Add a note", text: notes, axis: .vertical)
+                    .accessibilityIdentifier("sessionNotesField")
             }
 
             if let breaks = session.breaks, !breaks.isEmpty {
@@ -86,6 +91,40 @@ struct SessionDetailView: View {
             }
         }
         .navigationTitle(session.subjectName ?? "Session")
+        .onDisappear { try? modelContext.save() }
+    }
+
+    @ViewBuilder
+    private var studyTimeSection: some View {
+        let end = session.endedAt ?? .now
+        let spans = StudyTimeline.spans(for: session, now: end)
+        let totals = StudyTimeline.totals(spans)
+        if end > session.startedAt, !spans.isEmpty {
+            Section("Study time") {
+                SessionStudyBar(spans: spans, range: session.startedAt...end)
+                    .padding(.vertical, 4)
+                ForEach(StudyTimeKind.allCases, id: \.self) { kind in
+                    if let total = totals[kind] {
+                        LabeledContent {
+                            Text(formattedDuration(total))
+                        } label: {
+                            Label {
+                                Text(kind.title)
+                            } icon: {
+                                Circle().fill(kind.color).frame(width: 10, height: 10)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private var notes: Binding<String> {
+        Binding(
+            get: { session.notes ?? "" },
+            set: { session.notes = $0.isEmpty ? nil : $0 }
+        )
     }
 
     private func formattedDuration(_ interval: TimeInterval) -> String {

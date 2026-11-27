@@ -30,7 +30,7 @@ struct StudySessionTests {
 	// and using one after the container is released crashes the test process.
 	private func makeContainer() throws -> ModelContainer {
 		try ModelContainer(
-			for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
+			for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, FocusBlock.self,
 			configurations: ModelConfiguration(isStoredInMemoryOnly: true)
 		)
 	}
@@ -138,7 +138,7 @@ struct StudySessionTests {
 		var current = start
 		let vm = StudyTrackingViewModel(now: { current })
 		vm.startSession(context: context)
-		#expect(vm.startFocusTarget(duration: 1_200))
+		#expect(vm.startFocusTarget(duration: 1_200, context: context))
 		current = start.addingTimeInterval(600)
 		vm.pauseSession(context: context)
 		current = start.addingTimeInterval(720)
@@ -157,7 +157,7 @@ struct StudySessionTests {
 		#expect(target.progress(sessionActiveElapsed: elapsed) == vm.focusProgress(at: tick))
 		#expect(vm.focusProgress(at: tick) == 0.5)
 
-		vm.resetFocusTarget()
+		vm.resetFocusTarget(context: context)
 		guard case .elapsed(let studyTiming, let studyTickOrigin) = vm.timerDisplay else {
 			Issue.record("Expected a study-time snapshot")
 			return
@@ -176,7 +176,7 @@ struct StudySessionTests {
 		let vm = StudyTrackingViewModel(now: { current })
 		vm.startSession(context: container.mainContext)
 		current = start.addingTimeInterval(60)
-		#expect(vm.startFocusTarget(duration: 300))
+		#expect(vm.startFocusTarget(duration: 300, context: container.mainContext))
 
 		guard case .countdown(let timing, let target, let tickOrigin) = vm.timerDisplay else {
 			Issue.record("Expected a countdown snapshot")
@@ -201,7 +201,7 @@ struct StudySessionTests {
 		let vm = StudyTrackingViewModel(now: { current })
 		vm.startSession(context: context)
 		current.addTimeInterval(10)
-		#expect(vm.startFocusTarget(duration: 300))
+		#expect(vm.startFocusTarget(duration: 300, context: context))
 		vm.finishSession(context: context)
 
 		#expect(try context.fetch(FetchDescriptor<StudySession>()).count == 1)
