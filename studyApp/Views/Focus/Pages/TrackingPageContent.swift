@@ -24,7 +24,11 @@ struct TrackingPageContent: View {
         VStack {
             controlsSection
 
-            connectionRow
+            HStack {
+                PlacePicker(vm: vm)
+
+                connectionRow
+            }
 
             Spacer()
 
@@ -137,7 +141,7 @@ struct TrackingPageHeader: View {
 #Preview {
     // swiftlint:disable:next force_try
     let container = try! ModelContainer(
-        for: Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
+        for: Schema(AppSchema.models),
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
     )
 
