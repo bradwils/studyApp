@@ -37,10 +37,12 @@ final class StudyTrackingViewModel {
 
     private var timing: SessionTiming?
     private let now: () -> Date
+    private let timeZone: () -> TimeZone
     private let logger = Logger(subsystem: "com.studyApp", category: "studyTracking")
 
-    init(now: @escaping () -> Date = Date.init) {
+    init(now: @escaping () -> Date = Date.init, timeZone: @escaping () -> TimeZone = { .current }) {
         self.now = now
+        self.timeZone = timeZone
     }
 
     // MARK: - Facts
@@ -108,6 +110,7 @@ final class StudyTrackingViewModel {
             subject: selectedSubject,
             subjectName: selectedSubject?.name,
             startedAt: now,
+            timeZoneID: timeZone().identifier,
             breaks: [],
             sections: [StudySection(startedAt: now)]
         )
