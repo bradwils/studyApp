@@ -94,6 +94,9 @@ Stable handles in the app:
 | `startPauseButton`, `endSessionButton` | `Views/Focus/Components/SessionControls.swift` |
 | `editSubjectsButton` | `Views/Settings/SettingsView.swift` |
 | `subjectNameField`, `subjectCodeField`, `addSubjectButton`, `subjectRow_<CODE>` | `Views/Settings/SubjectsEditor.swift` |
+| `placePickerButton`, labelled with the chosen place or `Add place` | `Views/Components/PlacePicker.swift` |
+| `editPlacesButton` | `Views/Settings/SettingsView.swift` |
+| `placeNameField`, `addPlaceButton`, `placeRow_<Name>` | `Views/Settings/PlacesEditor.swift` |
 | Navigation titles `Settings`, `Social`, `Groups`, `Sessions` | Each tab's root view |
 
 When a flow needs a control with no stable handle, add an `.accessibilityIdentifier` in the same change and add it to this table.
