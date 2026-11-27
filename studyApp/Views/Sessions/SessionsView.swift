@@ -47,6 +47,12 @@ struct SessionsView: View {
             Text("\(session.startedAt.formatted(date: .abbreviated, time: .shortened)) · \(formattedDuration(session.totalDuration))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            if let place = session.location?.locationLabel, !place.isEmpty {
+                // A Label would pull the row separator in to its title.
+                Text("\(Image(systemName: "mappin.and.ellipse")) \(place)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             if session.endedAt == nil {
                 Text(session.id == activeSessionID ? "In progress" : "Unfinished")
                     .font(.caption)
