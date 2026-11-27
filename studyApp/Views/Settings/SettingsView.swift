@@ -57,6 +57,13 @@ struct SettingsView: View {
                             .presentationDragIndicator(.visible)
                             .presentationBackgroundInteraction(.enabled)
                     }
+
+                    NavigationLink {
+                        PlacesEditor()
+                    } label: {
+                        Label("Edit Places", systemImage: "mappin.and.ellipse")
+                    }
+                    .accessibilityIdentifier("editPlacesButton")
                 }
 
                 #if DEBUG
