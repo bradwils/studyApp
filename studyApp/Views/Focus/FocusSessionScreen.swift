@@ -40,7 +40,7 @@ struct FocusSessionScreen: View {
     )
     let vm = StudyTrackingViewModel()
     vm.startSession(context: container.mainContext)
-    vm.startFocusTarget(duration: 5 * 60)
+    vm.startFocusTarget(duration: 5 * 60, context: container.mainContext)
 
     return FocusSessionScreen(vm: vm)
         .modelContainer(container)

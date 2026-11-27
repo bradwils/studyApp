@@ -145,6 +145,7 @@ final class StudyTrackingViewModel {
 
         closeOpenSection(of: session, at: now)
         closeOpenBreak(of: session, at: now)
+        closeOpenFocusBlock(of: session, at: now)
         session.lastPausedAt = nil
         session.endedAt = now
         session.totalBreakDuration = (session.breaks ?? []).reduce(0) { $0 + $1.duration }
@@ -162,19 +163,26 @@ final class StudyTrackingViewModel {
 
     /// Starts a focus target during active study when no target is set and the duration is valid.
     @discardableResult
-    func startFocusTarget(duration: TimeInterval) -> Bool {
+    func startFocusTarget(duration: TimeInterval, context: ModelContext) -> Bool {
         let now = now()
-        guard let timing, timing.isRunning, focusTarget == nil,
+        guard let session = activeSession, let timing, timing.isRunning, focusTarget == nil,
               let target = FocusTarget(duration: duration, activeElapsedAtStart: timing.activeElapsed(at: now))
         else { return false }
 
+        session.focusBlocks.append(FocusBlock(startedAt: now, targetDuration: duration))
         focusTarget = target
+        save(context)
         return true
     }
 
     /// Clears the countdown while preserving the study session and its elapsed time.
-    func resetFocusTarget() {
+    func resetFocusTarget(context: ModelContext) {
+        let now = now()
+        guard let session = activeSession, focusTarget != nil else { return }
+
+        closeOpenFocusBlock(of: session, at: now)
         focusTarget = nil
+        save(context)
     }
 
     func addInterruption() {
@@ -199,6 +207,10 @@ final class StudyTrackingViewModel {
 
     private func closeOpenBreak(of session: StudySession, at date: Date) {
         session.breaks?.last(where: { $0.endedAt == nil })?.endedAt = date
+    }
+
+    private func closeOpenFocusBlock(of session: StudySession, at date: Date) {
+        session.focusBlocks.last(where: { $0.endedAt == nil })?.endedAt = date
     }
 
     private func save(_ context: ModelContext) {

@@ -24,6 +24,6 @@ enum AppSchema {
     /// The single source of truth for the persisted model types.
     static let models: [any PersistentModel.Type] = [
         Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self,
-        RemoteUser.self, StudyItem.self, FieldDefinition.self, FieldValue.self, Tag.self
+        FocusBlock.self, RemoteUser.self, StudyItem.self, FieldDefinition.self, FieldValue.self, Tag.self
     ]
 }

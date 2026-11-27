@@ -16,6 +16,8 @@ struct FocusPageContent: View {
     let isLocked: Bool
     let onLockChange: (Bool) -> Void
 
+    @Environment(\.modelContext) private var modelContext
+
     @State private var selectedDuration: TimeInterval = 0
 
     var body: some View {
@@ -33,7 +35,7 @@ struct FocusPageContent: View {
                 duration: $selectedDuration,
                 hasTarget: vm.hasFocusTarget,
                 canStart: FocusDurationLimits.standard.allows(selectedDuration) && vm.phase == .running,
-                onStart: { vm.startFocusTarget(duration: selectedDuration) }
+                onStart: { vm.startFocusTarget(duration: selectedDuration, context: modelContext) }
             )
 
             HStack(spacing: 20) {
@@ -43,7 +45,7 @@ struct FocusPageContent: View {
                 if vm.hasFocusTarget {
                     Button(action: {
                         withAnimation {
-                            vm.resetFocusTarget()
+                            vm.resetFocusTarget(context: modelContext)
                         }
                     }) {
                         Image(systemName: "arrow.counterclockwise")
@@ -80,7 +82,7 @@ struct FocusPageHeader: View {
     )
     let vm = StudyTrackingViewModel()
     vm.startSession(context: container.mainContext)
-    vm.startFocusTarget(duration: 25 * 60)
+    vm.startFocusTarget(duration: 25 * 60, context: container.mainContext)
 
     return FocusSessionScreen(vm: vm)
         .modelContainer(container)

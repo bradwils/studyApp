@@ -145,7 +145,7 @@ struct SwiftDataIntegrityTests {
         )).first)
         active.breaks = [StudyBreak(startedAt: active.startedAt, endedAt: active.startedAt)]
         active.location = SessionLocation(locationLabel: "Cancelled")
-        #expect(vm.startFocusTarget(duration: 300))
+        #expect(vm.startFocusTarget(duration: 300, context: context))
         try context.save()
         try expectGraphCounts(makeContext(container), sessions: 2, children: 2)
 
@@ -158,6 +158,7 @@ struct SwiftDataIntegrityTests {
         #expect(sessions.first?.location?.locationLabel == "Previous")
         #expect(try reader.fetch(FetchDescriptor<Subject>()).map(\.id) == [subjectID])
         try expectGraphCounts(reader, sessions: 1, children: 1)
+        #expect(try reader.fetchCount(FetchDescriptor<FocusBlock>()) == 0)
         #expect(vm.activeSessionID == nil)
         #expect(vm.focusTarget == nil)
         #expect(vm.phase == .idle)
@@ -189,7 +190,7 @@ struct SwiftDataIntegrityTests {
         current.addTimeInterval(30)
         vm.resumeSession(context: context)
         vm.addInterruption()
-        #expect(vm.startFocusTarget(duration: 300))
+        #expect(vm.startFocusTarget(duration: 300, context: context))
         current.addTimeInterval(30)
 
         vm.finishSession(context: context)
@@ -215,6 +216,11 @@ struct SwiftDataIntegrityTests {
         #expect(try reader.fetchCount(FetchDescriptor<StudyBreak>()) == 1)
         #expect(try reader.fetchCount(FetchDescriptor<StudySection>()) == 2)
         #expect(try reader.fetchCount(FetchDescriptor<SessionLocation>()) == 1)
+        let block = try #require(stored.focusBlocks.first)
+        #expect(stored.focusBlocks.count == 1)
+        #expect(block.targetDuration == 300)
+        #expect(block.startedAt == endedAt.addingTimeInterval(-30))
+        #expect(block.endedAt == endedAt)
         #expect(!context.hasChanges)
         #expect(vm.activeSessionID == nil)
         #expect(vm.focusTarget == nil)
@@ -369,7 +375,7 @@ struct SwiftDataIntegrityTests {
 
     private func makeContainer(at storeURL: URL? = nil) throws -> ModelContainer {
         let schema = Schema([Subject.self, StudySession.self, StudyBreak.self,
-                             StudySection.self, SessionLocation.self])
+                             StudySection.self, SessionLocation.self, FocusBlock.self])
         let configuration: ModelConfiguration
         if let storeURL {
             configuration = ModelConfiguration(schema: schema, url: storeURL, cloudKitDatabase: .none)
