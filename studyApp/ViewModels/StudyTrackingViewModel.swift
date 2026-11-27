@@ -32,6 +32,8 @@ final class StudyTrackingViewModel {
     private var activeSession: StudySession?
     private(set) var focusTarget: FocusTarget?
     private(set) var selectedSubject: Subject?
+    /// Held as a name rather than a ``PlaceOption`` so deleting the option can't leave a stale model here.
+    private(set) var selectedPlaceName: String?
     /// Set when a transition's save throws; clear it with ``dismissSaveError()``.
     private(set) var saveErrorMessage: String?
 
@@ -100,6 +102,30 @@ final class StudyTrackingViewModel {
         selectedSubject = subject
     }
 
+    func selectPlace(_ place: PlaceOption?, context: ModelContext) {
+        let now = now()
+        selectedPlaceName = place?.name
+        place?.lastUsedAt = now
+
+        if let session = activeSession {
+            if let location = session.location {
+                context.delete(location)
+            }
+            session.location = place.map { SessionLocation(locationLabel: $0.name) }
+        }
+        save(context)
+    }
+
+    func restoreLastPlace(context: ModelContext) {
+        guard selectedPlaceName == nil else { return }
+        var descriptor = FetchDescriptor<PlaceOption>(
+            predicate: #Predicate { $0.lastUsedAt != nil },
+            sortBy: [SortDescriptor(\.lastUsedAt, order: .reverse)]
+        )
+        descriptor.fetchLimit = 1
+        selectedPlaceName = (try? context.fetch(descriptor))?.first?.name
+    }
+
     func startSession(context: ModelContext) {
         let now = now()
         guard phase == .idle else { return }
@@ -109,7 +135,8 @@ final class StudyTrackingViewModel {
             subjectName: selectedSubject?.name,
             startedAt: now,
             breaks: [],
-            sections: [StudySection(startedAt: now)]
+            sections: [StudySection(startedAt: now)],
+            location: selectedPlaceName.map { SessionLocation(locationLabel: $0) }
         )
         context.insert(session)
         activeSession = session

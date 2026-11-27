@@ -25,7 +25,7 @@ struct StudyAppApp: App {
 	MainTabView(tracking: StudyTrackingViewModel())
 		.environment(AppSession())
 		.modelContainer(
-			for: [Subject.self, StudySession.self, StudyBreak.self, StudySection.self, SessionLocation.self, RemoteUser.self],
+			for: AppSchema.models,
 			inMemory: true
 		)
 }
