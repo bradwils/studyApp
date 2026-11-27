@@ -84,6 +84,7 @@ final class StudySession: Identifiable {
     var subjectName: String?  // preserved if subject is later deleted
 
     var startedAt: Date
+    var timeZoneID: String?          // TimeZone.identifier where the session started
     var endedAt: Date?
     var lastPausedAt: Date?
 
@@ -124,6 +125,7 @@ final class StudySession: Identifiable {
         subject: Subject? = nil,
         subjectName: String? = nil,
         startedAt: Date = Date(),
+        timeZoneID: String? = nil,
         endedAt: Date? = nil,
         lastPausedAt: Date? = nil,
         totalBreakDuration: TimeInterval? = 0,
@@ -139,6 +141,7 @@ final class StudySession: Identifiable {
         self.subject = subject
         self.subjectName = subjectName
         self.startedAt = startedAt
+        self.timeZoneID = timeZoneID
         self.endedAt = endedAt
         self.lastPausedAt = lastPausedAt
         self.totalBreakDuration = totalBreakDuration

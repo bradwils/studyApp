@@ -210,4 +210,29 @@ struct StudySessionTests {
 		#expect(vm.phase == .idle)
 		#expect(vm.timerDisplay == .idle)
 	}
+
+	@MainActor
+	@Test("A started session keeps its time zone after a save and a fresh refetch")
+	func startSessionStoresTimeZone() throws {
+		let container = try makeContainer()
+		let sydney = try #require(TimeZone(identifier: "Australia/Sydney"))
+		let london = try #require(TimeZone(identifier: "Europe/London"))
+		let vm = StudyTrackingViewModel(timeZone: { sydney })
+
+		vm.startSession(context: container.mainContext)
+
+		let reader = ModelContext(container)
+		let stored = try #require(try reader.fetch(FetchDescriptor<StudySession>()).first)
+		#expect(stored.timeZoneID == "Australia/Sydney")
+		#expect(stored.timeZone(fallback: london) == sydney)
+	}
+
+	@Test("A missing or invalid time zone ID falls back", arguments: [nil, "", "Mars/Olympus_Mons"] as [String?])
+	func unusableTimeZoneIDFallsBack(timeZoneID: String?) throws {
+		let london = try #require(TimeZone(identifier: "Europe/London"))
+		let session = StudySession(timeZoneID: timeZoneID)
+
+		#expect(session.timeZone(fallback: london) == london)
+		#expect(session.timeZone() == .current)
+	}
 }
